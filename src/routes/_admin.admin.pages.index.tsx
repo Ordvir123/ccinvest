@@ -1,6 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { FilePlus2, Pencil } from "lucide-react";
+import { toast } from "sonner";
+import { FilePlus2, Pencil, Copy, ExternalLink } from "lucide-react";
+
+const SITE_ORIGIN = "https://ccinvest.lovable.app";
 
 import { Section } from "@/components/ui/section";
 import { Button } from "@/components/ui/button";
