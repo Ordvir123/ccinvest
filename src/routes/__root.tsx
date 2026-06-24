@@ -11,7 +11,12 @@ import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
-import i18n, { applyDocumentDirection } from "@/i18n";
+import i18n, {
+  applyDocumentDirection,
+  SUPPORTED_UI_LANGS,
+  UI_LANG_STORAGE_KEY,
+  type UiLang,
+} from "@/i18n";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 
@@ -126,8 +131,11 @@ function RootComponent() {
   const { queryClient } = Route.useRouteContext();
 
   useEffect(() => {
-    // Restore persisted UI language direction (RTL for Hebrew, LTR otherwise).
-    applyDocumentDirection(i18n.resolvedLanguage ?? "fr");
+    // Restore persisted UI language after hydration to keep SSR/client text identical.
+    const stored = window.localStorage.getItem(UI_LANG_STORAGE_KEY);
+    const lang = SUPPORTED_UI_LANGS.includes(stored as UiLang) ? (stored as UiLang) : "fr";
+    if (i18n.resolvedLanguage !== lang) void i18n.changeLanguage(lang);
+    applyDocumentDirection(lang);
   }, []);
 
   return (
