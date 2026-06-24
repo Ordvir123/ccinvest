@@ -182,7 +182,7 @@ export function PageEditor({
         id: pageId,
         slug,
         source_lang: sourceLang,
-        status: "draft",
+        status,
         content,
         seo,
       });
@@ -191,10 +191,64 @@ export function PageEditor({
         setPageId(saved.id);
         navigate({ to: "/admin/pages/$id", params: { id: saved.id }, replace: true });
       }
+      return saved.id;
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to save.");
     } finally {
       setSaving(false);
+    }
+  };
+
+  const liveUrl = slug ? `${SITE_ORIGIN}/${slug}` : "";
+
+  const onPublish = async () => {
+    const problem = await validateForPublish({ id: pageId, slug, title: content.hero.title });
+    if (problem) {
+      setSlugError(problem.includes("slug") ? problem : null);
+      toast.error(problem);
+      return;
+    }
+    setPublishing(true);
+    try {
+      // Save current edits first, then flip status to published.
+      const savedId = await onSave();
+      const id = pageId ?? savedId;
+      if (!id) throw new Error("Save the page before publishing.");
+      const next = await setPageStatus(id, "published");
+      setStatus(next);
+      toast.success("Page published — it's now live.");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to publish.");
+    } finally {
+      setPublishing(false);
+    }
+  };
+
+  const onUnpublish = async () => {
+    if (!pageId) return;
+    setPublishing(true);
+    try {
+      const next = await setPageStatus(pageId, "draft");
+      setStatus(next);
+      toast.success("Page unpublished — now a draft.");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to unpublish.");
+    } finally {
+      setPublishing(false);
+    }
+  };
+
+  const copyShareLink = async (lang?: ReadingLang) => {
+    if (!liveUrl) {
+      toast.error("Add a slug first.");
+      return;
+    }
+    const url = lang ? `${liveUrl}?lang=${lang}` : liveUrl;
+    try {
+      await navigator.clipboard.writeText(url);
+      toast.success(`Link copied${lang ? ` (${lang.toUpperCase()})` : ""}.`);
+    } catch {
+      toast.error("Could not copy link.");
     }
   };
 
