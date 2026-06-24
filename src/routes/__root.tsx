@@ -11,14 +11,7 @@ import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
-import i18n, {
-  applyDocumentDirection,
-  SUPPORTED_UI_LANGS,
-  UI_LANG_STORAGE_KEY,
-  type UiLang,
-} from "@/i18n";
-import { Toaster } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
+import i18n, { applyDocumentDirection } from "../i18n";
 
 function NotFoundComponent() {
   return (
@@ -85,25 +78,25 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "CC Invest — Real Estate" },
-      { name: "description", content: "CC Invest — premium real estate projects." },
-      { name: "author", content: "CC Invest" },
+      { title: "CCINVEST" },
+      { name: "description", content: "CC Invest builds real estate landing pages with a React-based builder and Supabase backend." },
+      { name: "author", content: "Lovable" },
+      { property: "og:title", content: "CCINVEST" },
+      { property: "og:description", content: "CC Invest builds real estate landing pages with a React-based builder and Supabase backend." },
       { property: "og:type", content: "website" },
-      { property: "og:site_name", content: "CC Invest" },
-      { name: "twitter:card", content: "summary_large_image" },
-      { name: "msapplication-TileColor", content: "#05286F" },
-      { name: "msapplication-TileImage", content: "/brand/icon-192.png" },
-      { name: "theme-color", content: "#05286F" },
+      { name: "twitter:card", content: "summary" },
+      { name: "twitter:site", content: "@Lovable" },
+      { name: "twitter:title", content: "CCINVEST" },
+      { name: "twitter:description", content: "CC Invest builds real estate landing pages with a React-based builder and Supabase backend." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/4d369935-1a95-4565-a8ca-21ea4c18c115/id-preview-c925aad6--c551c527-8e58-4db1-93a8-fc0012ba7373.lovable.app-1782302569606.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/4d369935-1a95-4565-a8ca-21ea4c18c115/id-preview-c925aad6--c551c527-8e58-4db1-93a8-fc0012ba7373.lovable.app-1782302569606.png" },
     ],
     links: [
-      { rel: "icon", href: "/favicon.ico", sizes: "any" },
-      { rel: "icon", type: "image/png", sizes: "192x192", href: "/brand/icon-192.png" },
-      { rel: "apple-touch-icon", href: "/apple-touch-icon.png" },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       {
         rel: "stylesheet",
-        href: "https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Cormorant+Garamond:wght@400;500;600;700&family=Frank+Ruhl+Libre:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=Heebo:wght@400;500;600;700&display=swap",
+        href: "https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=Assistant:wght@400;500;600;700&family=Heebo:wght@400;500;600;700&display=swap",
       },
       {
         rel: "stylesheet",
@@ -135,20 +128,14 @@ function RootComponent() {
   const { queryClient } = Route.useRouteContext();
 
   useEffect(() => {
-    // Restore persisted UI language after hydration to keep SSR/client text identical.
-    const stored = window.localStorage.getItem(UI_LANG_STORAGE_KEY);
-    const lang = SUPPORTED_UI_LANGS.includes(stored as UiLang) ? (stored as UiLang) : "fr";
-    if (i18n.resolvedLanguage !== lang) void i18n.changeLanguage(lang);
-    applyDocumentDirection(lang);
+    // Restore persisted UI language direction (RTL for Hebrew, LTR otherwise).
+    applyDocumentDirection(i18n.resolvedLanguage ?? "fr");
   }, []);
 
   return (
     <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-        <Outlet />
-        <Toaster />
-      </TooltipProvider>
+      {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
+      <Outlet />
     </QueryClientProvider>
   );
 }
