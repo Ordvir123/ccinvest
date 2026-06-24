@@ -1,0 +1,48 @@
+{
+  "app": {
+    "name": "CC Invest"
+  },
+  "nav": {
+    "pages": "עמודים",
+    "newPage": "עמוד חדש",
+    "settings": "הגדרות",
+    "logout": "התנתקות"
+  },
+  "language": {
+    "label": "שפת הממשק",
+    "fr": "צרפתית",
+    "he": "עברית"
+  },
+  "auth": {
+    "loginTitle": "כניסת מנהל",
+    "loginSubtitle": "התחברו כדי לנהל את העמודים שלכם.",
+    "email": "כתובת אימייל",
+    "password": "סיסמה",
+    "signIn": "התחברות",
+    "signingIn": "מתחבר…",
+    "error": "ההתחברות נכשלה. בדקו את הפרטים.",
+    "loggedOut": "התנתקת מהמערכת."
+  },
+  "pages": {
+    "title": "עמודים",
+    "subtitle": "ניהול עמודי פרויקטים בנדל\"ן.",
+    "empty": "אין עמודים עדיין.",
+    "status": "סטטוס",
+    "slug": "מזהה (slug)",
+    "draft": "טיוטה",
+    "published": "פורסם"
+  },
+  "newPage": {
+    "title": "עמוד חדש",
+    "subtitle": "יצירת עמוד פרויקט חדש.",
+    "slug": "מזהה (slug)",
+    "create": "יצירה"
+  },
+  "settings": {
+    "title": "הגדרות",
+    "subtitle": "הגדרות אזור הניהול."
+  },
+  "common": {
+    "comingSoon": "בקרוב"
+  }
+}
