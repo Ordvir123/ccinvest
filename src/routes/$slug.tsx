@@ -4,18 +4,13 @@ import { useQuery } from "@tanstack/react-query";
 
 import { PageRenderer } from "@/components/page/PageRenderer";
 import { ReadingLanguageSwitcher } from "@/components/page/ReadingLanguageSwitcher";
-import { fetchPublishedPage, fetchTranslation } from "@/lib/pages";
+import { fetchPublishedPage } from "@/lib/pages";
+import { resolveTranslation } from "@/lib/translate";
 import { isRtlReading, type ReadingLang } from "@/types/page";
 
 export const Route = createFileRoute("/$slug")({
   component: ProjectPage,
 });
-
-const FALLBACK_BADGE: Record<ReadingLang, string> = {
-  fr: "Traduction à venir",
-  he: "תרגום בקרוב",
-  en: "Translation coming soon",
-};
 
 function ProjectPage() {
   const { slug } = Route.useParams();
@@ -31,10 +26,13 @@ function ProjectPage() {
   const activeLang: ReadingLang = lang ?? sourceLang;
   const needsTranslation = !!page && activeLang !== sourceLang;
 
+  // Translate on-the-fly (cached server-side after first request).
   const translationQuery = useQuery({
     queryKey: ["page-translation", page?.id, activeLang],
-    queryFn: () => fetchTranslation(page!.id, activeLang),
+    queryFn: () => resolveTranslation(page!.id, page!.content, sourceLang, activeLang),
     enabled: needsTranslation,
+    staleTime: Infinity,
+    retry: false,
   });
 
   // Apply reading direction for the visitor's chosen language.
@@ -61,9 +59,10 @@ function ProjectPage() {
     );
   }
 
+  const isTranslating = needsTranslation && translationQuery.isLoading;
   const translated = needsTranslation ? translationQuery.data : null;
+  // While translating (first switch) keep showing the source content underneath.
   const content = translated ?? page.content;
-  const isFallback = needsTranslation && !translated && !translationQuery.isLoading;
 
   return (
     <>
@@ -74,9 +73,16 @@ function ProjectPage() {
 
       <PageRenderer content={content} />
 
-      {isFallback && (
-        <div className="fixed bottom-20 right-5 z-40 rounded-md border border-border bg-card/90 px-3 py-1.5 text-xs text-muted-foreground shadow ltr:right-5 rtl:left-5 rtl:right-auto">
-          {FALLBACK_BADGE[activeLang]}
+      {isTranslating && (
+        <div className="fixed bottom-20 z-40 flex items-center gap-2 rounded-md border border-border bg-card/95 px-3 py-1.5 text-xs text-muted-foreground shadow ltr:right-5 rtl:left-5">
+          <span className="h-3 w-3 animate-spin rounded-full border-2 border-muted-foreground border-t-transparent" />
+          {activeLang === "he" ? "מתרגם…" : "Translating…"}
+        </div>
+      )}
+
+      {needsTranslation && translationQuery.isError && (
+        <div className="fixed bottom-20 z-40 rounded-md border border-destructive/40 bg-card/95 px-3 py-1.5 text-xs text-destructive shadow ltr:right-5 rtl:left-5">
+          {(translationQuery.error as Error)?.message ?? "Translation failed."}
         </div>
       )}
 
