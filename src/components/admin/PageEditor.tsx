@@ -500,6 +500,14 @@ export function PageEditor({
         </div>
       </div>
 
+      {showAiNote && (
+        <div className="border-b border-border bg-primary/10 px-4 py-2 text-sm text-foreground md:px-6">
+          AI filled what it found. Review and complete the empty fields — nothing was invented.
+        </div>
+      )}
+
+
+
       {/* Desktop: two panes. Mobile: tabs. */}
       <div className="hidden flex-1 gap-6 p-4 md:flex md:p-6">
         <div className="w-1/2 min-w-0">{formPanel}</div>
