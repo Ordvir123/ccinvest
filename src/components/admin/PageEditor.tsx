@@ -535,19 +535,59 @@ export function PageEditor({
           <Badge variant={status === "published" ? "default" : "secondary"}>
             {status === "published" ? "Published" : "Draft"}
           </Badge>
+          {status === "published" && liveUrl && (
+            <a
+              href={liveUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+            >
+              <ExternalLink className="h-3 w-3" /> {liveUrl}
+            </a>
+          )}
         </div>
         <div className="flex items-center gap-2">
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <span>
-                <Button type="button" variant="outline" size="sm" disabled>
-                  <Lock className="h-4 w-4" /> Publish
-                </Button>
-              </span>
-            </TooltipTrigger>
-            <TooltipContent>Available in a later step</TooltipContent>
-          </Tooltip>
-          <Button type="button" size="sm" onClick={onSave} disabled={saving}>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button type="button" variant="outline" size="sm" disabled={!slug}>
+                <Copy className="h-4 w-4" /> Copy share link
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => copyShareLink()}>
+                Default ({sourceLang.toUpperCase()})
+              </DropdownMenuItem>
+              {READING_LANGS.map((l) => (
+                <DropdownMenuItem key={l} onClick={() => copyShareLink(l)}>
+                  {l.toUpperCase()}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          {status === "published" ? (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={onUnpublish}
+              disabled={publishing}
+            >
+              <EyeOff className="h-4 w-4" /> {publishing ? "…" : "Unpublish"}
+            </Button>
+          ) : (
+            <Button
+              type="button"
+              variant="default"
+              size="sm"
+              onClick={onPublish}
+              disabled={publishing}
+            >
+              <Globe className="h-4 w-4" /> {publishing ? "Publishing…" : "Publish"}
+            </Button>
+          )}
+
+          <Button type="button" size="sm" variant="secondary" onClick={onSave} disabled={saving}>
             <Save className="h-4 w-4" /> {saving ? "Saving…" : "Save draft"}
           </Button>
         </div>
