@@ -1,6 +1,6 @@
 import { createFileRoute, Link, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
-import { FileText, FilePlus2, Settings, LogOut } from "lucide-react";
+import { FileText, FilePlus2, Inbox, Settings, LogOut } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
@@ -17,6 +17,7 @@ export const Route = createFileRoute("/_admin")({
 const navItems = [
   { to: "/admin/pages", labelKey: "nav.pages", icon: FileText, exact: false },
   { to: "/admin/pages/new", labelKey: "nav.newPage", icon: FilePlus2, exact: false },
+  { to: "/admin/leads", labelKey: "nav.leads", icon: Inbox, exact: false },
   { to: "/admin/settings", labelKey: "nav.settings", icon: Settings, exact: false },
 ] as const;
 
