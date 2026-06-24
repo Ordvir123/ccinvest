@@ -36,6 +36,8 @@ import {
   isSlugTaken,
   savePage,
   cleanContent,
+  setPageStatus,
+  validateForPublish,
 } from "@/lib/pages";
 import {
   READING_LANGS,
@@ -44,6 +46,7 @@ import {
   type Page,
   type PageContent,
   type PageSeo,
+  type PageStatus,
   type ReadingLang,
   type Stat,
   type Unit,
