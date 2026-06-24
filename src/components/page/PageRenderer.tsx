@@ -15,7 +15,8 @@ import {
   CarouselPrevious,
 } from "@/components/ui/carousel";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
-import { hasItems, hasText, type PageContent, type Unit } from "@/types/page";
+import { hasItems, hasText, type PageContent, type ReadingLang, type Unit } from "@/types/page";
+import { ContactForm } from "@/components/page/ContactForm";
 
 const scrollToContact = () => {
   document.getElementById("contact")?.scrollIntoView({ behavior: "smooth" });
