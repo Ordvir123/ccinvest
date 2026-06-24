@@ -422,3 +422,35 @@ export async function listPublishedPages(): Promise<PublishedCard[]> {
       .map(toCard);
   }
 }
+
+/* ============================================================
+ * SLICE 6 — publish flow
+ * ============================================================ */
+
+/** Minimal publish validation. Returns an error message or null when valid. */
+export async function validateForPublish(input: {
+  id?: string;
+  slug: string;
+  title: string;
+}): Promise<string | null> {
+  if (!input.slug?.trim()) return "A slug is required before publishing.";
+  if (!input.title?.trim()) return "Hero title is required before publishing.";
+  const taken = await isSlugTaken(input.slug, input.id);
+  if (taken) return "This slug is already used by another page.";
+  return null;
+}
+
+/** Flip a page's status (publish/unpublish). Returns the new status. */
+export async function setPageStatus(
+  id: string,
+  status: PageStatus,
+): Promise<PageStatus> {
+  const { data, error } = await supabase
+    .from("pages")
+    .update({ status })
+    .eq("id", id)
+    .select("status")
+    .single();
+  if (error) throw error;
+  return data.status as PageStatus;
+}
