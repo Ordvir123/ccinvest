@@ -21,6 +21,7 @@ import { cn } from "@/lib/utils";
 import { PageRenderer } from "@/components/page/PageRenderer";
 import { SectionCard, Field } from "@/components/admin/editor-parts";
 import { SingleImageUpload, GalleryUpload } from "@/components/admin/MediaUpload";
+import { TranslationsTab } from "@/components/admin/TranslationsTab";
 import {
   emptyPageContent,
   emptySeo,
