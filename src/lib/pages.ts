@@ -37,6 +37,7 @@ export async function fetchTranslation(
   pageId: string,
   lang: ReadingLang,
 ): Promise<PageContent | null> {
+  if (!isSupabaseConfigured) return null;
   try {
     const { data, error } = await supabase
       .from("page_translations")
