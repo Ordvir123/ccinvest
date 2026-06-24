@@ -16,6 +16,8 @@ if (!supabaseUrl || !supabaseKey) {
       "Add your external Supabase project env vars to enable auth and data.",
   );
 }
+export const isSupabaseConfigured = Boolean(supabaseUrl && supabaseKey);
+
 
 export const supabase = createClient(supabaseUrl ?? "http://localhost", supabaseKey ?? "anon", {
   auth: {
