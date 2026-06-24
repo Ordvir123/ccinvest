@@ -1,0 +1,48 @@
+{
+  "app": {
+    "name": "CC Invest"
+  },
+  "nav": {
+    "pages": "Pages",
+    "newPage": "Nouvelle page",
+    "settings": "Paramètres",
+    "logout": "Déconnexion"
+  },
+  "language": {
+    "label": "Langue de l'interface",
+    "fr": "Français",
+    "he": "Hébreu"
+  },
+  "auth": {
+    "loginTitle": "Connexion administrateur",
+    "loginSubtitle": "Connectez-vous pour gérer vos pages.",
+    "email": "Adresse e-mail",
+    "password": "Mot de passe",
+    "signIn": "Se connecter",
+    "signingIn": "Connexion…",
+    "error": "Échec de la connexion. Vérifiez vos identifiants.",
+    "loggedOut": "Vous avez été déconnecté."
+  },
+  "pages": {
+    "title": "Pages",
+    "subtitle": "Gérez les pages de vos projets immobiliers.",
+    "empty": "Aucune page pour l'instant.",
+    "status": "Statut",
+    "slug": "Slug",
+    "draft": "Brouillon",
+    "published": "Publiée"
+  },
+  "newPage": {
+    "title": "Nouvelle page",
+    "subtitle": "Créez une nouvelle page de projet.",
+    "slug": "Slug",
+    "create": "Créer"
+  },
+  "settings": {
+    "title": "Paramètres",
+    "subtitle": "Configuration de l'espace administrateur."
+  },
+  "common": {
+    "comingSoon": "Bientôt disponible"
+  }
+}
