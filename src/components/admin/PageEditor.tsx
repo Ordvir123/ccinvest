@@ -75,7 +75,18 @@ function moveItem<T>(arr: T[], i: number, dir: -1 | 1): T[] {
   return next;
 }
 
-export function PageEditor({ initialPage }: { initialPage?: Page }) {
+export function PageEditor({
+  initialPage,
+  initialContent,
+  initialSourceLang,
+  showAiNote = false,
+}: {
+  initialPage?: Page;
+  /** AI-prefilled content for a brand-new page (Slice 3). */
+  initialContent?: PageContent;
+  initialSourceLang?: string;
+  showAiNote?: boolean;
+}) {
   const navigate = useNavigate();
   const isEdit = !!initialPage;
 
@@ -83,16 +94,23 @@ export function PageEditor({ initialPage }: { initialPage?: Page }) {
   const [slug, setSlug] = useState(initialPage?.slug ?? "");
   const [slugTouched, setSlugTouched] = useState(!!initialPage);
   const [slugError, setSlugError] = useState<string | null>(null);
-  const [sourceLang, setSourceLang] = useState(initialPage?.source_lang ?? "fr");
+  const [sourceLang, setSourceLang] = useState(
+    initialPage?.source_lang ?? initialSourceLang ?? "fr",
+  );
   const [status] = useState(initialPage?.status ?? "draft");
   const [content, setContent] = useState<PageContent>(
-    initialPage ? { ...emptyPageContent(), ...initialPage.content } : emptyPageContent(),
+    initialPage
+      ? { ...emptyPageContent(), ...initialPage.content }
+      : initialContent
+        ? { ...emptyPageContent(), ...initialContent }
+        : emptyPageContent(),
   );
   const [seo, setSeo] = useState<PageSeo>(initialPage?.seo ?? emptySeo());
   const [previewLang, setPreviewLang] = useState<ReadingLang>(
-    (initialPage?.source_lang as ReadingLang) ?? "fr",
+    (initialPage?.source_lang as ReadingLang) ?? (initialSourceLang as ReadingLang) ?? "fr",
   );
   const [saving, setSaving] = useState(false);
+
 
   // Convenient typed updaters.
   const patch = (p: Partial<PageContent>) => setContent((c) => ({ ...c, ...p }));
@@ -481,6 +499,14 @@ export function PageEditor({ initialPage }: { initialPage?: Page }) {
           </Button>
         </div>
       </div>
+
+      {showAiNote && (
+        <div className="border-b border-border bg-primary/10 px-4 py-2 text-sm text-foreground md:px-6">
+          AI filled what it found. Review and complete the empty fields — nothing was invented.
+        </div>
+      )}
+
+
 
       {/* Desktop: two panes. Mobile: tabs. */}
       <div className="hidden flex-1 gap-6 p-4 md:flex md:p-6">
