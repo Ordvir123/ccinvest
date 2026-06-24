@@ -13,6 +13,8 @@ export type ResolvedPage = {
 
 /** Fetch a published page by slug (anon-readable). Falls back to local seed. */
 export async function fetchPublishedPage(slug: string): Promise<Page | null> {
+  // Env not wired yet — use the local seed so the renderer is demonstrable.
+  if (!isSupabaseConfigured) return SEED_PAGES[slug] ?? null;
   try {
     const { data, error } = await supabase
       .from("pages")
