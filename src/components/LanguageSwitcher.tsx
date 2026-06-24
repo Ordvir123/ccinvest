@@ -8,13 +8,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { applyDocumentDirection, type UiLang } from "@/i18n";
+import { applyDocumentDirection, UI_LANG_STORAGE_KEY, type UiLang } from "@/i18n";
 
 export function LanguageSwitcher() {
   const { i18n, t } = useTranslation();
   const current = (i18n.resolvedLanguage ?? "fr") as UiLang;
 
   const onChange = (value: string) => {
+    window.localStorage.setItem(UI_LANG_STORAGE_KEY, value);
     i18n.changeLanguage(value);
     applyDocumentDirection(value);
   };
