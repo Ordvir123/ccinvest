@@ -125,7 +125,7 @@ export function ContactForm({
       <Section>
         <div className="mx-auto max-w-xl">
           <h2 className="text-center text-3xl text-primary-foreground md:text-4xl">
-            {heading ?? t.message && "Contact"}
+            {heading ?? "Contact"}
           </h2>
 
           {done ? (
