@@ -106,7 +106,8 @@ export function PageEditor({
   const [sourceLang, setSourceLang] = useState(
     initialPage?.source_lang ?? initialSourceLang ?? "fr",
   );
-  const [status] = useState(initialPage?.status ?? "draft");
+  const [status, setStatus] = useState<PageStatus>(initialPage?.status ?? "draft");
+  const [publishing, setPublishing] = useState(false);
   const [content, setContent] = useState<PageContent>(
     initialPage
       ? { ...emptyPageContent(), ...initialPage.content }
