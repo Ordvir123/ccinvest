@@ -291,9 +291,51 @@ function Videos({ videos }: { videos: PageContent["videos"] }) {
   );
 }
 
-function Contact({ contact }: { contact: PageContent["contact"] }) {
+export type PageRendererProps = {
+  content: PageContent;
+  /** Lead-capture context. When omitted, the contact form is inert (preview). */
+  interactive?: boolean;
+  pageId?: string | null;
+  slug?: string;
+  lang?: ReadingLang;
+};
+
+export function PageRenderer({
+  content,
+  interactive = false,
+  pageId,
+  slug,
+  lang = "fr",
+}: PageRendererProps) {
   return (
-    <section id="contact" className="bg-primary text-primary-foreground">
+    <main className="bg-background">
+      <Hero hero={content.hero} />
+      <Stats stats={content.stats} />
+      {content.location &&
+        (hasText(content.location.heading) ||
+          hasText(content.location.text) ||
+          hasText(content.location.map_query)) && (
+          <LocationBlock location={content.location} />
+        )}
+      {content.about &&
+        (hasText(content.about.heading) ||
+          hasText(content.about.body) ||
+          hasItems(content.about.features)) && <About about={content.about} />}
+      <Gallery gallery={content.gallery} />
+      <Units units={content.units} />
+      <Videos videos={content.videos} />
+      <ContactForm
+        heading={content.contact?.heading}
+        interactive={interactive}
+        pageId={pageId}
+        slug={slug}
+        projectTitle={content.hero?.title}
+        lang={lang}
+      />
+    </main>
+  );
+}
+
       <Section>
         <div className="mx-auto max-w-xl">
           <h2 className="text-center text-3xl text-primary-foreground md:text-4xl">
