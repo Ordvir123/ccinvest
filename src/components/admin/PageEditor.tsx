@@ -1,7 +1,13 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
-import { Plus, Trash2, ArrowUp, ArrowDown, Save, Lock } from "lucide-react";
+import { Plus, Trash2, ArrowUp, ArrowDown, Save, Globe, EyeOff, Copy, ExternalLink } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,7 +21,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+
 import { cn } from "@/lib/utils";
 
 import { PageRenderer } from "@/components/page/PageRenderer";
@@ -30,6 +36,8 @@ import {
   isSlugTaken,
   savePage,
   cleanContent,
+  setPageStatus,
+  validateForPublish,
 } from "@/lib/pages";
 import {
   READING_LANGS,
@@ -38,6 +46,7 @@ import {
   type Page,
   type PageContent,
   type PageSeo,
+  type PageStatus,
   type ReadingLang,
   type Stat,
   type Unit,
@@ -45,6 +54,7 @@ import {
 } from "@/types/page";
 
 const SOURCE_LANGS = ["fr", "he", "en"] as const;
+const SITE_ORIGIN = "https://ccinvest.lovable.app";
 
 function MoveRemove({
   onUp,
@@ -100,7 +110,8 @@ export function PageEditor({
   const [sourceLang, setSourceLang] = useState(
     initialPage?.source_lang ?? initialSourceLang ?? "fr",
   );
-  const [status] = useState(initialPage?.status ?? "draft");
+  const [status, setStatus] = useState<PageStatus>(initialPage?.status ?? "draft");
+  const [publishing, setPublishing] = useState(false);
   const [content, setContent] = useState<PageContent>(
     initialPage
       ? { ...emptyPageContent(), ...initialPage.content }
@@ -172,7 +183,7 @@ export function PageEditor({
         id: pageId,
         slug,
         source_lang: sourceLang,
-        status: "draft",
+        status,
         content,
         seo,
       });
@@ -181,10 +192,64 @@ export function PageEditor({
         setPageId(saved.id);
         navigate({ to: "/admin/pages/$id", params: { id: saved.id }, replace: true });
       }
+      return saved.id;
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to save.");
     } finally {
       setSaving(false);
+    }
+  };
+
+  const liveUrl = slug ? `${SITE_ORIGIN}/${slug}` : "";
+
+  const onPublish = async () => {
+    const problem = await validateForPublish({ id: pageId, slug, title: content.hero.title });
+    if (problem) {
+      setSlugError(problem.includes("slug") ? problem : null);
+      toast.error(problem);
+      return;
+    }
+    setPublishing(true);
+    try {
+      // Save current edits first, then flip status to published.
+      const savedId = await onSave();
+      const id = pageId ?? savedId;
+      if (!id) throw new Error("Save the page before publishing.");
+      const next = await setPageStatus(id, "published");
+      setStatus(next);
+      toast.success("Page published — it's now live.");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to publish.");
+    } finally {
+      setPublishing(false);
+    }
+  };
+
+  const onUnpublish = async () => {
+    if (!pageId) return;
+    setPublishing(true);
+    try {
+      const next = await setPageStatus(pageId, "draft");
+      setStatus(next);
+      toast.success("Page unpublished — now a draft.");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to unpublish.");
+    } finally {
+      setPublishing(false);
+    }
+  };
+
+  const copyShareLink = async (lang?: ReadingLang) => {
+    if (!liveUrl) {
+      toast.error("Add a slug first.");
+      return;
+    }
+    const url = lang ? `${liveUrl}?lang=${lang}` : liveUrl;
+    try {
+      await navigator.clipboard.writeText(url);
+      toast.success(`Link copied${lang ? ` (${lang.toUpperCase()})` : ""}.`);
+    } catch {
+      toast.error("Could not copy link.");
     }
   };
 
@@ -470,19 +535,59 @@ export function PageEditor({
           <Badge variant={status === "published" ? "default" : "secondary"}>
             {status === "published" ? "Published" : "Draft"}
           </Badge>
+          {status === "published" && liveUrl && (
+            <a
+              href={liveUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+            >
+              <ExternalLink className="h-3 w-3" /> {liveUrl}
+            </a>
+          )}
         </div>
         <div className="flex items-center gap-2">
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <span>
-                <Button type="button" variant="outline" size="sm" disabled>
-                  <Lock className="h-4 w-4" /> Publish
-                </Button>
-              </span>
-            </TooltipTrigger>
-            <TooltipContent>Available in a later step</TooltipContent>
-          </Tooltip>
-          <Button type="button" size="sm" onClick={onSave} disabled={saving}>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button type="button" variant="outline" size="sm" disabled={!slug}>
+                <Copy className="h-4 w-4" /> Copy share link
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => copyShareLink()}>
+                Default ({sourceLang.toUpperCase()})
+              </DropdownMenuItem>
+              {READING_LANGS.map((l) => (
+                <DropdownMenuItem key={l} onClick={() => copyShareLink(l)}>
+                  {l.toUpperCase()}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          {status === "published" ? (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={onUnpublish}
+              disabled={publishing}
+            >
+              <EyeOff className="h-4 w-4" /> {publishing ? "…" : "Unpublish"}
+            </Button>
+          ) : (
+            <Button
+              type="button"
+              variant="default"
+              size="sm"
+              onClick={onPublish}
+              disabled={publishing}
+            >
+              <Globe className="h-4 w-4" /> {publishing ? "Publishing…" : "Publish"}
+            </Button>
+          )}
+
+          <Button type="button" size="sm" variant="secondary" onClick={onSave} disabled={saving}>
             <Save className="h-4 w-4" /> {saving ? "Saving…" : "Save draft"}
           </Button>
         </div>

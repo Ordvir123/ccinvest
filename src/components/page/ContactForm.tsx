@@ -1,0 +1,225 @@
+import { useState } from "react";
+import { Check, Loader2 } from "lucide-react";
+
+import { Section } from "@/components/ui/section";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { submitLead, validateLead } from "@/lib/leads";
+import { isRtlReading, type ReadingLang } from "@/types/page";
+
+type Labels = {
+  name: string;
+  phone: string;
+  email: string;
+  message: string;
+  send: string;
+  sending: string;
+  success: string;
+  error: string;
+};
+
+const COPY: Record<ReadingLang, Labels> = {
+  fr: {
+    name: "Nom",
+    phone: "Téléphone",
+    email: "Email",
+    message: "Message",
+    send: "Envoyer",
+    sending: "Envoi…",
+    success: "Merci ! Nous vous recontacterons bientôt.",
+    error: "Échec de l'envoi. Veuillez réessayer.",
+  },
+  he: {
+    name: "שם",
+    phone: "טלפון",
+    email: "אימייל",
+    message: "הודעה",
+    send: "שליחה",
+    sending: "שולח…",
+    success: "תודה! ניצור איתך קשר בקרוב.",
+    error: "השליחה נכשלה. נסה שוב.",
+  },
+  en: {
+    name: "Name",
+    phone: "Phone",
+    email: "Email",
+    message: "Message",
+    send: "Send",
+    sending: "Sending…",
+    success: "Thank you! We'll be in touch soon.",
+    error: "Could not send. Please try again.",
+  },
+};
+
+interface Props {
+  heading?: string;
+  /** When false (editor preview), the form is inert. */
+  interactive?: boolean;
+  pageId?: string | null;
+  slug?: string;
+  projectTitle?: string;
+  lang?: ReadingLang;
+}
+
+export function ContactForm({
+  heading,
+  interactive = false,
+  pageId,
+  slug,
+  projectTitle,
+  lang = "fr",
+}: Props) {
+  const t = COPY[lang] ?? COPY.fr;
+  const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
+  const [message, setMessage] = useState("");
+  const [company, setCompany] = useState(""); // honeypot
+  const [sending, setSending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [done, setDone] = useState(false);
+
+  const onSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!interactive) return;
+    setError(null);
+    const input = {
+      name,
+      phone,
+      email,
+      message,
+      lang,
+      page_id: pageId ?? null,
+      page_slug: slug,
+      project_title: projectTitle,
+      company,
+    };
+    const invalid = validateLead(input);
+    if (invalid) {
+      setError(invalid);
+      return;
+    }
+    setSending(true);
+    try {
+      await submitLead(input);
+      setDone(true);
+      setName("");
+      setPhone("");
+      setEmail("");
+      setMessage("");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t.error);
+    } finally {
+      setSending(false);
+    }
+  };
+
+  return (
+    <section
+      id="contact"
+      className="bg-primary text-primary-foreground"
+      dir={isRtlReading(lang) ? "rtl" : "ltr"}
+    >
+      <Section>
+        <div className="mx-auto max-w-xl">
+          <h2 className="text-center text-3xl text-primary-foreground md:text-4xl">
+            {heading ?? "Contact"}
+          </h2>
+
+          {done ? (
+            <div className="mt-8 flex flex-col items-center gap-3 rounded-lg bg-card/95 p-8 text-center text-card-foreground">
+              <Check className="h-10 w-10 text-primary" />
+              <p className="text-lg">{t.success}</p>
+            </div>
+          ) : (
+            <form className="mt-8 space-y-4" onSubmit={onSubmit} aria-label="Contact form">
+              {/* Honeypot — visually hidden, ignored by humans */}
+              <input
+                type="text"
+                tabIndex={-1}
+                autoComplete="off"
+                aria-hidden="true"
+                value={company}
+                onChange={(e) => setCompany(e.target.value)}
+                className="absolute left-[-9999px] h-0 w-0 opacity-0"
+              />
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="c-name" className="text-primary-foreground">
+                    {t.name}
+                  </Label>
+                  <Input
+                    id="c-name"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    className="bg-card text-card-foreground"
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="c-phone" className="text-primary-foreground">
+                    {t.phone}
+                  </Label>
+                  <Input
+                    id="c-phone"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    className="bg-card text-card-foreground"
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="c-email" className="text-primary-foreground">
+                  {t.email}
+                </Label>
+                <Input
+                  id="c-email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="bg-card text-card-foreground"
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="c-message" className="text-primary-foreground">
+                  {t.message}
+                </Label>
+                <Textarea
+                  id="c-message"
+                  rows={4}
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
+                  className="bg-card text-card-foreground"
+                />
+              </div>
+
+              {error && (
+                <p className="text-sm font-medium text-destructive-foreground bg-destructive/80 rounded px-3 py-2">
+                  {error}
+                </p>
+              )}
+
+              <Button
+                type="submit"
+                size="lg"
+                disabled={sending || !interactive}
+                className="w-full bg-card text-primary hover:bg-card/90"
+              >
+                {sending ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" /> {t.sending}
+                  </>
+                ) : (
+                  t.send
+                )}
+              </Button>
+            </form>
+          )}
+        </div>
+      </Section>
+    </section>
+  );
+}

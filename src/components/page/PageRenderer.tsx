@@ -4,9 +4,6 @@ import { Check, ChevronRight } from "lucide-react";
 import { Section } from "@/components/ui/section";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
 import {
   Carousel,
   CarouselContent,
@@ -15,7 +12,8 @@ import {
   CarouselPrevious,
 } from "@/components/ui/carousel";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
-import { hasItems, hasText, type PageContent, type Unit } from "@/types/page";
+import { hasItems, hasText, type PageContent, type ReadingLang, type Unit } from "@/types/page";
+import { ContactForm } from "@/components/page/ContactForm";
 
 const scrollToContact = () => {
   document.getElementById("contact")?.scrollIntoView({ behavior: "smooth" });
@@ -291,61 +289,22 @@ function Videos({ videos }: { videos: PageContent["videos"] }) {
   );
 }
 
-function Contact({ contact }: { contact: PageContent["contact"] }) {
-  return (
-    <section id="contact" className="bg-primary text-primary-foreground">
-      <Section>
-        <div className="mx-auto max-w-xl">
-          <h2 className="text-center text-3xl text-primary-foreground md:text-4xl">
-            {contact?.heading ?? "Contact"}
-          </h2>
-          {/* Visual-only stub — submission logic arrives in Slice 6. */}
-          <form
-            className="mt-8 space-y-4"
-            onSubmit={(e) => e.preventDefault()}
-            aria-label="Contact form (preview)"
-          >
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="c-name" className="text-primary-foreground">
-                  Nom
-                </Label>
-                <Input id="c-name" className="bg-card text-card-foreground" />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="c-phone" className="text-primary-foreground">
-                  Téléphone
-                </Label>
-                <Input id="c-phone" className="bg-card text-card-foreground" />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="c-email" className="text-primary-foreground">
-                Email
-              </Label>
-              <Input id="c-email" type="email" className="bg-card text-card-foreground" />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="c-message" className="text-primary-foreground">
-                Message
-              </Label>
-              <Textarea id="c-message" rows={4} className="bg-card text-card-foreground" />
-            </div>
-            <Button
-              type="submit"
-              size="lg"
-              className="w-full bg-card text-primary hover:bg-card/90"
-            >
-              Envoyer
-            </Button>
-          </form>
-        </div>
-      </Section>
-    </section>
-  );
-}
+export type PageRendererProps = {
+  content: PageContent;
+  /** Lead-capture context. When omitted, the contact form is inert (preview). */
+  interactive?: boolean;
+  pageId?: string | null;
+  slug?: string;
+  lang?: ReadingLang;
+};
 
-export function PageRenderer({ content }: { content: PageContent }) {
+export function PageRenderer({
+  content,
+  interactive = false,
+  pageId,
+  slug,
+  lang = "fr",
+}: PageRendererProps) {
   return (
     <main className="bg-background">
       <Hero hero={content.hero} />
@@ -363,7 +322,15 @@ export function PageRenderer({ content }: { content: PageContent }) {
       <Gallery gallery={content.gallery} />
       <Units units={content.units} />
       <Videos videos={content.videos} />
-      <Contact contact={content.contact} />
+      <ContactForm
+        heading={content.contact?.heading}
+        interactive={interactive}
+        pageId={pageId}
+        slug={slug}
+        projectTitle={content.hero?.title}
+        lang={lang}
+      />
     </main>
   );
 }
+

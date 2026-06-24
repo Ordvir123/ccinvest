@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as AdminRouteImport } from './routes/_admin'
 import { Route as SlugRouteImport } from './routes/$slug'
 import { Route as IndexRouteImport } from './routes/index'
@@ -16,10 +17,16 @@ import { Route as AdminLoginRouteImport } from './routes/admin.login'
 import { Route as AdminAdminRouteImport } from './routes/_admin.admin'
 import { Route as AdminAdminIndexRouteImport } from './routes/_admin.admin.index'
 import { Route as AdminAdminSettingsRouteImport } from './routes/_admin.admin.settings'
+import { Route as AdminAdminLeadsRouteImport } from './routes/_admin.admin.leads'
 import { Route as AdminAdminPagesIndexRouteImport } from './routes/_admin.admin.pages.index'
 import { Route as AdminAdminPagesNewRouteImport } from './routes/_admin.admin.pages.new'
 import { Route as AdminAdminPagesIdRouteImport } from './routes/_admin.admin.pages.$id'
 
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminRoute = AdminRouteImport.update({
   id: '/_admin',
   getParentRoute: () => rootRouteImport,
@@ -54,6 +61,11 @@ const AdminAdminSettingsRoute = AdminAdminSettingsRouteImport.update({
   path: '/settings',
   getParentRoute: () => AdminAdminRoute,
 } as any)
+const AdminAdminLeadsRoute = AdminAdminLeadsRouteImport.update({
+  id: '/leads',
+  path: '/leads',
+  getParentRoute: () => AdminAdminRoute,
+} as any)
 const AdminAdminPagesIndexRoute = AdminAdminPagesIndexRouteImport.update({
   id: '/pages/',
   path: '/pages/',
@@ -73,8 +85,10 @@ const AdminAdminPagesIdRoute = AdminAdminPagesIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/$slug': typeof SlugRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/admin': typeof AdminAdminRouteWithChildren
   '/admin/login': typeof AdminLoginRoute
+  '/admin/leads': typeof AdminAdminLeadsRoute
   '/admin/settings': typeof AdminAdminSettingsRoute
   '/admin/': typeof AdminAdminIndexRoute
   '/admin/pages/$id': typeof AdminAdminPagesIdRoute
@@ -84,7 +98,9 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/$slug': typeof SlugRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/admin/login': typeof AdminLoginRoute
+  '/admin/leads': typeof AdminAdminLeadsRoute
   '/admin/settings': typeof AdminAdminSettingsRoute
   '/admin': typeof AdminAdminIndexRoute
   '/admin/pages/$id': typeof AdminAdminPagesIdRoute
@@ -96,8 +112,10 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/$slug': typeof SlugRoute
   '/_admin': typeof AdminRouteWithChildren
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/_admin/admin': typeof AdminAdminRouteWithChildren
   '/admin/login': typeof AdminLoginRoute
+  '/_admin/admin/leads': typeof AdminAdminLeadsRoute
   '/_admin/admin/settings': typeof AdminAdminSettingsRoute
   '/_admin/admin/': typeof AdminAdminIndexRoute
   '/_admin/admin/pages/$id': typeof AdminAdminPagesIdRoute
@@ -109,8 +127,10 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/$slug'
+    | '/sitemap.xml'
     | '/admin'
     | '/admin/login'
+    | '/admin/leads'
     | '/admin/settings'
     | '/admin/'
     | '/admin/pages/$id'
@@ -120,7 +140,9 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/$slug'
+    | '/sitemap.xml'
     | '/admin/login'
+    | '/admin/leads'
     | '/admin/settings'
     | '/admin'
     | '/admin/pages/$id'
@@ -131,8 +153,10 @@ export interface FileRouteTypes {
     | '/'
     | '/$slug'
     | '/_admin'
+    | '/sitemap.xml'
     | '/_admin/admin'
     | '/admin/login'
+    | '/_admin/admin/leads'
     | '/_admin/admin/settings'
     | '/_admin/admin/'
     | '/_admin/admin/pages/$id'
@@ -144,11 +168,19 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   SlugRoute: typeof SlugRoute
   AdminRoute: typeof AdminRouteWithChildren
+  SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   AdminLoginRoute: typeof AdminLoginRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_admin': {
       id: '/_admin'
       path: ''
@@ -198,6 +230,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminAdminSettingsRouteImport
       parentRoute: typeof AdminAdminRoute
     }
+    '/_admin/admin/leads': {
+      id: '/_admin/admin/leads'
+      path: '/leads'
+      fullPath: '/admin/leads'
+      preLoaderRoute: typeof AdminAdminLeadsRouteImport
+      parentRoute: typeof AdminAdminRoute
+    }
     '/_admin/admin/pages/': {
       id: '/_admin/admin/pages/'
       path: '/pages'
@@ -223,6 +262,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface AdminAdminRouteChildren {
+  AdminAdminLeadsRoute: typeof AdminAdminLeadsRoute
   AdminAdminSettingsRoute: typeof AdminAdminSettingsRoute
   AdminAdminIndexRoute: typeof AdminAdminIndexRoute
   AdminAdminPagesIdRoute: typeof AdminAdminPagesIdRoute
@@ -231,6 +271,7 @@ interface AdminAdminRouteChildren {
 }
 
 const AdminAdminRouteChildren: AdminAdminRouteChildren = {
+  AdminAdminLeadsRoute: AdminAdminLeadsRoute,
   AdminAdminSettingsRoute: AdminAdminSettingsRoute,
   AdminAdminIndexRoute: AdminAdminIndexRoute,
   AdminAdminPagesIdRoute: AdminAdminPagesIdRoute,
@@ -256,6 +297,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   SlugRoute: SlugRoute,
   AdminRoute: AdminRouteWithChildren,
+  SitemapDotxmlRoute: SitemapDotxmlRoute,
   AdminLoginRoute: AdminLoginRoute,
 }
 export const routeTree = rootRouteImport
