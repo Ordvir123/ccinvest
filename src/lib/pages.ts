@@ -196,7 +196,7 @@ export async function isSlugTaken(slug: string, excludeId?: string): Promise<boo
 }
 
 /** Remove empty optional fields so nothing renders placeholder text. */
-function cleanContent(content: PageContent): PageContent {
+export function cleanContent(content: PageContent): PageContent {
   const t = (v?: string) => (v ?? "").trim();
   const keepText = (v?: string) => {
     const s = t(v);
