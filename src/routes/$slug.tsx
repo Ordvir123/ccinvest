@@ -4,9 +4,11 @@ import { useQuery } from "@tanstack/react-query";
 
 import { PageRenderer } from "@/components/page/PageRenderer";
 import { ReadingLanguageSwitcher } from "@/components/page/ReadingLanguageSwitcher";
+import { SiteHeader } from "@/components/site/SiteHeader";
+import { SiteFooter } from "@/components/site/SiteFooter";
 import { fetchPublishedPage } from "@/lib/pages";
 import { resolveTranslation } from "@/lib/translate";
-import { isRtlReading, type ReadingLang } from "@/types/page";
+import { isRtlReading, seoForLang, hasText, type ReadingLang } from "@/types/page";
 
 export const Route = createFileRoute("/$slug")({
   component: ProjectPage,
@@ -64,14 +66,32 @@ function ProjectPage() {
   // While translating (first switch) keep showing the source content underneath.
   const content = translated ?? page.content;
 
+  // Per-language SEO; fall back to source language when a field is empty.
+  const seoActive = seoForLang(page.seo, sourceLang, activeLang);
+  const seoSource = seoForLang(page.seo, sourceLang, sourceLang);
+  const pick = (k: "meta_title" | "meta_description" | "canonical" | "og_title" | "og_description" | "og_image") =>
+    hasText(seoActive[k]) ? seoActive[k] : seoSource[k];
+
+  const title = pick("meta_title");
+  const description = pick("meta_description");
+  const ogTitle = pick("og_title") ?? title;
+  const ogDescription = pick("og_description") ?? description;
+  const ogImage = pick("og_image") ?? content.gallery?.find((m) => hasText(m.url))?.url;
+
   return (
     <>
-      {page.seo?.meta_title && <title>{page.seo.meta_title}</title>}
-      {page.seo?.meta_description && (
-        <meta name="description" content={page.seo.meta_description} />
+      {hasText(title) && <title>{title}</title>}
+      {hasText(description) && <meta name="description" content={description} />}
+      {hasText(ogTitle) && <meta property="og:title" content={ogTitle} />}
+      {hasText(ogDescription) && (
+        <meta property="og:description" content={ogDescription} />
       )}
+      {hasText(ogImage) && <meta property="og:image" content={ogImage} />}
+      {hasText(ogImage) && <meta name="twitter:image" content={ogImage} />}
 
+      <SiteHeader />
       <PageRenderer content={content} />
+      <SiteFooter />
 
       {isTranslating && (
         <div className="fixed bottom-20 z-40 flex items-center gap-2 rounded-md border border-border bg-card/95 px-3 py-1.5 text-xs text-muted-foreground shadow ltr:right-5 rtl:left-5">

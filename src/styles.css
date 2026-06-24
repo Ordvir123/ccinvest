@@ -5,10 +5,9 @@
 @custom-variant dark (&:is(.dark *));
 
 /*
- * CC Invest — provisional luxury real-estate design system.
- * All colors are tokens (oklch). Never hardcode colors in components.
- * Palette: charcoal text, deep charcoal/navy primary, warm gold/brass accent,
- * off-white background, muted grays.
+ * CC Invest — real brand design system.
+ * Navy + steel palette (no gold). All colors are oklch tokens.
+ * Heading/body fonts swap by document language (Hebrew vs Latin).
  */
 
 @theme inline {
@@ -21,6 +20,7 @@
 
   --font-sans: var(--font-body);
   --font-serif: var(--font-heading);
+  --font-eyebrow: var(--font-label);
 
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -30,12 +30,14 @@
   --color-popover-foreground: var(--popover-foreground);
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
+  --color-ink: var(--ink);
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
   --color-muted: var(--muted);
   --color-muted-foreground: var(--muted-foreground);
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
+  --color-steel: var(--steel);
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
   --color-border: var(--border);
@@ -53,80 +55,71 @@
 }
 
 :root {
-  --radius: 0.5rem;
+  --radius: 0.375rem;
 
-  --font-heading: "Cormorant Garamond", "Playfair Display", Georgia, serif;
-  --font-body: "Inter", "Assistant", "Heebo", system-ui, sans-serif;
+  /* Latin (FR/EN) font stack — overridden for Hebrew below. */
+  --font-heading: "Cormorant Garamond", Georgia, serif;
+  --font-body: "Inter", system-ui, sans-serif;
+  --font-label: "Cinzel", "Cormorant Garamond", serif;
 
-  /* off-white warm background */
-  --background: oklch(0.985 0.004 95);
-  /* near-black charcoal text */
-  --foreground: oklch(0.22 0.012 260);
+  /* off-white cool background */
+  --background: oklch(0.988 0.002 247.8);
+  /* cool near-black body text */
+  --foreground: oklch(0.203 0.033 267.7);
 
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.22 0.012 260);
+  --card-foreground: oklch(0.203 0.033 267.7);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.22 0.012 260);
+  --popover-foreground: oklch(0.203 0.033 267.7);
 
-  /* deep charcoal/navy primary */
-  --primary: oklch(0.29 0.035 255);
-  --primary-foreground: oklch(0.985 0.004 95);
+  /* brand navy */
+  --primary: oklch(0.307 0.129 262.1);
+  --primary-foreground: oklch(0.988 0.002 247.8);
+  /* deep navy for headings / strong text */
+  --ink: oklch(0.278 0.131 262.6);
 
-  --secondary: oklch(0.95 0.006 95);
-  --secondary-foreground: oklch(0.29 0.035 255);
+  /* steel — secondary text, borders, hovers */
+  --steel: oklch(0.589 0.068 267.3);
+  --secondary: oklch(0.965 0.004 247.8);
+  --secondary-foreground: oklch(0.278 0.131 262.6);
 
-  --muted: oklch(0.95 0.006 95);
-  --muted-foreground: oklch(0.52 0.012 260);
+  --muted: oklch(0.965 0.004 247.8);
+  --muted-foreground: oklch(0.503 0.034 266.1);
 
-  /* warm gold / brass accent */
-  --accent: oklch(0.74 0.105 78);
-  --accent-foreground: oklch(0.22 0.012 260);
+  /* accent = steel (no gold) */
+  --accent: oklch(0.589 0.068 267.3);
+  --accent-foreground: oklch(1 0 0);
 
   --destructive: oklch(0.55 0.2 27);
-  --destructive-foreground: oklch(0.985 0.004 95);
+  --destructive-foreground: oklch(0.988 0.002 247.8);
 
-  --border: oklch(0.9 0.006 95);
-  --input: oklch(0.9 0.006 95);
-  --ring: oklch(0.74 0.105 78);
+  --border: oklch(0.900 0.015 264.5);
+  --input: oklch(0.900 0.015 264.5);
+  --ring: oklch(0.307 0.129 262.1);
 
-  --sidebar: oklch(0.29 0.035 255);
-  --sidebar-foreground: oklch(0.95 0.006 95);
-  --sidebar-primary: oklch(0.74 0.105 78);
-  --sidebar-primary-foreground: oklch(0.22 0.012 260);
-  --sidebar-accent: oklch(0.34 0.035 255);
-  --sidebar-accent-foreground: oklch(0.95 0.006 95);
-  --sidebar-border: oklch(0.36 0.03 255);
-  --sidebar-ring: oklch(0.74 0.105 78);
+  /* hero overlay gradient: navy #0A357F -> #011F67 */
+  --gradient-brand: linear-gradient(
+    135deg,
+    oklch(0.352 0.134 260.8),
+    oklch(0.278 0.131 262.6)
+  );
+
+  --sidebar: oklch(0.278 0.131 262.6);
+  --sidebar-foreground: oklch(0.965 0.004 247.8);
+  --sidebar-primary: oklch(0.589 0.068 267.3);
+  --sidebar-primary-foreground: oklch(1 0 0);
+  --sidebar-accent: oklch(0.34 0.10 262);
+  --sidebar-accent-foreground: oklch(0.965 0.004 247.8);
+  --sidebar-border: oklch(0.36 0.08 262);
+  --sidebar-ring: oklch(0.589 0.068 267.3);
 }
 
-.dark {
-  --background: oklch(0.2 0.015 260);
-  --foreground: oklch(0.95 0.006 95);
-  --card: oklch(0.25 0.02 258);
-  --card-foreground: oklch(0.95 0.006 95);
-  --popover: oklch(0.25 0.02 258);
-  --popover-foreground: oklch(0.95 0.006 95);
-  --primary: oklch(0.85 0.02 95);
-  --primary-foreground: oklch(0.22 0.012 260);
-  --secondary: oklch(0.3 0.02 258);
-  --secondary-foreground: oklch(0.95 0.006 95);
-  --muted: oklch(0.3 0.02 258);
-  --muted-foreground: oklch(0.7 0.012 260);
-  --accent: oklch(0.74 0.105 78);
-  --accent-foreground: oklch(0.22 0.012 260);
-  --destructive: oklch(0.6 0.2 27);
-  --destructive-foreground: oklch(0.985 0.004 95);
-  --border: oklch(1 0 0 / 12%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.74 0.105 78);
-  --sidebar: oklch(0.18 0.015 260);
-  --sidebar-foreground: oklch(0.95 0.006 95);
-  --sidebar-primary: oklch(0.74 0.105 78);
-  --sidebar-primary-foreground: oklch(0.22 0.012 260);
-  --sidebar-accent: oklch(0.28 0.02 258);
-  --sidebar-accent-foreground: oklch(0.95 0.006 95);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.74 0.105 78);
+/* Hebrew: swap to Hebrew-aware faces (caseless, no uppercasing). */
+:root:lang(he),
+[lang="he"] {
+  --font-heading: "Frank Ruhl Libre", "Cormorant Garamond", serif;
+  --font-body: "Heebo", system-ui, sans-serif;
+  --font-label: "Heebo", system-ui, sans-serif;
 }
 
 @layer base {
@@ -144,5 +137,33 @@
     font-family: var(--font-heading);
     font-weight: 600;
     letter-spacing: -0.01em;
+    color: var(--ink);
   }
+}
+
+/* Brand navy gradient surface (hero overlays). */
+@utility bg-gradient-brand {
+  background-image: var(--gradient-brand);
+}
+
+/* Section eyebrow / label: Cinzel, uppercased + tracked for Latin only. */
+@utility eyebrow {
+  font-family: var(--font-label);
+  text-transform: uppercase;
+  letter-spacing: 0.28em;
+  font-weight: 600;
+}
+
+/* Hebrew is caseless — never uppercase, looser tracking via Heebo. */
+[lang="he"] .eyebrow,
+:lang(he) .eyebrow {
+  text-transform: none;
+  letter-spacing: 0.12em;
+  font-weight: 700;
+}
+
+/* Thin hairline divider. */
+@utility hairline {
+  border: 0;
+  border-top: 1px solid var(--color-border);
 }

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Building2, Check, ChevronRight } from "lucide-react";
+import { Check, ChevronRight } from "lucide-react";
 
 import { Section } from "@/components/ui/section";
 import { Button } from "@/components/ui/button";
@@ -23,14 +23,15 @@ const scrollToContact = () => {
 
 function Hero({ hero }: { hero: PageContent["hero"] }) {
   return (
-    <section className="relative overflow-hidden bg-primary text-primary-foreground">
-      <Section className="flex min-h-[78vh] flex-col justify-center py-20 text-center">
-        <div className="mx-auto mb-8 flex items-center gap-2 text-primary-foreground/90">
-          <Building2 className="h-5 w-5 text-accent" aria-hidden />
-          <span className="text-sm font-semibold uppercase tracking-[0.35em]">CC Invest</span>
-        </div>
+    <section className="relative overflow-hidden bg-gradient-brand text-primary-foreground">
+      <Section className="flex min-h-[80vh] flex-col justify-center py-24 text-center">
+        <img
+          src="/brand/cc-invest-logo.png"
+          alt="CC Invest"
+          className="mx-auto mb-10 h-12 w-auto rounded bg-card px-4 py-2.5 shadow-sm md:h-14"
+        />
         {hasText(hero.kicker) && (
-          <p className="mb-5 text-sm font-medium uppercase tracking-[0.3em] text-accent">
+          <p className="eyebrow mb-6 text-xs text-primary-foreground/70">
             {hero.kicker}
           </p>
         )}
@@ -38,16 +39,23 @@ function Hero({ hero }: { hero: PageContent["hero"] }) {
           {hero.title}
         </h1>
         {hasText(hero.subtitle) && (
-          <p className="mx-auto mt-6 max-w-2xl text-lg text-primary-foreground/80">
+          <p className="mx-auto mt-7 max-w-2xl text-lg leading-relaxed text-primary-foreground/80">
             {hero.subtitle}
           </p>
         )}
         {hasText(hero.price) && (
-          <p className="mt-6 font-serif text-3xl text-accent">{hero.price}</p>
+          <p className="mt-8 font-serif text-3xl text-primary-foreground md:text-4xl">
+            {hero.price}
+          </p>
         )}
         {hasText(hero.cta_label) && (
           <div className="mt-10">
-            <Button variant="default" size="lg" className="bg-accent text-accent-foreground hover:bg-accent/90" onClick={scrollToContact}>
+            <Button
+              variant="secondary"
+              size="lg"
+              className="bg-card text-primary hover:bg-card/90"
+              onClick={scrollToContact}
+            >
               {hero.cta_label}
             </Button>
           </div>
@@ -64,8 +72,8 @@ function Stats({ stats }: { stats: PageContent["stats"] }) {
       <div className="mx-auto grid max-w-6xl grid-cols-2 divide-x divide-border md:grid-cols-4 rtl:divide-x-reverse">
         {stats.map((s, i) => (
           <div key={i} className="px-4 py-10 text-center">
-            <div className="font-serif text-4xl text-primary md:text-5xl">{s.value}</div>
-            <div className="mt-2 text-xs font-medium uppercase tracking-widest text-muted-foreground">
+            <div className="font-serif text-4xl text-ink md:text-5xl">{s.value}</div>
+            <div className="eyebrow mt-3 text-[0.65rem] text-steel">
               {s.label}
             </div>
           </div>
@@ -82,7 +90,7 @@ function LocationBlock({ location }: { location: NonNullable<PageContent["locati
       <div className="grid items-center gap-10 md:grid-cols-2">
         <div>
           {hasText(location.heading) && (
-            <h2 className="text-3xl text-foreground md:text-4xl">{location.heading}</h2>
+            <h2 className="text-3xl text-ink md:text-4xl">{location.heading}</h2>
           )}
           {hasText(location.text) && (
             <p className="mt-5 text-lg leading-relaxed text-muted-foreground">{location.text}</p>
@@ -110,7 +118,7 @@ function About({ about }: { about: NonNullable<PageContent["about"]> }) {
       <Section>
         <div className="mx-auto max-w-3xl text-center">
           {hasText(about.heading) && (
-            <h2 className="text-3xl text-foreground md:text-4xl">{about.heading}</h2>
+            <h2 className="text-3xl text-ink md:text-4xl">{about.heading}</h2>
           )}
           {hasText(about.body) && (
             <p className="mt-6 text-lg leading-relaxed text-muted-foreground">{about.body}</p>
@@ -120,7 +128,7 @@ function About({ about }: { about: NonNullable<PageContent["about"]> }) {
           <ul className="mx-auto mt-10 grid max-w-3xl gap-3 sm:grid-cols-2">
             {about.features!.map((f, i) => (
               <li key={i} className="flex items-center gap-3 text-foreground">
-                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-accent/20 text-accent">
+                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
                   <Check className="h-4 w-4" aria-hidden />
                 </span>
                 {f}
@@ -140,7 +148,7 @@ function Gallery({ gallery }: { gallery: PageContent["gallery"] }) {
 
   return (
     <Section>
-      <h2 className="mb-8 text-center text-3xl text-foreground md:text-4xl">Galerie</h2>
+      <h2 className="mb-8 text-center text-3xl text-ink md:text-4xl">Galerie</h2>
       <Carousel opts={{ loop: true }} className="mx-auto w-full max-w-4xl">
         <CarouselContent>
           {gallery.map((img, i) => (
@@ -203,9 +211,9 @@ function UnitCard({ unit }: { unit: Unit }) {
         />
       )}
       <CardContent className="flex flex-1 flex-col p-6">
-        <h3 className="font-serif text-2xl text-foreground">{unit.name}</h3>
+        <h3 className="font-serif text-2xl text-ink">{unit.name}</h3>
         {hasText(unit.price) && (
-          <p className="mt-1 text-lg font-semibold text-accent">{unit.price}</p>
+          <p className="mt-1 text-lg font-semibold text-primary">{unit.price}</p>
         )}
         {visibleRows.length > 0 && (
           <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
@@ -224,7 +232,7 @@ function UnitCard({ unit }: { unit: Unit }) {
           <ul className="mt-4 space-y-1.5">
             {unit.features!.map((f, i) => (
               <li key={i} className="flex items-center gap-2 text-sm text-foreground">
-                <ChevronRight className="h-4 w-4 text-accent rtl:rotate-180" aria-hidden />
+                <ChevronRight className="h-4 w-4 text-primary rtl:rotate-180" aria-hidden />
                 {f}
               </li>
             ))}
@@ -240,7 +248,7 @@ function Units({ units }: { units: PageContent["units"] }) {
   return (
     <section className="bg-secondary">
       <Section>
-        <h2 className="mb-10 text-center text-3xl text-foreground md:text-4xl">
+        <h2 className="mb-10 text-center text-3xl text-ink md:text-4xl">
           Appartements disponibles
         </h2>
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -257,7 +265,7 @@ function Videos({ videos }: { videos: PageContent["videos"] }) {
   if (!hasItems(videos)) return null;
   return (
     <Section>
-      <h2 className="mb-10 text-center text-3xl text-foreground md:text-4xl">Vidéos</h2>
+      <h2 className="mb-10 text-center text-3xl text-ink md:text-4xl">Vidéos</h2>
       <div className="grid gap-8 md:grid-cols-2">
         {videos!.map((v, i) => (
           <figure key={i}>
@@ -326,7 +334,7 @@ function Contact({ contact }: { contact: PageContent["contact"] }) {
             <Button
               type="submit"
               size="lg"
-              className="w-full bg-accent text-accent-foreground hover:bg-accent/90"
+              className="w-full bg-card text-primary hover:bg-card/90"
             >
               Envoyer
             </Button>

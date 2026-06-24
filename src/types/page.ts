@@ -37,7 +37,20 @@ export type PageContent = {
   contact?: { heading?: string };
 };
 
-export type PageSeo = {
+/** SEO + social fields authored per reading language. */
+export type SeoFields = {
+  meta_title?: string;
+  meta_description?: string;
+  canonical?: string;
+  og_title?: string;
+  og_description?: string;
+  /** Social share image (og:image / twitter image). */
+  og_image?: string;
+};
+
+/** Per-language SEO map. May also hold legacy flat fields (pre-Slice-5). */
+export type PageSeo = Partial<Record<ReadingLang, SeoFields>> & {
+  /** @deprecated legacy single-language fields, migrated to seo.<source_lang>. */
   meta_title?: string;
   meta_description?: string;
   canonical?: string;
@@ -70,3 +83,48 @@ export const hasText = (v?: string | null): v is string =>
 
 export const hasItems = <T>(arr?: T[] | null): arr is T[] =>
   Array.isArray(arr) && arr.length > 0;
+
+/**
+ * Idempotent migration: legacy flat seo ({ meta_title, ... }) becomes
+ * seo.<sourceLang>.*. Already per-language objects pass through untouched.
+ * Empty fields stay empty — nothing is fabricated.
+ */
+export function normalizeSeo(
+  seo: PageSeo | null | undefined,
+  sourceLang: string = "fr",
+): Partial<Record<ReadingLang, SeoFields>> {
+  const lang = (READING_LANGS.includes(sourceLang as ReadingLang)
+    ? sourceLang
+    : "fr") as ReadingLang;
+  if (!seo) return {};
+
+  const out: Partial<Record<ReadingLang, SeoFields>> = {};
+  for (const l of READING_LANGS) {
+    const v = (seo as Record<string, unknown>)[l];
+    if (v && typeof v === "object") out[l] = { ...(v as SeoFields) };
+  }
+
+  // Fold any legacy flat fields into the source language (without clobbering).
+  const legacy: SeoFields = {
+    meta_title: seo.meta_title,
+    meta_description: seo.meta_description,
+    canonical: seo.canonical,
+  };
+  const hasLegacy = Object.values(legacy).some((x) => hasText(x as string));
+  if (hasLegacy) {
+    out[lang] = { ...legacy, ...(out[lang] ?? {}) };
+  }
+  return out;
+}
+
+/** Resolve SEO fields for a reading language (no source fallback here). */
+export function seoForLang(
+  seo: PageSeo | null | undefined,
+  sourceLang: string,
+  lang: ReadingLang,
+): SeoFields {
+  const norm = normalizeSeo(seo, sourceLang);
+  return norm[lang] ?? {};
+}
+
+export const emptySeoFields = (): SeoFields => ({});

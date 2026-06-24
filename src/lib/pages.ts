@@ -1,12 +1,16 @@
 import { supabase, isSupabaseConfigured } from "@/integrations/supabase/client";
 import { SEED_PAGES } from "@/lib/seed/montefiore-allenby";
-import type {
-  Media,
-  Page,
-  PageContent,
-  PageSeo,
-  PageStatus,
-  ReadingLang,
+import {
+  READING_LANGS,
+  normalizeSeo,
+  hasText,
+  type Media,
+  type Page,
+  type PageContent,
+  type PageSeo,
+  type PageStatus,
+  type ReadingLang,
+  type SeoFields,
 } from "@/types/page";
 
 export type ResolvedPage = {
@@ -118,7 +122,7 @@ export function emptyPageContent(): PageContent {
 }
 
 export function emptySeo(): PageSeo {
-  return { meta_title: "", meta_description: "", canonical: "" };
+  return {};
 }
 
 /** Normalize a slug to lowercase-hyphen-no-special-chars. */
@@ -271,22 +275,35 @@ export function cleanContent(content: PageContent): PageContent {
   return { hero, stats, location, about, gallery, units, videos, contact };
 }
 
-function cleanSeo(seo: PageSeo): PageSeo {
+function cleanSeo(seo: PageSeo, sourceLang: string): PageSeo {
   const t = (v?: string) => {
     const s = (v ?? "").trim();
     return s.length ? s : undefined;
   };
-  return {
-    meta_title: t(seo.meta_title),
-    meta_description: t(seo.meta_description),
-    canonical: t(seo.canonical),
-  };
+  // Migrate any legacy flat fields into per-language, then trim every field.
+  const norm = normalizeSeo(seo, sourceLang);
+  const out: PageSeo = {};
+  for (const l of READING_LANGS) {
+    const f = norm[l];
+    if (!f) continue;
+    const cleaned: SeoFields = {
+      meta_title: t(f.meta_title),
+      meta_description: t(f.meta_description),
+      canonical: t(f.canonical),
+      og_title: t(f.og_title),
+      og_description: t(f.og_description),
+      og_image: t(f.og_image),
+    };
+    // Keep the language only if something remains.
+    if (Object.values(cleaned).some((x) => x !== undefined)) out[l] = cleaned;
+  }
+  return out;
 }
 
 /** Insert (new) or update (existing) a page as a draft-capable record. */
 export async function savePage(input: SavePageInput): Promise<Page> {
   const content = cleanContent(input.content);
-  const seo = cleanSeo(input.seo);
+  const seo = cleanSeo(input.seo, input.source_lang);
 
   if (input.id) {
     const { data, error } = await supabase
@@ -351,4 +368,57 @@ export async function removePageMedia(url: string): Promise<void> {
   const path = decodeURIComponent(url.slice(idx + marker.length));
   const { error } = await supabase.storage.from(PAGE_MEDIA_BUCKET).remove([path]);
   if (error) console.warn("[pages] failed to remove storage object:", error);
+}
+
+/* ============================================================
+ * SLICE 5 — public home listing
+ * ============================================================ */
+
+export type PublishedCard = {
+  slug: string;
+  title: string;
+  location?: string;
+  priceFrom?: string;
+  cover?: string;
+};
+
+function toCard(page: Page): PublishedCard {
+  const c = page.content;
+  const cover =
+    c.gallery?.find((m) => hasText(m.url))?.url ??
+    c.units?.find((u) => hasText(u.image?.url))?.image?.url;
+  // price-from: hero price, else cheapest-looking unit price (first non-empty).
+  const priceFrom = hasText(c.hero.price)
+    ? c.hero.price
+    : c.units?.find((u) => hasText(u.price))?.price;
+  return {
+    slug: page.slug,
+    title: c.hero.title?.trim() || page.slug,
+    location: hasText(c.location?.heading) ? c.location!.heading : undefined,
+    priceFrom: priceFrom || undefined,
+    cover: cover || undefined,
+  };
+}
+
+/** Published pages for the public home grid (anon-readable). */
+export async function listPublishedPages(): Promise<PublishedCard[]> {
+  if (!isSupabaseConfigured) {
+    return Object.values(SEED_PAGES)
+      .filter((p) => p.status === "published")
+      .map(toCard);
+  }
+  try {
+    const { data, error } = await supabase
+      .from("pages")
+      .select("id, slug, status, source_lang, content, seo")
+      .eq("status", "published")
+      .order("updated_at", { ascending: false });
+    if (error) throw error;
+    return (data ?? []).map((row) => toCard(row as Page));
+  } catch (err) {
+    console.warn("[pages] published list falling back to seed:", err);
+    return Object.values(SEED_PAGES)
+      .filter((p) => p.status === "published")
+      .map(toCard);
+  }
 }
