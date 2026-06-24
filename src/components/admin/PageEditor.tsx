@@ -54,6 +54,7 @@ import {
 } from "@/types/page";
 
 const SOURCE_LANGS = ["fr", "he", "en"] as const;
+const SITE_ORIGIN = "https://ccinvest.lovable.app";
 
 function MoveRemove({
   onUp,
