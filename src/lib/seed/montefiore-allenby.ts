@@ -10,11 +10,15 @@ export const SEED_PAGES: Record<string, Page> = {
     status: "published",
     source_lang: "fr",
     seo: {
-      meta_title: "Montefiore / Allenby - CCInvest",
-      meta_description:
-        "À VENDRE – TLV. Nouvel immeuble de 6 étages à proximité de la mer et du marché. 17 appartements de 2 et 3 pièces, livraison Avril 2027.",
-      canonical: "/montefiore-allenby",
+      // Slice 5: SEO is per-language. Source (fr) authored; he/en stay empty.
+      fr: {
+        meta_title: "Montefiore / Allenby - CCInvest",
+        meta_description:
+          "À VENDRE – TLV. Nouvel immeuble de 6 étages à proximité de la mer et du marché. 17 appartements de 2 et 3 pièces, livraison Avril 2027.",
+        canonical: "/montefiore-allenby",
+      },
     },
+
     content: {
       hero: {
         kicker: "À VENDRE - TLV",

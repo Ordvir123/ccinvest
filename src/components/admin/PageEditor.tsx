@@ -22,9 +22,9 @@ import { PageRenderer } from "@/components/page/PageRenderer";
 import { SectionCard, Field } from "@/components/admin/editor-parts";
 import { SingleImageUpload, GalleryUpload } from "@/components/admin/MediaUpload";
 import { TranslationsTab } from "@/components/admin/TranslationsTab";
+import { SeoEditor } from "@/components/admin/SeoEditor";
 import {
   emptyPageContent,
-  emptySeo,
   normalizeSlug,
   extractYouTubeId,
   isSlugTaken,
@@ -34,6 +34,7 @@ import {
 import {
   READING_LANGS,
   isRtlReading,
+  normalizeSeo,
   type Page,
   type PageContent,
   type PageSeo,
@@ -107,7 +108,9 @@ export function PageEditor({
         ? { ...emptyPageContent(), ...initialContent }
         : emptyPageContent(),
   );
-  const [seo, setSeo] = useState<PageSeo>(initialPage?.seo ?? emptySeo());
+  const [seo, setSeo] = useState<PageSeo>(
+    normalizeSeo(initialPage?.seo, initialPage?.source_lang ?? initialSourceLang ?? "fr"),
+  );
   const [previewLang, setPreviewLang] = useState<ReadingLang>(
     (initialPage?.source_lang as ReadingLang) ?? (initialSourceLang as ReadingLang) ?? "fr",
   );
@@ -416,31 +419,14 @@ export function PageEditor({
         </Field>
       </SectionCard>
 
-      <SectionCard title="SEO" defaultOpen={false}>
-        <Field label="Meta title">
-          <Input value={seo.meta_title ?? ""} onChange={(e) => setSeo((s) => ({ ...s, meta_title: e.target.value }))} />
-        </Field>
-        <Field label="Meta description">
-          <Textarea
-            rows={3}
-            value={seo.meta_description ?? ""}
-            onChange={(e) => setSeo((s) => ({ ...s, meta_description: e.target.value }))}
-          />
-        </Field>
-        <Field label="Canonical" hint="Auto-suggested from the slug; editable.">
-          <Input
-            value={seo.canonical ?? ""}
-            onChange={(e) => setSeo((s) => ({ ...s, canonical: e.target.value }))}
-            onFocus={() => {
-              if (!seo.canonical && slug) setSeo((s) => ({ ...s, canonical: `/${slug}` }));
-            }}
-            placeholder={publicUrl}
-          />
-        </Field>
-        <p className="text-xs text-muted-foreground">
-          Cover image and social titles come in a later step.
-        </p>
+      <SectionCard
+        title="SEO & social"
+        description="Authored per language. Empty fields stay empty."
+        defaultOpen={false}
+      >
+        <SeoEditor seo={seo} onChange={setSeo} slug={slug} content={content} />
       </SectionCard>
+
     </div>
   );
 
