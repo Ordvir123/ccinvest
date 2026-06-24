@@ -78,6 +78,25 @@ function PagesList() {
                       {new Date(p.updated_at).toLocaleDateString()}
                     </TableCell>
                     <TableCell className="text-end">
+                      {p.status === "published" && (
+                        <>
+                          <Button asChild variant="ghost" size="sm">
+                            <a href={`${SITE_ORIGIN}/${p.slug}`} target="_blank" rel="noreferrer">
+                              <ExternalLink className="h-4 w-4" /> View
+                            </a>
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={async () => {
+                              await navigator.clipboard.writeText(`${SITE_ORIGIN}/${p.slug}`);
+                              toast.success("Share link copied.");
+                            }}
+                          >
+                            <Copy className="h-4 w-4" /> Link
+                          </Button>
+                        </>
+                      )}
                       <Button asChild variant="ghost" size="sm">
                         <Link to="/admin/pages/$id" params={{ id: p.id }}>
                           <Pencil className="h-4 w-4" /> Edit
