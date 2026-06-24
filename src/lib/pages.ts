@@ -1,4 +1,4 @@
-import { supabase } from "@/integrations/supabase/client";
+import { supabase, isSupabaseConfigured } from "@/integrations/supabase/client";
 import { SEED_PAGES } from "@/lib/seed/montefiore-allenby";
 import type { Page, PageContent, ReadingLang } from "@/types/page";
 
