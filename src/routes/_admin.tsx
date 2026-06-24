@@ -15,8 +15,8 @@ export const Route = createFileRoute("/_admin")({
 });
 
 const navItems = [
-  { to: "/admin", labelKey: "nav.pages", icon: FileText, exact: true },
-  { to: "/admin/new", labelKey: "nav.newPage", icon: FilePlus2, exact: false },
+  { to: "/admin/pages", labelKey: "nav.pages", icon: FileText, exact: false },
+  { to: "/admin/pages/new", labelKey: "nav.newPage", icon: FilePlus2, exact: false },
   { to: "/admin/settings", labelKey: "nav.settings", icon: Settings, exact: false },
 ] as const;
 
