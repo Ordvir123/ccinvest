@@ -79,18 +79,18 @@ function Hero({ hero }: { hero: PageContent["hero"] }) {
           <div className="absolute inset-0 bg-[oklch(0.18_0.04_265/0.55)]" />
         </>
       )}
-      <Section className="relative z-10 flex min-h-[80vh] flex-col justify-center py-24 text-center">
+      <Section className="relative z-10 flex min-h-[80vh] flex-col justify-center py-20 text-center md:py-24">
         <img
           src="/brand/cc-invest-logo.png"
           alt="CC Invest"
-          className="mx-auto mb-10 h-12 w-auto rounded bg-card px-4 py-2.5 shadow-sm md:h-14"
+          className="mx-auto mb-8 h-10 w-auto rounded bg-card px-3 py-2 shadow-sm md:mb-10 md:h-14"
         />
         {hasText(hero.kicker) && (
-          <p className="eyebrow mb-6 text-xs text-primary-foreground/80">
+          <p className="eyebrow mb-5 text-xs text-primary-foreground/80">
             {hero.kicker}
           </p>
         )}
-        <h1 className="mx-auto max-w-3xl text-balance text-5xl !text-primary-foreground [text-shadow:0_2px_12px_oklch(0.15_0.03_265/0.5)] md:text-7xl">
+        <h1 className="mx-auto max-w-3xl text-balance text-4xl !text-primary-foreground [text-shadow:0_2px_12px_oklch(0.15_0.03_265/0.5)] sm:text-5xl md:text-7xl">
           {hero.title}
         </h1>
         {hasText(hero.subtitle) && (
