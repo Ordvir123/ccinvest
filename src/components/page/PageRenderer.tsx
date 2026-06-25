@@ -189,14 +189,18 @@ function About({ about }: { about: NonNullable<PageContent["about"]> }) {
         </div>
         {hasItems(about.features) && (
           <ul className="mx-auto mt-10 grid max-w-3xl gap-3 sm:grid-cols-2">
-            {about.features!.map((f, i) => (
-              <li key={i} className="flex items-center gap-3 text-foreground">
-                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
-                  <Check className="h-4 w-4" aria-hidden />
-                </span>
-                {f}
-              </li>
-            ))}
+            {about.features!.map((f, i) => {
+              const Icon =
+                getIcon(about.feature_icons?.[i]) ?? getIcon(guessIcon(f, "check")) ?? Check;
+              return (
+                <li key={i} className="flex items-center gap-3 text-foreground">
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+                    <Icon className="h-4 w-4" aria-hidden />
+                  </span>
+                  {f}
+                </li>
+              );
+            })}
           </ul>
         )}
       </Section>
