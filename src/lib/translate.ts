@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { translatePageContent } from "@/lib/translate-page.functions";
 import type { PageContent, ReadingLang } from "@/types/page";
 
 /* ============================================================
