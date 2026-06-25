@@ -11,6 +11,10 @@
 // -------------------------------------------------------------
 
 import { z } from "https://esm.sh/zod@3.23.8";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.4";
+
+// Hard cap on input text to prevent AI-cost abuse via huge payloads.
+const MAX_TEXT_LENGTH = 20_000;
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
