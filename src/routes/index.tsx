@@ -34,29 +34,36 @@ export const Route = createFileRoute("/")({
 function useCountUp(target: number, duration = 1500) {
   const [value, setValue] = useState(0);
   const ref = useRef<HTMLDivElement>(null);
-  const started = useRef(false);
+  const [inView, setInView] = useState(false);
+
   useEffect(() => {
-    if (!ref.current || started.current) return;
+    if (!ref.current) return;
     const obs = new IntersectionObserver(
       ([entry]) => {
-        if (entry.isIntersecting && !started.current) {
-          started.current = true;
-          const start = performance.now();
-          const tick = (now: number) => {
-            const p = Math.min((now - start) / duration, 1);
-            setValue(Math.floor(p * target));
-            if (p < 1) requestAnimationFrame(tick);
-          };
-          requestAnimationFrame(tick);
-        }
+        if (entry.isIntersecting) setInView(true);
       },
       { threshold: 0.4 },
     );
     obs.observe(ref.current);
     return () => obs.disconnect();
-  }, [target, duration]);
+  }, []);
+
+  useEffect(() => {
+    if (!inView) return;
+    const start = performance.now();
+    let raf = 0;
+    const tick = (now: number) => {
+      const p = Math.min((now - start) / duration, 1);
+      setValue(Math.floor(p * target));
+      if (p < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [inView, target, duration]);
+
   return { value, ref };
 }
+
 
 function StatItem({ value, label }: { value: number; label: string }) {
   const { value: v, ref } = useCountUp(value);
