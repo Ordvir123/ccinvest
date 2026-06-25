@@ -100,6 +100,8 @@ function Home() {
           alt="Tel Aviv luxury apartment"
           width={1920}
           height={1080}
+          decoding="async"
+          fetchPriority="high"
           className="absolute inset-0 h-full w-full object-cover"
         />
         <div className="absolute inset-0 bg-gradient-overlay" />
