@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { Check, ChevronRight } from "lucide-react";
 
+import { getIcon, guessIcon } from "@/lib/page-icons";
+
 import { Section } from "@/components/ui/section";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -77,18 +79,18 @@ function Hero({ hero }: { hero: PageContent["hero"] }) {
           <div className="absolute inset-0 bg-[oklch(0.18_0.04_265/0.55)]" />
         </>
       )}
-      <Section className="relative z-10 flex min-h-[80vh] flex-col justify-center py-24 text-center">
+      <Section className="relative z-10 flex min-h-[80vh] flex-col justify-center py-20 text-center md:py-24">
         <img
           src="/brand/cc-invest-logo.png"
           alt="CC Invest"
-          className="mx-auto mb-10 h-12 w-auto rounded bg-card px-4 py-2.5 shadow-sm md:h-14"
+          className="mx-auto mb-8 h-10 w-auto rounded bg-card px-3 py-2 shadow-sm md:mb-10 md:h-14"
         />
         {hasText(hero.kicker) && (
-          <p className="eyebrow mb-6 text-xs text-primary-foreground/80">
+          <p className="eyebrow mb-5 text-xs text-primary-foreground/80">
             {hero.kicker}
           </p>
         )}
-        <h1 className="mx-auto max-w-3xl text-balance text-5xl !text-primary-foreground [text-shadow:0_2px_12px_oklch(0.15_0.03_265/0.5)] md:text-7xl">
+        <h1 className="mx-auto max-w-3xl text-balance text-4xl !text-primary-foreground [text-shadow:0_2px_12px_oklch(0.15_0.03_265/0.5)] sm:text-5xl md:text-7xl">
           {hero.title}
         </h1>
         {hasText(hero.subtitle) && (
@@ -123,14 +125,22 @@ function Stats({ stats }: { stats: PageContent["stats"] }) {
   return (
     <section className="border-y border-border bg-secondary">
       <div className="mx-auto grid max-w-6xl grid-cols-2 divide-x divide-border md:grid-cols-4 rtl:divide-x-reverse">
-        {stats.map((s, i) => (
-          <div key={i} className="px-4 py-10 text-center">
-            <div className="font-serif text-4xl text-ink md:text-5xl">{s.value}</div>
-            <div className="eyebrow mt-3 text-[0.65rem] text-steel">
-              {s.label}
+        {stats.map((s, i) => {
+          const Icon = getIcon(s.icon) ?? getIcon(guessIcon(s.label, "sparkles"));
+          return (
+            <div key={i} className="flex flex-col items-center px-3 py-8 text-center md:px-4 md:py-10">
+              {Icon && (
+                <span className="mb-3 flex h-11 w-11 items-center justify-center rounded-full bg-primary/10 text-primary">
+                  <Icon className="h-5 w-5" aria-hidden />
+                </span>
+              )}
+              <div className="font-serif text-3xl text-ink md:text-5xl">{s.value}</div>
+              <div className="eyebrow mt-2 text-[0.65rem] text-steel">
+                {s.label}
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </section>
   );
@@ -179,14 +189,18 @@ function About({ about }: { about: NonNullable<PageContent["about"]> }) {
         </div>
         {hasItems(about.features) && (
           <ul className="mx-auto mt-10 grid max-w-3xl gap-3 sm:grid-cols-2">
-            {about.features!.map((f, i) => (
-              <li key={i} className="flex items-center gap-3 text-foreground">
-                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
-                  <Check className="h-4 w-4" aria-hidden />
-                </span>
-                {f}
-              </li>
-            ))}
+            {about.features!.map((f, i) => {
+              const Icon =
+                getIcon(about.feature_icons?.[i]) ?? getIcon(guessIcon(f, "check")) ?? Check;
+              return (
+                <li key={i} className="flex items-center gap-3 text-foreground">
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+                    <Icon className="h-4 w-4" aria-hidden />
+                  </span>
+                  {f}
+                </li>
+              );
+            })}
           </ul>
         )}
       </Section>

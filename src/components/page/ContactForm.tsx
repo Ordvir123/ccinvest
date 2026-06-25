@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { submitLead, validateLead } from "@/lib/leads";
 import { isRtlReading, type ReadingLang } from "@/types/page";
+import contactBg from "@/assets/contact-bg.jpg.asset.json";
 
 type Labels = {
   name: string;
@@ -115,11 +116,20 @@ export function ContactForm({
   return (
     <section
       id="contact"
-      className="bg-primary text-primary-foreground"
+      className="relative overflow-hidden text-primary-foreground"
       dir={isRtlReading(lang) ? "rtl" : "ltr"}
     >
-      <Section>
+      <img
+        src={contactBg.url}
+        alt=""
+        aria-hidden
+        loading="lazy"
+        className="absolute inset-0 h-full w-full object-cover"
+      />
+      <div className="absolute inset-0 bg-primary/85" />
+      <Section className="relative z-10 pb-40 md:pb-56">
         <div className="mx-auto max-w-xl">
+
           <h2 className="text-center text-3xl text-primary-foreground md:text-4xl">
             {heading ?? "Contact"}
           </h2>

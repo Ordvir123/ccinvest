@@ -130,6 +130,38 @@ export async function fetchTranslationRow(
 }
 
 /**
+ * Re-attach non-translatable fields (images + chosen icons) from the source
+ * onto a translated copy. The AI translation only returns text fields, so media
+ * URLs (hero background, unit images) and manual icon choices must be restored
+ * here to stay consistent across languages.
+ */
+export function preserveStableFields(
+  source: PageContent,
+  translated: PageContent,
+): PageContent {
+  const out = structuredClone(translated) as PageContent;
+  if (source.hero?.background) {
+    out.hero = { ...out.hero, background: source.hero.background };
+  }
+  if (Array.isArray(out.stats)) {
+    out.stats = out.stats.map((s, i) => ({
+      ...s,
+      icon: source.stats?.[i]?.icon ?? s.icon,
+    }));
+  }
+  if (out.about && source.about?.feature_icons) {
+    out.about = { ...out.about, feature_icons: source.about.feature_icons };
+  }
+  if (Array.isArray(out.units)) {
+    out.units = out.units.map((u, i) => ({
+      ...u,
+      image: source.units?.[i]?.image ?? u.image,
+    }));
+  }
+  return out;
+}
+
+/**
  * Visitor-facing resolve: translate (and cache via the edge function) when
  * needed, otherwise return the cached translation. Caching/writes happen inside
  * the edge function with service privileges.
@@ -155,7 +187,8 @@ export async function resolveTranslation(
       accessToken,
     },
   });
-  return (result?.content ?? {}) as PageContent;
+  const translated = (result?.content ?? {}) as PageContent;
+  return preserveStableFields(content, translated);
 }
 
 /**

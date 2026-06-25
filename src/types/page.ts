@@ -2,7 +2,7 @@
 
 export type Media = { url: string; alt?: string };
 
-export type Stat = { value: string; label: string };
+export type Stat = { value: string; label: string; icon?: string };
 
 export type Unit = {
   name: string;
@@ -32,7 +32,7 @@ export type PageContent = {
   };
   stats: Stat[];
   location?: { heading?: string; text?: string; map_query?: string };
-  about?: { heading?: string; body?: string; features?: string[] };
+  about?: { heading?: string; body?: string; features?: string[]; feature_icons?: string[] };
   gallery: Media[];
   units?: Unit[];
   videos?: Video[];

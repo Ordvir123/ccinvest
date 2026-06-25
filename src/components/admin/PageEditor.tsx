@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
-import { Plus, Trash2, ArrowUp, ArrowDown, Save, Globe, EyeOff, Copy, ExternalLink, Monitor, Smartphone } from "lucide-react";
+import { Plus, Trash2, ArrowUp, ArrowDown, Save, Globe, EyeOff, Copy, ExternalLink, Monitor, Smartphone, RefreshCw } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -27,6 +27,7 @@ import { cn } from "@/lib/utils";
 import { PageRenderer } from "@/components/page/PageRenderer";
 import { SectionCard, Field } from "@/components/admin/editor-parts";
 import { SingleImageUpload, GalleryUpload } from "@/components/admin/MediaUpload";
+import { IconPicker } from "@/components/admin/IconPicker";
 import { TranslationsTab } from "@/components/admin/TranslationsTab";
 import { SeoEditor } from "@/components/admin/SeoEditor";
 import {
@@ -323,9 +324,20 @@ export function PageEditor({
       </SectionCard>
 
 
-      <SectionCard title="Stats" description="Repeatable value + label rows.">
+      <SectionCard title="Stats" description="Repeatable value + label rows. Icons auto-match the label; override per row.">
         {(content.stats ?? []).map((s, i) => (
           <div key={i} className="flex items-end gap-2">
+            <div className="space-y-1.5">
+              <span className="text-sm font-medium text-foreground">Icon</span>
+              <IconPicker
+                value={s.icon}
+                onChange={(icon) => {
+                  const next = content.stats.slice();
+                  next[i] = { ...next[i], icon };
+                  patch({ stats: next });
+                }}
+              />
+            </div>
             <div className="flex-1">
               <Field label="Value">
                 <Input
@@ -394,10 +406,19 @@ export function PageEditor({
         <Field label="Body">
           <Textarea rows={4} value={content.about?.body ?? ""} onChange={(e) => patchAbout({ body: e.target.value })} />
         </Field>
-        <Field label="Features">
+        <Field label="Features" hint="Icons auto-match the text; override per row.">
           <div className="space-y-2">
             {(content.about?.features ?? []).map((f, i) => (
               <div key={i} className="flex items-center gap-2">
+                <IconPicker
+                  value={content.about?.feature_icons?.[i]}
+                  onChange={(icon) => {
+                    const icons = (content.about?.feature_icons ?? []).slice();
+                    while (icons.length <= i) icons.push(undefined as unknown as string);
+                    icons[i] = icon as string;
+                    patchAbout({ feature_icons: icons });
+                  }}
+                />
                 <Input
                   value={f}
                   onChange={(e) => {
@@ -410,8 +431,14 @@ export function PageEditor({
                   type="button"
                   variant="ghost"
                   size="icon"
-                  className="h-8 w-8"
-                  onClick={() => patchAbout({ features: (content.about?.features ?? []).filter((_, idx) => idx !== i) })}
+                  className="h-8 w-8 shrink-0"
+                  onClick={() => {
+                    const icons = (content.about?.feature_icons ?? []).filter((_, idx) => idx !== i);
+                    patchAbout({
+                      features: (content.about?.features ?? []).filter((_, idx) => idx !== i),
+                      feature_icons: icons,
+                    });
+                  }}
                 >
                   <Trash2 className="h-4 w-4" />
                 </Button>
@@ -428,6 +455,7 @@ export function PageEditor({
           </div>
         </Field>
       </SectionCard>
+
 
       <SectionCard title="Gallery" defaultOpen={false}>
         <GalleryUpload
@@ -619,15 +647,26 @@ export function PageEditor({
           </DropdownMenu>
 
           {status === "published" ? (
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={onUnpublish}
-              disabled={publishing}
-            >
-              <EyeOff className="h-4 w-4" /> {publishing ? "…" : "Unpublish"}
-            </Button>
+            <>
+              <Button
+                type="button"
+                variant="default"
+                size="sm"
+                onClick={onPublish}
+                disabled={publishing}
+              >
+                <RefreshCw className="h-4 w-4" /> {publishing ? "Updating…" : "Update"}
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={onUnpublish}
+                disabled={publishing}
+              >
+                <EyeOff className="h-4 w-4" /> {publishing ? "…" : "Unpublish"}
+              </Button>
+            </>
           ) : (
             <Button
               type="button"
