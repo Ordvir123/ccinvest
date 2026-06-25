@@ -30,6 +30,13 @@ function AboutPage() {
         <div className="whitespace-pre-line text-lg leading-relaxed text-muted-foreground">
           {t("public.about.body")}
         </div>
+        <div className="mt-12 rounded-lg bg-background py-10">
+          <img
+            src={teamPortrait.url}
+            alt={t("public.about.title")}
+            className="mx-auto w-full max-w-sm rounded-lg"
+          />
+        </div>
       </main>
       <SiteFooter />
     </div>
