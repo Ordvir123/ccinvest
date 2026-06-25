@@ -4,8 +4,6 @@ import { useQuery } from "@tanstack/react-query";
 
 import { PageRenderer } from "@/components/page/PageRenderer";
 import { ReadingLanguageSwitcher } from "@/components/page/ReadingLanguageSwitcher";
-import { SiteHeader } from "@/components/site/SiteHeader";
-import { SiteFooter } from "@/components/site/SiteFooter";
 import { fetchPublishedPage } from "@/lib/pages";
 import { resolveTranslation } from "@/lib/translate";
 import {
