@@ -1,7 +1,6 @@
 import { cn } from "@/lib/utils";
+import { Flag } from "@/components/Flag";
 import { READING_LANGS, type ReadingLang } from "@/types/page";
-
-const FLAGS: Record<ReadingLang, string> = { fr: "🇫🇷", he: "🇮🇱", en: "🇺🇸" };
 
 interface Props {
   value: ReadingLang;
@@ -20,15 +19,11 @@ export function ReadingLanguageSwitcher({ value, onChange }: Props) {
           aria-pressed={value === lang}
           aria-label={lang.toUpperCase()}
           className={cn(
-            "flex items-center gap-1 rounded-full px-2.5 py-1 text-sm font-medium transition-colors",
-            value === lang
-              ? "bg-primary text-primary-foreground"
-              : "text-muted-foreground hover:bg-muted",
+            "flex items-center rounded-full p-1.5 transition-all",
+            value === lang ? "ring-2 ring-primary" : "opacity-60 hover:opacity-100",
           )}
         >
-          <span className="text-base leading-none" aria-hidden>
-            {FLAGS[lang]}
-          </span>
+          <Flag code={lang} className="h-4 w-6 rounded-sm" />
         </button>
       ))}
     </div>
