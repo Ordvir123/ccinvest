@@ -374,6 +374,8 @@ export type PageRendererProps = {
   pageId?: string | null;
   slug?: string;
   lang?: ReadingLang;
+  /** Global template settings (logo, colors, defaults). */
+  settings?: TemplateSettings;
 };
 
 export function PageRenderer({
@@ -382,11 +384,19 @@ export function PageRenderer({
   pageId,
   slug,
   lang = "fr",
+  settings = DEFAULT_TEMPLATE_SETTINGS,
 }: PageRendererProps) {
   const labels = LABELS[lang] ?? LABELS.fr;
+  const brandStyle = hasText(settings.primaryColor)
+    ? ({
+        "--primary": settings.primaryColor,
+        "--primary-glow": settings.primaryColor,
+        "--gradient-brand": `linear-gradient(135deg, ${settings.primaryColor}, ${settings.primaryColor})`,
+      } as React.CSSProperties)
+    : undefined;
   return (
-    <main className="bg-background">
-      <Hero hero={content.hero} />
+    <main className="bg-background" style={brandStyle}>
+      <Hero hero={content.hero} settings={settings} />
       <Stats stats={content.stats} />
       {content.location &&
         (hasText(content.location.heading) ||
@@ -402,12 +412,18 @@ export function PageRenderer({
       <Units units={content.units} labels={labels} />
       <Videos videos={content.videos} labels={labels} />
       <ContactForm
-        heading={content.contact?.heading}
+        heading={content.contact?.heading ?? (hasText(settings.defaultContactHeading) ? settings.defaultContactHeading : undefined)}
         interactive={interactive}
         pageId={pageId}
         slug={slug}
         projectTitle={content.hero?.title}
         lang={lang}
+        backgroundUrl={settings.contactBgUrl}
+      />
+    </main>
+  );
+}
+
       />
     </main>
   );
