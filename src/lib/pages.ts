@@ -167,7 +167,9 @@ export async function listPages(): Promise<PageListItem[]> {
     .order("updated_at", { ascending: false });
 
   if (error) throw error;
-  return (data ?? []).map((row) => {
+  return (data ?? [])
+    .filter((row) => row.slug !== TEMPLATE_SETTINGS_SLUG)
+    .map((row) => {
     const content = (row.content ?? {}) as PageContent;
     return {
       id: row.id as string,
