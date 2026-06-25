@@ -1,39 +1,28 @@
 import { supabase } from "@/integrations/supabase/client";
 import { emptyPageContent } from "@/lib/pages";
+import { extractPageContent } from "@/lib/extract-page.functions";
 import type { PageContent } from "@/types/page";
 
 export type ExtractLang = "fr" | "he" | "en";
 
 /**
- * Call the `extract-page` edge function and return a partial PageContent.
+ * Extract a partial PageContent from raw text using Lovable AI (server-side).
  * Throws an Error with a user-friendly message on failure.
  */
 export async function extractPageFromText(
   text: string,
   sourceLang?: ExtractLang,
 ): Promise<Partial<PageContent>> {
-  const { data, error } = await supabase.functions.invoke("extract-page", {
-    body: { text, source_lang: sourceLang },
+  const { data: sessionData } = await supabase.auth.getSession();
+  const accessToken = sessionData.session?.access_token;
+  if (!accessToken) throw new Error("You must be signed in to use AI extraction.");
+
+  const result = await extractPageContent({
+    data: { text, sourceLang, accessToken },
   });
-
-  if (error) {
-    // Edge function returned a non-2xx; try to surface its JSON { error }.
-    let message = error.message || "AI extraction failed.";
-    try {
-      const ctx = (error as { context?: Response }).context;
-      if (ctx && typeof ctx.json === "function") {
-        const body = await ctx.json();
-        if (body?.error) message = body.error;
-      }
-    } catch {
-      /* ignore */
-    }
-    throw new Error(message);
-  }
-
-  if (data?.error) throw new Error(data.error as string);
-  return (data?.content ?? {}) as Partial<PageContent>;
+  return (result?.content ?? {}) as Partial<PageContent>;
 }
+
 
 /**
  * Deep-merge an AI partial into a complete PageContent, preserving the exact
