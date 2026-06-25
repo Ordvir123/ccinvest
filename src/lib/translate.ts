@@ -140,31 +140,21 @@ export async function resolveTranslation(
   targetLang: ReadingLang,
   opts?: { force?: boolean },
 ): Promise<PageContent> {
-  const { data, error } = await supabase.functions.invoke("translate-page", {
-    body: {
-      content,
-      source_lang: sourceLang,
-      target_lang: targetLang,
-      page_id: pageId,
+  const { data: sessionData } = await supabase.auth.getSession();
+  const accessToken = sessionData.session?.access_token;
+  if (!accessToken) throw new Error("You must be signed in to translate.");
+
+  const result = await translatePageContent({
+    data: {
+      content: content as Record<string, unknown>,
+      sourceLang,
+      targetLang,
+      pageId,
       force: opts?.force ?? false,
+      accessToken,
     },
   });
-
-  if (error) {
-    let message = error.message || "Translation failed.";
-    try {
-      const ctx = (error as { context?: Response }).context;
-      if (ctx && typeof ctx.json === "function") {
-        const body = await ctx.json();
-        if (body?.error) message = body.error;
-      }
-    } catch {
-      /* ignore */
-    }
-    throw new Error(message);
-  }
-  if (data?.error) throw new Error(data.error as string);
-  return (data?.content ?? {}) as PageContent;
+  return (result?.content ?? {}) as PageContent;
 }
 
 /**
