@@ -7,12 +7,45 @@
     "newPage": "Nouvelle page",
     "settings": "Paramètres",
     "logout": "Déconnexion",
-    "leads": "Prospects"
+    "leads": "Prospects",
+    "home": "Accueil",
+    "properties": "Appartements",
+    "about": "À propos",
+    "contact": "Contact"
   },
   "language": {
     "label": "Langue de l'interface",
     "fr": "Français",
     "he": "Hébreu"
+  },
+  "footer": {
+    "rights": "Tous droits réservés."
+  },
+  "public": {
+    "hero": {
+      "eyebrow": "Tel Aviv-Yafo",
+      "title": "Investissement immobilier de prestige à Tel Aviv",
+      "subtitle": "Une sélection d'appartements d'exception, accompagnée d'un service sur mesure.",
+      "cta": "Voir les appartements"
+    },
+    "stats": {
+      "projects": "Projets disponibles",
+      "years": "Années d'expérience",
+      "clients": "Clients satisfaits",
+      "cities": "Quartiers couverts"
+    },
+    "properties": {
+      "title": "Nos appartements",
+      "subtitle": "Découvrez notre sélection de biens à Tel Aviv.",
+      "empty": "Aucun bien publié pour le moment.",
+      "viewAll": "Voir tout",
+      "discover": "Découvrir"
+    },
+    "about": {
+      "title": "À propos",
+      "body": "CC Invest accompagne ses clients dans l'acquisition de biens immobiliers d'exception à Tel Aviv-Yafo. De la sélection rigoureuse des projets à l'accompagnement personnalisé, notre équipe met son expertise au service de votre investissement.",
+      "cta": "En savoir plus"
+    }
   },
   "auth": {
     "loginTitle": "Connexion administrateur",

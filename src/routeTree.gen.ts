@@ -10,6 +10,8 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as AppartementsRouteImport } from './routes/appartements'
+import { Route as AboutRouteImport } from './routes/about'
 import { Route as AdminRouteImport } from './routes/_admin'
 import { Route as SlugRouteImport } from './routes/$slug'
 import { Route as IndexRouteImport } from './routes/index'
@@ -25,6 +27,16 @@ import { Route as AdminAdminPagesIdRouteImport } from './routes/_admin.admin.pag
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
   path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AppartementsRoute = AppartementsRouteImport.update({
+  id: '/appartements',
+  path: '/appartements',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AboutRoute = AboutRouteImport.update({
+  id: '/about',
+  path: '/about',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminRoute = AdminRouteImport.update({
@@ -85,6 +97,8 @@ const AdminAdminPagesIdRoute = AdminAdminPagesIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/$slug': typeof SlugRoute
+  '/about': typeof AboutRoute
+  '/appartements': typeof AppartementsRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/admin': typeof AdminAdminRouteWithChildren
   '/admin/login': typeof AdminLoginRoute
@@ -98,6 +112,8 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/$slug': typeof SlugRoute
+  '/about': typeof AboutRoute
+  '/appartements': typeof AppartementsRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/admin/login': typeof AdminLoginRoute
   '/admin/leads': typeof AdminAdminLeadsRoute
@@ -112,6 +128,8 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/$slug': typeof SlugRoute
   '/_admin': typeof AdminRouteWithChildren
+  '/about': typeof AboutRoute
+  '/appartements': typeof AppartementsRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/_admin/admin': typeof AdminAdminRouteWithChildren
   '/admin/login': typeof AdminLoginRoute
@@ -127,6 +145,8 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/$slug'
+    | '/about'
+    | '/appartements'
     | '/sitemap.xml'
     | '/admin'
     | '/admin/login'
@@ -140,6 +160,8 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/$slug'
+    | '/about'
+    | '/appartements'
     | '/sitemap.xml'
     | '/admin/login'
     | '/admin/leads'
@@ -153,6 +175,8 @@ export interface FileRouteTypes {
     | '/'
     | '/$slug'
     | '/_admin'
+    | '/about'
+    | '/appartements'
     | '/sitemap.xml'
     | '/_admin/admin'
     | '/admin/login'
@@ -168,6 +192,8 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   SlugRoute: typeof SlugRoute
   AdminRoute: typeof AdminRouteWithChildren
+  AboutRoute: typeof AboutRoute
+  AppartementsRoute: typeof AppartementsRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   AdminLoginRoute: typeof AdminLoginRoute
 }
@@ -179,6 +205,20 @@ declare module '@tanstack/react-router' {
       path: '/sitemap.xml'
       fullPath: '/sitemap.xml'
       preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/appartements': {
+      id: '/appartements'
+      path: '/appartements'
+      fullPath: '/appartements'
+      preLoaderRoute: typeof AppartementsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/about': {
+      id: '/about'
+      path: '/about'
+      fullPath: '/about'
+      preLoaderRoute: typeof AboutRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_admin': {
@@ -297,6 +337,8 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   SlugRoute: SlugRoute,
   AdminRoute: AdminRouteWithChildren,
+  AboutRoute: AboutRoute,
+  AppartementsRoute: AppartementsRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   AdminLoginRoute: AdminLoginRoute,
 }

@@ -1,12 +1,15 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
+import { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 
-import { Section } from "@/components/ui/section";
 import { SiteHeader } from "@/components/site/SiteHeader";
 import { SiteFooter } from "@/components/site/SiteFooter";
+import { ProjectCard } from "@/components/site/ProjectCard";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { listPublishedPages } from "@/lib/pages";
-
-const LOGO = "/brand/cc-invest-logo.png";
+import heroImage from "@/assets/hero-apartment.jpg";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -14,12 +17,12 @@ export const Route = createFileRoute("/")({
       { title: "CC Invest — Premium Real Estate" },
       {
         name: "description",
-        content: "Discover CC Invest's curated real estate projects.",
+        content: "Discover CC Invest's curated real estate projects in Tel Aviv.",
       },
       { property: "og:title", content: "CC Invest — Premium Real Estate" },
       {
         property: "og:description",
-        content: "Discover CC Invest's curated real estate projects.",
+        content: "Discover CC Invest's curated real estate projects in Tel Aviv.",
       },
       { property: "og:url", content: "https://ccinvest.lovable.app/" },
     ],
@@ -28,93 +31,160 @@ export const Route = createFileRoute("/")({
   component: Home,
 });
 
+function useCountUp(target: number, duration = 1500) {
+  const [value, setValue] = useState(0);
+  const ref = useRef<HTMLDivElement>(null);
+  const [inView, setInView] = useState(false);
+
+  useEffect(() => {
+    if (!ref.current) return;
+    const obs = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) setInView(true);
+      },
+      { threshold: 0.4 },
+    );
+    obs.observe(ref.current);
+    return () => obs.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (!inView) return;
+    const start = performance.now();
+    let raf = 0;
+    const tick = (now: number) => {
+      const p = Math.min((now - start) / duration, 1);
+      setValue(Math.floor(p * target));
+      if (p < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [inView, target, duration]);
+
+  return { value, ref };
+}
+
+
+function StatItem({ value, label }: { value: number; label: string }) {
+  const { value: v, ref } = useCountUp(value);
+  return (
+    <div ref={ref} className="text-center">
+      <div className="font-display text-4xl text-cta md:text-5xl">{v}</div>
+      <div className="mt-2 text-xs uppercase tracking-wider text-primary-foreground/70 md:text-sm">
+        {label}
+      </div>
+    </div>
+  );
+}
+
 function Home() {
+  const { t } = useTranslation();
+
   const { data: projects, isLoading } = useQuery({
     queryKey: ["published-pages"],
     queryFn: listPublishedPages,
   });
 
+  const count = projects?.length ?? 0;
+  const featured = (projects ?? []).slice(0, 6);
+
   return (
-    <div className="flex min-h-screen flex-col bg-background">
+    <div className="flex min-h-screen flex-col">
       <SiteHeader />
 
-      <main className="flex-1">
-        {/* Branded landing intro */}
-        <section className="bg-gradient-brand text-primary-foreground">
-          <Section className="flex flex-col items-center py-24 text-center md:py-32">
-            <img
-              src={LOGO}
-              alt="CC Invest"
-              className="mb-10 h-16 w-auto rounded bg-card px-5 py-3 shadow-sm md:h-20"
-            />
-            <p className="eyebrow mb-5 text-xs text-primary-foreground/70">
-              CC Invest
+      {/* Hero */}
+      <section className="relative h-[85vh] min-h-[560px] w-full overflow-hidden">
+        <img
+          src={heroImage}
+          alt="Tel Aviv luxury apartment"
+          width={1920}
+          height={1080}
+          className="absolute inset-0 h-full w-full object-cover"
+        />
+        <div className="absolute inset-0 bg-gradient-overlay" />
+        <div className="absolute inset-0 bg-gradient-hero" />
+        <div className="container relative z-10 mx-auto flex h-full items-end px-4 pb-20">
+          <div className="max-w-2xl text-primary-foreground">
+            <p className="mb-4 text-sm uppercase tracking-[0.3em] text-cta">
+              {t("public.hero.eyebrow")}
             </p>
-            <h1 className="max-w-3xl text-balance text-4xl text-primary-foreground md:text-6xl">
-              Exceptional addresses, thoughtfully selected
+            <h1 className="font-display text-4xl leading-tight md:text-6xl lg:text-7xl">
+              {t("public.hero.title")}
             </h1>
-            <p className="mt-6 max-w-xl text-lg text-primary-foreground/80">
-              A curated portfolio of premium real estate projects.
+            <p className="mt-6 text-lg text-primary-foreground/85 md:text-xl">
+              {t("public.hero.subtitle")}
             </p>
-          </Section>
-        </section>
-
-        {/* Published projects grid */}
-        <Section className="py-16 md:py-24">
-          <div className="mb-12 text-center">
-            <p className="eyebrow mb-3 text-xs text-primary">Portfolio</p>
-            <h2 className="text-3xl text-ink md:text-4xl">Our projects</h2>
-            <hr className="hairline mx-auto mt-6 w-16" />
+            <Button
+              asChild
+              size="lg"
+              className="mt-8 bg-cta uppercase tracking-wider text-cta-foreground hover:bg-cta/90"
+            >
+              <Link to="/appartements">{t("public.hero.cta")}</Link>
+            </Button>
           </div>
+        </div>
+      </section>
 
-          {isLoading ? (
-            <p className="text-center text-muted-foreground">Loading…</p>
-          ) : !projects || projects.length === 0 ? (
-            <p className="text-center text-muted-foreground">
-              No published projects yet.
-            </p>
-          ) : (
-            <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
-              {projects.map((p) => (
-                <Link
-                  key={p.slug}
-                  to="/$slug"
-                  params={{ slug: p.slug }}
-                  className="group flex flex-col overflow-hidden rounded-lg border border-border bg-card transition-shadow hover:shadow-md"
-                >
-                  <div className="aspect-[4/3] w-full overflow-hidden bg-secondary">
-                    {p.cover ? (
-                      <img
-                        src={p.cover}
-                        alt={p.title}
-                        loading="lazy"
-                        className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
-                      />
-                    ) : (
-                      <div className="flex h-full items-center justify-center">
-                        <img src={LOGO} alt="" className="h-10 w-auto opacity-40" />
-                      </div>
-                    )}
-                  </div>
-                  <div className="flex flex-1 flex-col p-6">
-                    <h3 className="text-2xl text-ink">{p.title}</h3>
-                    {p.location && (
-                      <p className="mt-1 text-sm text-muted-foreground">
-                        {p.location}
-                      </p>
-                    )}
-                    {p.priceFrom && (
-                      <p className="mt-4 text-lg font-semibold text-primary">
-                        {p.priceFrom}
-                      </p>
-                    )}
-                  </div>
-                </Link>
+      {/* Stats strip */}
+      <section className="bg-primary py-12 text-primary-foreground md:py-16">
+        <div className="container mx-auto grid grid-cols-2 gap-8 px-4 md:grid-cols-4">
+          <StatItem value={count} label={t("public.stats.projects")} />
+          <StatItem value={12} label={t("public.stats.years")} />
+          <StatItem value={250} label={t("public.stats.clients")} />
+          <StatItem value={8} label={t("public.stats.cities")} />
+        </div>
+      </section>
+
+      {/* Projects */}
+      <section className="container mx-auto px-4 py-20">
+        <div className="mb-12 text-center">
+          <h2 className="font-display text-3xl md:text-4xl">
+            {t("public.properties.title")}
+          </h2>
+          <p className="mt-2 text-muted-foreground">
+            {t("public.properties.subtitle")}
+          </p>
+        </div>
+        {isLoading ? (
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {[0, 1, 2].map((i) => (
+              <Skeleton key={i} className="h-80" />
+            ))}
+          </div>
+        ) : featured.length === 0 ? (
+          <p className="py-10 text-center text-muted-foreground">
+            {t("public.properties.empty")}
+          </p>
+        ) : (
+          <>
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {featured.map((p) => (
+                <ProjectCard key={p.slug} project={p} />
               ))}
             </div>
-          )}
-        </Section>
-      </main>
+            <div className="mt-10 text-center">
+              <Button asChild variant="outline" size="lg">
+                <Link to="/appartements">{t("public.properties.viewAll")}</Link>
+              </Button>
+            </div>
+          </>
+        )}
+      </section>
+
+      {/* About teaser */}
+      <section className="bg-secondary py-20">
+        <div className="container mx-auto max-w-3xl px-4 text-center">
+          <h2 className="mb-6 font-display text-3xl md:text-4xl">
+            {t("public.about.title")}
+          </h2>
+          <div className="mb-8 whitespace-pre-line text-lg leading-relaxed text-muted-foreground">
+            {t("public.about.body")}
+          </div>
+          <Button asChild variant="default" size="lg">
+            <Link to="/about">{t("public.about.cta")}</Link>
+          </Button>
+        </div>
+      </section>
 
       <SiteFooter />
     </div>
