@@ -125,7 +125,7 @@ export function ContactForm({
       dir={isRtlReading(lang) ? "rtl" : "ltr"}
     >
       <img
-        src={contactBg.url}
+        src={backgroundUrl?.trim() ? backgroundUrl : contactBg.url}
         alt=""
         aria-hidden
         loading="lazy"
