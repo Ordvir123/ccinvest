@@ -198,5 +198,5 @@ export const extractPageContent = createServerFn({ method: "POST" })
 
     const pruned = (prune(validated.data) ?? {}) as Record<string, unknown>;
     delete pruned.gallery; // never extracted from text
-    return { content: pruned };
+    return { content: pruned as import("@/types/page").PageContent };
   });
