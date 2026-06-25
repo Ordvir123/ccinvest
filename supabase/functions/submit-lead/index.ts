@@ -181,8 +181,10 @@ Deno.serve(async (req) => {
     }
   }
 
+  // Never leak internal email-provider error details to the client. Detailed
+  // errors are logged server-side above; expose only a generic boolean flag.
   return new Response(
-    JSON.stringify({ ok: true, id: lead.id, emailWarning }),
+    JSON.stringify({ ok: true, id: lead.id, emailSent: emailWarning === null }),
     { headers: { ...corsHeaders, "Content-Type": "application/json" } },
   );
 });

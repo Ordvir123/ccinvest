@@ -205,6 +205,9 @@ Deno.serve(async (req) => {
     const force = Boolean(input?.force);
 
     if (!content || typeof content !== "object") return json({ error: "No content provided." }, 400);
+    if (JSON.stringify(content).length > 50_000) {
+      return json({ error: "Content exceeds the maximum allowed size." }, 400);
+    }
     if (!sourceLang || !targetLang) return json({ error: "Missing source_lang/target_lang." }, 400);
     if (sourceLang === targetLang) return json({ content });
 
