@@ -133,6 +133,13 @@ function ProjectPage() {
     queryFn: () => fetchPublishedPage(slug),
   });
 
+  const settingsQuery = useQuery({
+    queryKey: ["template-settings"],
+    queryFn: fetchTemplateSettings,
+    staleTime: 5 * 60 * 1000,
+  });
+
+
   const page = pageQuery.data;
   const sourceLang = (page?.source_lang ?? "fr") as ReadingLang;
   const activeLang: ReadingLang = lang ?? sourceLang;
