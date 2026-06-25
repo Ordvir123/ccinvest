@@ -186,6 +186,18 @@ function Home() {
         </div>
       </section>
 
+      {/* Team portrait */}
+      <section className="bg-background py-20">
+        <div className="container mx-auto max-w-xl px-4">
+          <img
+            src={teamPortrait.url}
+            alt={t("public.about.title")}
+            className="mx-auto w-full max-w-sm rounded-lg"
+          />
+        </div>
+      </section>
+
+
       <SiteFooter />
     </div>
   );
