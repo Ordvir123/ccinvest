@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { submitLead, validateLead } from "@/lib/leads";
 import { isRtlReading, type ReadingLang } from "@/types/page";
+import contactBg from "@/assets/contact-bg.jpg.asset.json";
 
 type Labels = {
   name: string;
