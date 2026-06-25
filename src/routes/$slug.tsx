@@ -192,7 +192,9 @@ function ProjectPage() {
         pageId={page.id}
         slug={page.slug}
         lang={activeLang}
+        settings={settingsQuery.data}
       />
+
 
       {isTranslating && (
         <div className="fixed bottom-5 z-40 flex items-center gap-2 rounded-md border border-border bg-card/95 px-3 py-1.5 text-xs text-muted-foreground shadow ltr:right-5 rtl:left-5">
