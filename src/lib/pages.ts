@@ -218,7 +218,7 @@ export function cleanContent(content: PageContent): PageContent {
   };
 
   const stats = (content.stats ?? [])
-    .map((s) => ({ value: t(s.value), label: t(s.label) }))
+    .map((s) => ({ value: t(s.value), label: t(s.label), icon: keepText(s.icon) }))
     .filter((s) => s.value || s.label);
 
   const location =
@@ -234,6 +234,7 @@ export function cleanContent(content: PageContent): PageContent {
       : undefined;
 
   const aboutFeatures = (content.about?.features ?? []).map(t).filter(Boolean);
+  const aboutIcons = (content.about?.feature_icons ?? []).slice(0, aboutFeatures.length);
   const about =
     content.about &&
     (keepText(content.about.heading) ||
@@ -243,6 +244,7 @@ export function cleanContent(content: PageContent): PageContent {
           heading: keepText(content.about.heading),
           body: keepText(content.about.body),
           features: aboutFeatures.length ? aboutFeatures : undefined,
+          feature_icons: aboutIcons.some((x) => x) ? aboutIcons : undefined,
         }
       : undefined;
 
