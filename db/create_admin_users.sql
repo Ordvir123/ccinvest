@@ -2,6 +2,15 @@
 -- Run this in your Supabase project: SQL Editor → New query → Run.
 -- Safe to re-run: existing users are confirmed and their passwords are reset.
 -- Requires the pgcrypto extension (enabled by default on Supabase).
+--
+-- SECURITY: Do NOT hardcode passwords in this file. Set them via the
+-- psql/SQL-Editor session settings below BEFORE running, e.g.:
+--   set my.admin1_email   = 'sarah@ccinvest.co.il';
+--   set my.admin1_password = '<choose-a-strong-password>';
+--   set my.admin2_email   = 'corinne@ccinvest.co.il';
+--   set my.admin2_password = '<choose-a-strong-password>';
+-- Then run this script. The passwords are never stored in the repo.
+-- After first login, rotate/change passwords via Supabase Auth as needed.
 
 -- Helper: upsert confirmed email/password users into auth.users + auth.identities.
 do $$
@@ -11,10 +20,15 @@ declare
 begin
   for v_user in
     select * from (values
-      ('sarah@ccinvest.co.il',   'Dvir1408'),
-      ('corinne@ccinvest.co.il', 'Rubensa26')
+      (current_setting('my.admin1_email', true),   current_setting('my.admin1_password', true)),
+      (current_setting('my.admin2_email', true),   current_setting('my.admin2_password', true))
     ) as t(email, password)
   loop
+    if v_user.email is null or v_user.password is null
+       or length(v_user.email) = 0 or length(v_user.password) = 0 then
+      raise exception 'Admin email/password not set. Configure my.adminN_email / my.adminN_password before running.';
+    end if;
+
     select id into v_id from auth.users where lower(email) = lower(v_user.email) limit 1;
 
     if v_id is null then
