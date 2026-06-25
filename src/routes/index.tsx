@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { listPublishedPages } from "@/lib/pages";
 import heroImage from "@/assets/hero-apartment.jpg";
+import teamPortrait from "@/assets/team-portrait.png.asset.json";
 
 export const Route = createFileRoute("/")({
   head: () => ({
