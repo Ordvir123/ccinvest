@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 
 import { SiteHeader } from "@/components/site/SiteHeader";
 import { SiteFooter } from "@/components/site/SiteFooter";
-import teamPortrait from "@/assets/team-portrait.png.asset.json";
+import teamPortrait from "@/assets/team-portrait.jpg";
 
 export const Route = createFileRoute("/about")({
   head: () => ({
@@ -32,8 +32,11 @@ function AboutPage() {
         </div>
         <div className="mt-12 rounded-lg bg-background py-10">
           <img
-            src={teamPortrait.url}
+            src={teamPortrait}
             alt={t("public.about.title")}
+            loading="lazy"
+            width={1024}
+            height={768}
             className="mx-auto w-full max-w-sm rounded-lg"
           />
         </div>
