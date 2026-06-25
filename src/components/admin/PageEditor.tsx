@@ -324,9 +324,20 @@ export function PageEditor({
       </SectionCard>
 
 
-      <SectionCard title="Stats" description="Repeatable value + label rows.">
+      <SectionCard title="Stats" description="Repeatable value + label rows. Icons auto-match the label; override per row.">
         {(content.stats ?? []).map((s, i) => (
           <div key={i} className="flex items-end gap-2">
+            <div className="space-y-1.5">
+              <span className="text-sm font-medium text-foreground">Icon</span>
+              <IconPicker
+                value={s.icon}
+                onChange={(icon) => {
+                  const next = content.stats.slice();
+                  next[i] = { ...next[i], icon };
+                  patch({ stats: next });
+                }}
+              />
+            </div>
             <div className="flex-1">
               <Field label="Value">
                 <Input
