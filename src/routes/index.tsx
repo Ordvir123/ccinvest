@@ -108,7 +108,7 @@ function Home() {
             <p className="mb-4 text-sm uppercase tracking-[0.3em] text-cta">
               {t("public.hero.eyebrow")}
             </p>
-            <h1 className="font-display text-4xl leading-tight md:text-6xl lg:text-7xl">
+            <h1 className="font-display text-4xl leading-tight !text-primary-foreground [text-shadow:0_2px_14px_oklch(0.15_0.03_265/0.55)] md:text-6xl lg:text-7xl">
               {t("public.hero.title")}
             </h1>
             <p className="mt-6 text-lg text-primary-foreground/85 md:text-xl">
