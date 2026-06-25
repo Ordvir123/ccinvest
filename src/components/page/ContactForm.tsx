@@ -105,7 +105,6 @@ export function ContactForm({
       setName("");
       setPhone("");
       setEmail("");
-      setMessage("");
     } catch (err) {
       setError(err instanceof Error ? err.message : t.error);
     } finally {
