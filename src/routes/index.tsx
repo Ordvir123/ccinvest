@@ -6,10 +6,16 @@ import { useTranslation } from "react-i18next";
 import { SiteHeader } from "@/components/site/SiteHeader";
 import { SiteFooter } from "@/components/site/SiteFooter";
 import { ProjectCard } from "@/components/site/ProjectCard";
+import { ContactForm } from "@/components/page/ContactForm";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { listPublishedPages } from "@/lib/pages";
+import type { ReadingLang } from "@/types/page";
 import heroImage from "@/assets/hero-apartment.jpg";
+
+const READING = ["fr", "he", "en"] as const;
+const toReadingLang = (l: string): ReadingLang =>
+  (READING as readonly string[]).includes(l) ? (l as ReadingLang) : "fr";
 
 
 export const Route = createFileRoute("/")({
