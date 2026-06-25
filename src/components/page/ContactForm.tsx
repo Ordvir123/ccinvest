@@ -146,55 +146,35 @@ export function ContactForm({
                 className="absolute left-[-9999px] h-0 w-0 opacity-0"
               />
               <div className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="c-name" className="text-primary-foreground">
-                    {t.name}
-                  </Label>
-                  <Input
-                    id="c-name"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    className="bg-card text-card-foreground"
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="c-phone" className="text-primary-foreground">
-                    {t.phone}
-                  </Label>
-                  <Input
-                    id="c-phone"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    className="bg-card text-card-foreground"
-                  />
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="c-email" className="text-primary-foreground">
-                  {t.email}
-                </Label>
                 <Input
-                  id="c-email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="bg-card text-card-foreground"
+                  id="c-name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder={t.name}
+                  aria-label={t.name}
+                  className="bg-card text-card-foreground placeholder:text-muted-foreground"
                   required
                 />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="c-message" className="text-primary-foreground">
-                  {t.message}
-                </Label>
-                <Textarea
-                  id="c-message"
-                  rows={4}
-                  value={message}
-                  onChange={(e) => setMessage(e.target.value)}
-                  className="bg-card text-card-foreground"
+                <Input
+                  id="c-phone"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  placeholder={t.phone}
+                  aria-label={t.phone}
+                  className="bg-card text-card-foreground placeholder:text-muted-foreground"
                 />
               </div>
+              <Input
+                id="c-email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder={t.email}
+                aria-label={t.email}
+                className="bg-card text-card-foreground placeholder:text-muted-foreground"
+                required
+              />
+
 
               {error && (
                 <p className="text-sm font-medium text-destructive-foreground bg-destructive/80 rounded px-3 py-2">
