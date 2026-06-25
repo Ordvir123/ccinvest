@@ -188,9 +188,19 @@ export const translatePageContent = createServerFn({ method: "POST" })
 
     const hash = await sha256Hex(canonicalJson(content));
 
-    // Privileged client for cache reads/writes.
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const admin = pageId ? supabaseAdmin : null;
+    // Cache reads/writes as the authenticated caller (RLS allows admins).
+    const { createClient } = await import("@supabase/supabase-js");
+    const supaUrl = import.meta.env.VITE_SUPABASE_URL as string | undefined;
+    const supaKey =
+      (import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string | undefined) ??
+      (import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined);
+    const admin =
+      pageId && supaUrl && supaKey
+        ? createClient(supaUrl, supaKey, {
+            auth: { persistSession: false, autoRefreshToken: false },
+            global: { headers: { Authorization: `Bearer ${data.accessToken}` } },
+          })
+        : null;
 
     let existing: { content: Record<string, unknown>; source_hash: string | null; locked_fields: string[] } | null =
       null;
