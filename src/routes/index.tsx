@@ -85,7 +85,8 @@ function StatItem({ value, label }: { value: number; label: string }) {
 }
 
 function Home() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const lang = toReadingLang(i18n.language);
 
   const { data: projects, isLoading } = useQuery({
     queryKey: ["published-pages"],
