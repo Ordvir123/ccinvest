@@ -114,7 +114,7 @@ function Hero({
             {hero.price}
           </p>
         )}
-        {hasText(hero.cta_label) && (
+        {hasText(ctaLabel) && (
           <div className="mt-10">
             <Button
               variant="secondary"
@@ -122,7 +122,7 @@ function Hero({
               className="bg-card text-primary hover:bg-card/90"
               onClick={scrollToContact}
             >
-              {hero.cta_label}
+              {ctaLabel}
             </Button>
           </div>
         )}
