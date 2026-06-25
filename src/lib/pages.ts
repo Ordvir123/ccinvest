@@ -1,4 +1,5 @@
 import { supabase, isSupabaseConfigured } from "@/integrations/supabase/client";
+import { compressImage } from "@/lib/image-compress";
 import { SEED_PAGES } from "@/lib/seed/montefiore-allenby";
 import {
   READING_LANGS,
@@ -348,6 +349,9 @@ export async function uploadPageMedia(file: File, slug: string): Promise<Media> 
   if (file.size > MAX_UPLOAD_BYTES) {
     throw new Error("File is too large (max 10MB).");
   }
+  // Auto-compress before upload so served images load fast without quality loss.
+  const compressed = await compressImage(file);
+  file = compressed;
   const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "-");
   const folder = slug || `tmp-${crypto.randomUUID()}`;
   const path = `${folder}/${crypto.randomUUID()}-${safeName}`;

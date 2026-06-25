@@ -68,6 +68,8 @@ function Hero({ hero }: { hero: PageContent["hero"] }) {
           <img
             src={bg}
             alt={hero.background?.alt ?? hero.title}
+            decoding="async"
+            fetchPriority="high"
             className="absolute inset-0 h-full w-full object-cover"
           />
           {/* Dark overlay keeps hero text readable over any image. */}

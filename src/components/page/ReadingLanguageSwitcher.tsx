@@ -7,10 +7,13 @@ interface Props {
   onChange: (lang: ReadingLang) => void;
 }
 
-/** Floating visitor reading-language switcher (flags). */
+/**
+ * Visitor reading-language switcher (flags). Rendered as the first, static
+ * section above the hero on landing pages — not fixed/floating on scroll.
+ */
 export function ReadingLanguageSwitcher({ value, onChange }: Props) {
   return (
-    <div className="fixed bottom-5 right-5 z-50 flex items-center gap-1 rounded-full border border-border bg-card/90 p-1 shadow-lg backdrop-blur ltr:right-5 rtl:left-5 rtl:right-auto">
+    <div className="flex w-full items-center justify-center gap-2 border-b border-border/40 bg-background py-3">
       {READING_LANGS.map((lang) => (
         <button
           key={lang}
@@ -19,8 +22,10 @@ export function ReadingLanguageSwitcher({ value, onChange }: Props) {
           aria-pressed={value === lang}
           aria-label={lang.toUpperCase()}
           className={cn(
-            "flex items-center rounded-full p-1.5 transition-all",
-            value === lang ? "ring-2 ring-primary" : "opacity-60 hover:opacity-100",
+            "flex items-center rounded-md border p-1.5 transition-all",
+            value === lang
+              ? "border-primary ring-1 ring-primary"
+              : "border-transparent opacity-60 hover:opacity-100 hover:border-border",
           )}
         >
           <Flag code={lang} className="h-4 w-6 rounded-sm" />

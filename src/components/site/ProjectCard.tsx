@@ -9,6 +9,8 @@ export function ProjectCard({ project }: { project: PublishedCard }) {
     <Link
       to="/$slug"
       params={{ slug: project.slug }}
+      target="_blank"
+      rel="noopener noreferrer"
       className="group block overflow-hidden rounded-lg bg-card shadow-card transition-all hover:-translate-y-1 hover:shadow-elegant"
     >
       <div className="relative aspect-[4/3] overflow-hidden bg-muted">
