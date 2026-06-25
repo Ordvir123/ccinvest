@@ -1,12 +1,5 @@
 import { useTranslation } from "react-i18next";
-import { ChevronDown } from "lucide-react";
 
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import { Flag } from "@/components/Flag";
 import {
@@ -17,7 +10,7 @@ import {
 } from "@/i18n";
 
 export function LanguageSwitcher() {
-  const { i18n, t } = useTranslation();
+  const { i18n } = useTranslation();
   const current = (i18n.resolvedLanguage ?? "fr") as UiLang;
 
   const onChange = (value: UiLang) => {
@@ -27,30 +20,23 @@ export function LanguageSwitcher() {
   };
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger
-        aria-label={t("language.label")}
-        className="inline-flex items-center gap-1.5 rounded-md border border-border bg-background px-2.5 py-1.5 text-sm font-medium transition-colors hover:bg-muted"
-      >
-        <Flag code={current} />
-        <span className="hidden sm:inline">{t(`language.${current}`)}</span>
-        <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" aria-hidden />
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="min-w-[9rem]">
-        {SUPPORTED_UI_LANGS.map((lang) => (
-          <DropdownMenuItem
-            key={lang}
-            onClick={() => onChange(lang)}
-            className={cn(
-              "gap-2",
-              current === lang && "font-semibold text-primary",
-            )}
-          >
-            <Flag code={lang} />
-            {t(`language.${lang}`)}
-          </DropdownMenuItem>
-        ))}
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <div className="inline-flex items-center gap-2">
+      {SUPPORTED_UI_LANGS.map((lang) => (
+        <button
+          key={lang}
+          type="button"
+          aria-label={lang}
+          onClick={() => onChange(lang)}
+          className={cn(
+            "rounded-md border transition-all p-1",
+            current === lang
+              ? "border-primary ring-1 ring-primary"
+              : "border-transparent opacity-70 hover:opacity-100 hover:border-border",
+          )}
+        >
+          <Flag code={lang} />
+        </button>
+      ))}
+    </div>
   );
 }
