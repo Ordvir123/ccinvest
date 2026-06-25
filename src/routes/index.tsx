@@ -196,6 +196,15 @@ function Home() {
         </div>
       </section>
 
+      <ContactForm
+        interactive
+        pageId={null}
+        lang={lang}
+        projectTitle={t("app.name")}
+        heading={t("public.contact.title")}
+        subheading={t("public.contact.subtitle")}
+      />
+
       <SiteFooter />
     </div>
   );
