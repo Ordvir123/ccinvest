@@ -125,14 +125,22 @@ function Stats({ stats }: { stats: PageContent["stats"] }) {
   return (
     <section className="border-y border-border bg-secondary">
       <div className="mx-auto grid max-w-6xl grid-cols-2 divide-x divide-border md:grid-cols-4 rtl:divide-x-reverse">
-        {stats.map((s, i) => (
-          <div key={i} className="px-4 py-10 text-center">
-            <div className="font-serif text-4xl text-ink md:text-5xl">{s.value}</div>
-            <div className="eyebrow mt-3 text-[0.65rem] text-steel">
-              {s.label}
+        {stats.map((s, i) => {
+          const Icon = getIcon(s.icon) ?? getIcon(guessIcon(s.label, "sparkles"));
+          return (
+            <div key={i} className="flex flex-col items-center px-3 py-8 text-center md:px-4 md:py-10">
+              {Icon && (
+                <span className="mb-3 flex h-11 w-11 items-center justify-center rounded-full bg-primary/10 text-primary">
+                  <Icon className="h-5 w-5" aria-hidden />
+                </span>
+              )}
+              <div className="font-serif text-3xl text-ink md:text-5xl">{s.value}</div>
+              <div className="eyebrow mt-2 text-[0.65rem] text-steel">
+                {s.label}
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </section>
   );
