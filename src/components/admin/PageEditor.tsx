@@ -508,30 +508,63 @@ export function PageEditor({
   /* ---------- preview panel ---------- */
   const previewPanel = (
     <div className="space-y-3">
-      <div className="flex items-center gap-1">
-        <span className="text-xs text-muted-foreground">Reading language:</span>
-        {READING_LANGS.map((l) => (
+      <div className="flex flex-wrap items-center gap-2">
+        <div className="flex items-center gap-1">
+          <span className="text-xs text-muted-foreground">Reading language:</span>
+          {READING_LANGS.map((l) => (
+            <button
+              key={l}
+              type="button"
+              onClick={() => setPreviewLang(l)}
+              className={cn(
+                "rounded px-2 py-0.5 text-xs font-medium",
+                previewLang === l ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted",
+              )}
+            >
+              {l.toUpperCase()}
+            </button>
+          ))}
+        </div>
+        <div className="ms-auto flex items-center gap-1 rounded-md border border-border p-0.5">
           <button
-            key={l}
             type="button"
-            onClick={() => setPreviewLang(l)}
+            onClick={() => setPreviewDevice("desktop")}
+            aria-pressed={previewDevice === "desktop"}
+            aria-label="Desktop preview"
             className={cn(
-              "rounded px-2 py-0.5 text-xs font-medium",
-              previewLang === l ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted",
+              "rounded px-2 py-1",
+              previewDevice === "desktop" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted",
             )}
           >
-            {l.toUpperCase()}
+            <Monitor className="h-4 w-4" />
           </button>
-        ))}
-        <span className="ms-2 text-xs text-muted-foreground">(showing source content)</span>
+          <button
+            type="button"
+            onClick={() => setPreviewDevice("mobile")}
+            aria-pressed={previewDevice === "mobile"}
+            aria-label="Mobile preview"
+            className={cn(
+              "rounded px-2 py-1",
+              previewDevice === "mobile" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted",
+            )}
+          >
+            <Smartphone className="h-4 w-4" />
+          </button>
+        </div>
       </div>
-      <div
-        dir={isRtlReading(previewLang) ? "rtl" : "ltr"}
-        className="max-h-[calc(100vh-12rem)] overflow-auto rounded-lg border border-border"
-      >
-        <PageRenderer content={content} />
+      <div className="max-h-[calc(100vh-12rem)] overflow-auto rounded-lg border border-border bg-muted/30 p-2">
+        <div
+          dir={isRtlReading(previewLang) ? "rtl" : "ltr"}
+          className={cn(
+            "mx-auto overflow-hidden bg-background transition-all",
+            previewDevice === "mobile" ? "w-[390px] max-w-full rounded-2xl border border-border shadow-lg" : "w-full",
+          )}
+        >
+          <PageRenderer content={content} lang={previewLang} />
+        </div>
       </div>
     </div>
+
   );
 
   return (
