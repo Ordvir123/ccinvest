@@ -647,15 +647,26 @@ export function PageEditor({
           </DropdownMenu>
 
           {status === "published" ? (
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={onUnpublish}
-              disabled={publishing}
-            >
-              <EyeOff className="h-4 w-4" /> {publishing ? "…" : "Unpublish"}
-            </Button>
+            <>
+              <Button
+                type="button"
+                variant="default"
+                size="sm"
+                onClick={onPublish}
+                disabled={publishing}
+              >
+                <RefreshCw className="h-4 w-4" /> {publishing ? "Updating…" : "Update"}
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={onUnpublish}
+                disabled={publishing}
+              >
+                <EyeOff className="h-4 w-4" /> {publishing ? "…" : "Unpublish"}
+              </Button>
+            </>
           ) : (
             <Button
               type="button"
