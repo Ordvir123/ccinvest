@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
-import { Plus, Trash2, ArrowUp, ArrowDown, Save, Globe, EyeOff, Copy, ExternalLink, Monitor, Smartphone } from "lucide-react";
+import { Plus, Trash2, ArrowUp, ArrowDown, Save, Globe, EyeOff, Copy, ExternalLink, Monitor, Smartphone, RefreshCw } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
