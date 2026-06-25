@@ -87,7 +87,6 @@ export function ContactForm({
       name,
       phone,
       email,
-      message,
       lang,
       page_id: pageId ?? null,
       page_slug: slug,
