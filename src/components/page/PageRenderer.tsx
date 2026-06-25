@@ -16,6 +16,10 @@ import {
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { hasItems, hasText, type PageContent, type ReadingLang, type Unit } from "@/types/page";
 import { ContactForm } from "@/components/page/ContactForm";
+import {
+  DEFAULT_TEMPLATE_SETTINGS,
+  type TemplateSettings,
+} from "@/lib/template-settings";
 
 /** Section labels translated by the page's reading language. */
 const LABELS: Record<ReadingLang, Record<string, string>> = {
