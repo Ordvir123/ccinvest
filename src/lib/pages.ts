@@ -213,6 +213,7 @@ export function cleanContent(content: PageContent): PageContent {
     subtitle: keepText(content.hero.subtitle),
     price: keepText(content.hero.price),
     cta_label: keepText(content.hero.cta_label),
+    background: content.hero.background?.url ? content.hero.background : undefined,
   };
 
   const stats = (content.stats ?? [])

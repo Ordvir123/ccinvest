@@ -1,0 +1,83 @@
+{
+  "app": {
+    "name": "CC Invest"
+  },
+  "nav": {
+    "pages": "Pages",
+    "newPage": "New page",
+    "settings": "Settings",
+    "logout": "Log out",
+    "leads": "Leads",
+    "home": "Home",
+    "properties": "Apartments",
+    "about": "About",
+    "contact": "Contact"
+  },
+  "language": {
+    "label": "Interface language",
+    "fr": "French",
+    "he": "Hebrew",
+    "en": "English"
+  },
+  "footer": {
+    "rights": "All rights reserved."
+  },
+  "public": {
+    "hero": {
+      "eyebrow": "Tel Aviv-Yafo",
+      "title": "Premium real estate investment in Tel Aviv",
+      "subtitle": "A curated selection of exceptional apartments, with personal and professional guidance every step of the way.",
+      "cta": "View apartments"
+    },
+    "stats": {
+      "projects": "Available projects",
+      "years": "Years of experience",
+      "clients": "Happy clients",
+      "cities": "Sought-after neighborhoods"
+    },
+    "properties": {
+      "title": "Our apartments",
+      "subtitle": "Discover our selection of properties in Tel Aviv.",
+      "empty": "No properties published yet.",
+      "viewAll": "View all",
+      "discover": "Discover"
+    },
+    "about": {
+      "title": "About",
+      "body": "CC Invest guides its clients through the acquisition of exceptional real estate in Tel Aviv-Yafo. From rigorous project selection to personal support, our team puts its expertise at the service of your investment.",
+      "cta": "Learn more"
+    }
+  },
+  "auth": {
+    "loginTitle": "Admin login",
+    "loginSubtitle": "Sign in to manage your pages.",
+    "email": "Email address",
+    "password": "Password",
+    "signIn": "Sign in",
+    "signingIn": "Signing in…",
+    "error": "Login failed. Check your credentials.",
+    "loggedOut": "You have been logged out."
+  },
+  "pages": {
+    "title": "Pages",
+    "subtitle": "Manage your real estate project pages.",
+    "empty": "No pages yet.",
+    "status": "Status",
+    "slug": "Slug",
+    "draft": "Draft",
+    "published": "Published"
+  },
+  "newPage": {
+    "title": "New page",
+    "subtitle": "Create a new project page.",
+    "slug": "Slug",
+    "create": "Create"
+  },
+  "settings": {
+    "title": "Settings",
+    "subtitle": "Admin area configuration."
+  },
+  "common": {
+    "comingSoon": "Coming soon"
+  }
+}

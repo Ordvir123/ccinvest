@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
-import { Plus, Trash2, ArrowUp, ArrowDown, Save, Globe, EyeOff, Copy, ExternalLink } from "lucide-react";
+import { Plus, Trash2, ArrowUp, ArrowDown, Save, Globe, EyeOff, Copy, ExternalLink, Monitor, Smartphone } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -125,6 +125,7 @@ export function PageEditor({
   const [previewLang, setPreviewLang] = useState<ReadingLang>(
     (initialPage?.source_lang as ReadingLang) ?? (initialSourceLang as ReadingLang) ?? "fr",
   );
+  const [previewDevice, setPreviewDevice] = useState<"desktop" | "mobile">("desktop");
   const [saving, setSaving] = useState(false);
 
 
@@ -211,19 +212,29 @@ export function PageEditor({
     }
     setPublishing(true);
     try {
-      // Save current edits first, then flip status to published.
-      const savedId = await onSave();
-      const id = pageId ?? savedId;
-      if (!id) throw new Error("Save the page before publishing.");
-      const next = await setPageStatus(id, "published");
-      setStatus(next);
+      // Save AND publish in a single write so a brand-new page is created with
+      // status 'published' (avoids a save→navigate→status-flip race).
+      const saved = await savePage({
+        id: pageId,
+        slug,
+        source_lang: sourceLang,
+        status: "published",
+        content,
+        seo,
+      });
+      setStatus("published");
       toast.success("Page published — it's now live.");
+      if (!pageId) {
+        setPageId(saved.id);
+        navigate({ to: "/admin/pages/$id", params: { id: saved.id }, replace: true });
+      }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to publish.");
     } finally {
       setPublishing(false);
     }
   };
+
 
   const onUnpublish = async () => {
     if (!pageId) return;
@@ -301,7 +312,16 @@ export function PageEditor({
         <Field label="CTA label">
           <Input value={content.hero.cta_label ?? ""} onChange={(e) => patchHero({ cta_label: e.target.value })} />
         </Field>
+        <Field label="Background image" hint="Optional. Shown behind the hero with a dark overlay for readability.">
+          <SingleImageUpload
+            slug={slug}
+            value={content.hero.background}
+            onChange={(background) => patchHero({ background })}
+            disabled={!canUpload}
+          />
+        </Field>
       </SectionCard>
+
 
       <SectionCard title="Stats" description="Repeatable value + label rows.">
         {(content.stats ?? []).map((s, i) => (
@@ -498,30 +518,63 @@ export function PageEditor({
   /* ---------- preview panel ---------- */
   const previewPanel = (
     <div className="space-y-3">
-      <div className="flex items-center gap-1">
-        <span className="text-xs text-muted-foreground">Reading language:</span>
-        {READING_LANGS.map((l) => (
+      <div className="flex flex-wrap items-center gap-2">
+        <div className="flex items-center gap-1">
+          <span className="text-xs text-muted-foreground">Reading language:</span>
+          {READING_LANGS.map((l) => (
+            <button
+              key={l}
+              type="button"
+              onClick={() => setPreviewLang(l)}
+              className={cn(
+                "rounded px-2 py-0.5 text-xs font-medium",
+                previewLang === l ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted",
+              )}
+            >
+              {l.toUpperCase()}
+            </button>
+          ))}
+        </div>
+        <div className="ms-auto flex items-center gap-1 rounded-md border border-border p-0.5">
           <button
-            key={l}
             type="button"
-            onClick={() => setPreviewLang(l)}
+            onClick={() => setPreviewDevice("desktop")}
+            aria-pressed={previewDevice === "desktop"}
+            aria-label="Desktop preview"
             className={cn(
-              "rounded px-2 py-0.5 text-xs font-medium",
-              previewLang === l ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted",
+              "rounded px-2 py-1",
+              previewDevice === "desktop" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted",
             )}
           >
-            {l.toUpperCase()}
+            <Monitor className="h-4 w-4" />
           </button>
-        ))}
-        <span className="ms-2 text-xs text-muted-foreground">(showing source content)</span>
+          <button
+            type="button"
+            onClick={() => setPreviewDevice("mobile")}
+            aria-pressed={previewDevice === "mobile"}
+            aria-label="Mobile preview"
+            className={cn(
+              "rounded px-2 py-1",
+              previewDevice === "mobile" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted",
+            )}
+          >
+            <Smartphone className="h-4 w-4" />
+          </button>
+        </div>
       </div>
-      <div
-        dir={isRtlReading(previewLang) ? "rtl" : "ltr"}
-        className="max-h-[calc(100vh-12rem)] overflow-auto rounded-lg border border-border"
-      >
-        <PageRenderer content={content} />
+      <div className="max-h-[calc(100vh-12rem)] overflow-auto rounded-lg border border-border bg-muted/30 p-2">
+        <div
+          dir={isRtlReading(previewLang) ? "rtl" : "ltr"}
+          className={cn(
+            "mx-auto overflow-hidden bg-background transition-all",
+            previewDevice === "mobile" ? "w-[390px] max-w-full rounded-2xl border border-border shadow-lg" : "w-full",
+          )}
+        >
+          <PageRenderer content={content} lang={previewLang} />
+        </div>
       </div>
     </div>
+
   );
 
   return (

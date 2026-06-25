@@ -27,6 +27,8 @@ export type PageContent = {
     subtitle?: string;
     price?: string;
     cta_label?: string;
+    /** Optional hero background image. */
+    background?: Media;
   };
   stats: Stat[];
   location?: { heading?: string; text?: string; map_query?: string };
