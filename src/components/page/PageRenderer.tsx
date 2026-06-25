@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { Check, ChevronRight } from "lucide-react";
 
+import { getIcon, guessIcon } from "@/lib/page-icons";
+
 import { Section } from "@/components/ui/section";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
