@@ -424,7 +424,3 @@ export function PageRenderer({
   );
 }
 
-      />
-    </main>
-  );
-}
