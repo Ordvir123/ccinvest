@@ -16,7 +16,8 @@
   "language": {
     "label": "Langue de l'interface",
     "fr": "Français",
-    "he": "Hébreu"
+    "he": "Hébreu",
+    "en": "Anglais"
   },
   "footer": {
     "rights": "Tous droits réservés."

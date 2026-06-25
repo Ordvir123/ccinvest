@@ -1,37 +1,62 @@
 import { useTranslation } from "react-i18next";
-import { Languages } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { applyDocumentDirection, UI_LANG_STORAGE_KEY, type UiLang } from "@/i18n";
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { cn } from "@/lib/utils";
+import {
+  applyDocumentDirection,
+  SUPPORTED_UI_LANGS,
+  UI_LANG_STORAGE_KEY,
+  type UiLang,
+} from "@/i18n";
+
+/** Flag per UI language: France / Israel / USA. */
+const FLAGS: Record<UiLang, string> = { fr: "🇫🇷", he: "🇮🇱", en: "🇺🇸" };
 
 export function LanguageSwitcher() {
   const { i18n, t } = useTranslation();
   const current = (i18n.resolvedLanguage ?? "fr") as UiLang;
 
-  const onChange = (value: string) => {
+  const onChange = (value: UiLang) => {
     window.localStorage.setItem(UI_LANG_STORAGE_KEY, value);
     i18n.changeLanguage(value);
     applyDocumentDirection(value);
   };
 
   return (
-    <div className="flex items-center gap-2">
-      <Languages className="h-4 w-4 text-muted-foreground" aria-hidden />
-      <Select value={current} onValueChange={onChange}>
-        <SelectTrigger className="w-[140px]" aria-label={t("language.label")}>
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="fr">{t("language.fr")}</SelectItem>
-          <SelectItem value="he">{t("language.he")}</SelectItem>
-        </SelectContent>
-      </Select>
-    </div>
+    <DropdownMenu>
+      <DropdownMenuTrigger
+        aria-label={t("language.label")}
+        className="inline-flex items-center gap-1.5 rounded-md border border-border bg-background px-2.5 py-1.5 text-sm font-medium transition-colors hover:bg-muted"
+      >
+        <span className="text-base leading-none" aria-hidden>
+          {FLAGS[current]}
+        </span>
+        <span className="hidden sm:inline">{t(`language.${current}`)}</span>
+        <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" aria-hidden />
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="min-w-[9rem]">
+        {SUPPORTED_UI_LANGS.map((lang) => (
+          <DropdownMenuItem
+            key={lang}
+            onClick={() => onChange(lang)}
+            className={cn(
+              "gap-2",
+              current === lang && "font-semibold text-primary",
+            )}
+          >
+            <span className="text-base leading-none" aria-hidden>
+              {FLAGS[lang]}
+            </span>
+            {t(`language.${lang}`)}
+          </DropdownMenuItem>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }

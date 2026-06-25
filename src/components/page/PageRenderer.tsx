@@ -15,34 +15,87 @@ import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { hasItems, hasText, type PageContent, type ReadingLang, type Unit } from "@/types/page";
 import { ContactForm } from "@/components/page/ContactForm";
 
+/** Section labels translated by the page's reading language. */
+const LABELS: Record<ReadingLang, Record<string, string>> = {
+  fr: {
+    gallery: "Galerie",
+    units: "Appartements disponibles",
+    videos: "Vidéos",
+    floor: "Étage",
+    orientation: "Orientation",
+    rooms: "Pièces",
+    surface: "Surface",
+    balcony: "Balcon",
+    parking: "Parking",
+    notFound: "Page introuvable.",
+  },
+  he: {
+    gallery: "גלריה",
+    units: "דירות זמינות",
+    videos: "סרטונים",
+    floor: "קומה",
+    orientation: "כיוון",
+    rooms: "חדרים",
+    surface: "שטח",
+    balcony: "מרפסת",
+    parking: "חניה",
+    notFound: "הדף לא נמצא.",
+  },
+  en: {
+    gallery: "Gallery",
+    units: "Available apartments",
+    videos: "Videos",
+    floor: "Floor",
+    orientation: "Orientation",
+    rooms: "Rooms",
+    surface: "Area",
+    balcony: "Balcony",
+    parking: "Parking",
+    notFound: "Page not found.",
+  },
+};
+
 const scrollToContact = () => {
   document.getElementById("contact")?.scrollIntoView({ behavior: "smooth" });
 };
 
 function Hero({ hero }: { hero: PageContent["hero"] }) {
+  const bg = hero.background?.url;
   return (
     <section className="relative overflow-hidden bg-gradient-brand text-primary-foreground">
-      <Section className="flex min-h-[80vh] flex-col justify-center py-24 text-center">
+      {bg && (
+        <>
+          <img
+            src={bg}
+            alt={hero.background?.alt ?? hero.title}
+            className="absolute inset-0 h-full w-full object-cover"
+          />
+          {/* Dark overlay keeps hero text readable over any image. */}
+          <div className="absolute inset-0 bg-gradient-overlay" />
+          <div className="absolute inset-0 bg-[oklch(0.18_0.04_265/0.55)]" />
+        </>
+      )}
+      <Section className="relative z-10 flex min-h-[80vh] flex-col justify-center py-24 text-center">
         <img
           src="/brand/cc-invest-logo.png"
           alt="CC Invest"
           className="mx-auto mb-10 h-12 w-auto rounded bg-card px-4 py-2.5 shadow-sm md:h-14"
         />
         {hasText(hero.kicker) && (
-          <p className="eyebrow mb-6 text-xs text-primary-foreground/70">
+          <p className="eyebrow mb-6 text-xs text-primary-foreground/80">
             {hero.kicker}
           </p>
         )}
-        <h1 className="mx-auto max-w-3xl text-balance text-5xl text-primary-foreground md:text-7xl">
+        <h1 className="mx-auto max-w-3xl text-balance text-5xl !text-primary-foreground [text-shadow:0_2px_12px_oklch(0.15_0.03_265/0.5)] md:text-7xl">
           {hero.title}
         </h1>
         {hasText(hero.subtitle) && (
-          <p className="mx-auto mt-7 max-w-2xl text-lg leading-relaxed text-primary-foreground/80">
+          <p className="mx-auto mt-7 max-w-2xl text-lg leading-relaxed text-primary-foreground/90 [text-shadow:0_1px_8px_oklch(0.15_0.03_265/0.45)]">
             {hero.subtitle}
           </p>
         )}
         {hasText(hero.price) && (
-          <p className="mt-8 font-serif text-3xl text-primary-foreground md:text-4xl">
+          <p className="mt-8 font-serif text-3xl !text-primary-foreground md:text-4xl">
             {hero.price}
           </p>
         )}
@@ -139,14 +192,14 @@ function About({ about }: { about: NonNullable<PageContent["about"]> }) {
   );
 }
 
-function Gallery({ gallery }: { gallery: PageContent["gallery"] }) {
+function Gallery({ gallery, labels }: { gallery: PageContent["gallery"]; labels: Record<string, string> }) {
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(0);
   if (!hasItems(gallery)) return null;
 
   return (
     <Section>
-      <h2 className="mb-8 text-center text-3xl text-ink md:text-4xl">Galerie</h2>
+      <h2 className="mb-8 text-center text-3xl text-ink md:text-4xl">{labels.gallery}</h2>
       <Carousel opts={{ loop: true }} className="mx-auto w-full max-w-4xl">
         <CarouselContent>
           {gallery.map((img, i) => (
@@ -187,14 +240,14 @@ function Gallery({ gallery }: { gallery: PageContent["gallery"] }) {
   );
 }
 
-function UnitCard({ unit }: { unit: Unit }) {
+function UnitCard({ unit, labels }: { unit: Unit; labels: Record<string, string> }) {
   const rows: [string, string | undefined][] = [
-    ["Étage", unit.floor],
-    ["Orientation", unit.orientation],
-    ["Pièces", unit.rooms],
-    ["Surface", hasText(unit.area_m2) ? `${unit.area_m2} m²` : undefined],
-    ["Balcon", hasText(unit.balcony_m2) ? `${unit.balcony_m2} m²` : undefined],
-    ["Parking", unit.parking],
+    [labels.floor, unit.floor],
+    [labels.orientation, unit.orientation],
+    [labels.rooms, unit.rooms],
+    [labels.surface, hasText(unit.area_m2) ? `${unit.area_m2} m²` : undefined],
+    [labels.balcony, hasText(unit.balcony_m2) ? `${unit.balcony_m2} m²` : undefined],
+    [labels.parking, unit.parking],
   ];
   const visibleRows = rows.filter(([, v]) => hasText(v));
 
@@ -241,17 +294,15 @@ function UnitCard({ unit }: { unit: Unit }) {
   );
 }
 
-function Units({ units }: { units: PageContent["units"] }) {
+function Units({ units, labels }: { units: PageContent["units"]; labels: Record<string, string> }) {
   if (!hasItems(units)) return null;
   return (
     <section className="bg-secondary">
       <Section>
-        <h2 className="mb-10 text-center text-3xl text-ink md:text-4xl">
-          Appartements disponibles
-        </h2>
+        <h2 className="mb-10 text-center text-3xl text-ink md:text-4xl">{labels.units}</h2>
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {units!.map((u, i) => (
-            <UnitCard key={i} unit={u} />
+            <UnitCard key={i} unit={u} labels={labels} />
           ))}
         </div>
       </Section>
@@ -259,11 +310,11 @@ function Units({ units }: { units: PageContent["units"] }) {
   );
 }
 
-function Videos({ videos }: { videos: PageContent["videos"] }) {
+function Videos({ videos, labels }: { videos: PageContent["videos"]; labels: Record<string, string> }) {
   if (!hasItems(videos)) return null;
   return (
     <Section>
-      <h2 className="mb-10 text-center text-3xl text-ink md:text-4xl">Vidéos</h2>
+      <h2 className="mb-10 text-center text-3xl text-ink md:text-4xl">{labels.videos}</h2>
       <div className="grid gap-8 md:grid-cols-2">
         {videos!.map((v, i) => (
           <figure key={i}>
@@ -305,6 +356,7 @@ export function PageRenderer({
   slug,
   lang = "fr",
 }: PageRendererProps) {
+  const labels = LABELS[lang] ?? LABELS.fr;
   return (
     <main className="bg-background">
       <Hero hero={content.hero} />
@@ -319,9 +371,9 @@ export function PageRenderer({
         (hasText(content.about.heading) ||
           hasText(content.about.body) ||
           hasItems(content.about.features)) && <About about={content.about} />}
-      <Gallery gallery={content.gallery} />
-      <Units units={content.units} />
-      <Videos videos={content.videos} />
+      <Gallery gallery={content.gallery} labels={labels} />
+      <Units units={content.units} labels={labels} />
+      <Videos videos={content.videos} labels={labels} />
       <ContactForm
         heading={content.contact?.heading}
         interactive={interactive}
@@ -333,4 +385,3 @@ export function PageRenderer({
     </main>
   );
 }
-
