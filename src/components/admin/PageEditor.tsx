@@ -301,7 +301,16 @@ export function PageEditor({
         <Field label="CTA label">
           <Input value={content.hero.cta_label ?? ""} onChange={(e) => patchHero({ cta_label: e.target.value })} />
         </Field>
+        <Field label="Background image" hint="Optional. Shown behind the hero with a dark overlay for readability.">
+          <SingleImageUpload
+            slug={slug}
+            value={content.hero.background}
+            onChange={(background) => patchHero({ background })}
+            disabled={!canUpload}
+          />
+        </Field>
       </SectionCard>
+
 
       <SectionCard title="Stats" description="Repeatable value + label rows.">
         {(content.stats ?? []).map((s, i) => (
