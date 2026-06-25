@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { PageRenderer } from "@/components/page/PageRenderer";
 import { ReadingLanguageSwitcher } from "@/components/page/ReadingLanguageSwitcher";
 import { fetchPublishedPage } from "@/lib/pages";
+import { fetchTemplateSettings } from "@/lib/template-settings";
 import { resolveTranslation } from "@/lib/translate";
 import {
   isRtlReading,
