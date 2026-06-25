@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 
 import { SiteHeader } from "@/components/site/SiteHeader";
 import { SiteFooter } from "@/components/site/SiteFooter";
+import teamPortrait from "@/assets/team-portrait.png.asset.json";
 
 export const Route = createFileRoute("/about")({
   head: () => ({
