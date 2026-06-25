@@ -1,4 +1,5 @@
 import { supabase, isSupabaseConfigured } from "@/integrations/supabase/client";
+import { compressImage } from "@/lib/image-compress";
 import { SEED_PAGES } from "@/lib/seed/montefiore-allenby";
 import {
   READING_LANGS,
