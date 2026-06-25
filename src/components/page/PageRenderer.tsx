@@ -16,6 +16,10 @@ import {
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { hasItems, hasText, type PageContent, type ReadingLang, type Unit } from "@/types/page";
 import { ContactForm } from "@/components/page/ContactForm";
+import {
+  DEFAULT_TEMPLATE_SETTINGS,
+  type TemplateSettings,
+} from "@/lib/template-settings";
 
 /** Section labels translated by the page's reading language. */
 const LABELS: Record<ReadingLang, Record<string, string>> = {
@@ -61,8 +65,15 @@ const scrollToContact = () => {
   document.getElementById("contact")?.scrollIntoView({ behavior: "smooth" });
 };
 
-function Hero({ hero }: { hero: PageContent["hero"] }) {
+function Hero({
+  hero,
+  settings,
+}: {
+  hero: PageContent["hero"];
+  settings: TemplateSettings;
+}) {
   const bg = hero.background?.url;
+  const ctaLabel = hasText(hero.cta_label) ? hero.cta_label : settings.defaultCtaLabel;
   return (
     <section className="relative overflow-hidden bg-gradient-brand text-primary-foreground">
       {bg && (
@@ -81,8 +92,8 @@ function Hero({ hero }: { hero: PageContent["hero"] }) {
       )}
       <Section className="relative z-10 flex min-h-[80vh] flex-col justify-center py-20 text-center md:py-24">
         <img
-          src="/brand/cc-invest-logo.png"
-          alt="CC Invest"
+          src={settings.brandLogoUrl}
+          alt={settings.brandName}
           className="mx-auto mb-8 h-10 w-auto rounded bg-card px-3 py-2 shadow-sm md:mb-10 md:h-14"
         />
         {hasText(hero.kicker) && (
@@ -103,7 +114,7 @@ function Hero({ hero }: { hero: PageContent["hero"] }) {
             {hero.price}
           </p>
         )}
-        {hasText(hero.cta_label) && (
+        {hasText(ctaLabel) && (
           <div className="mt-10">
             <Button
               variant="secondary"
@@ -111,7 +122,7 @@ function Hero({ hero }: { hero: PageContent["hero"] }) {
               className="bg-card text-primary hover:bg-card/90"
               onClick={scrollToContact}
             >
-              {hero.cta_label}
+              {ctaLabel}
             </Button>
           </div>
         )}
@@ -363,6 +374,8 @@ export type PageRendererProps = {
   pageId?: string | null;
   slug?: string;
   lang?: ReadingLang;
+  /** Global template settings (logo, colors, defaults). */
+  settings?: TemplateSettings;
 };
 
 export function PageRenderer({
@@ -371,11 +384,19 @@ export function PageRenderer({
   pageId,
   slug,
   lang = "fr",
+  settings = DEFAULT_TEMPLATE_SETTINGS,
 }: PageRendererProps) {
   const labels = LABELS[lang] ?? LABELS.fr;
+  const brandStyle = hasText(settings.primaryColor)
+    ? ({
+        "--primary": settings.primaryColor,
+        "--primary-glow": settings.primaryColor,
+        "--gradient-brand": `linear-gradient(135deg, ${settings.primaryColor}, ${settings.primaryColor})`,
+      } as React.CSSProperties)
+    : undefined;
   return (
-    <main className="bg-background">
-      <Hero hero={content.hero} />
+    <main className="bg-background" style={brandStyle}>
+      <Hero hero={content.hero} settings={settings} />
       <Stats stats={content.stats} />
       {content.location &&
         (hasText(content.location.heading) ||
@@ -391,13 +412,15 @@ export function PageRenderer({
       <Units units={content.units} labels={labels} />
       <Videos videos={content.videos} labels={labels} />
       <ContactForm
-        heading={content.contact?.heading}
+        heading={content.contact?.heading ?? (hasText(settings.defaultContactHeading) ? settings.defaultContactHeading : undefined)}
         interactive={interactive}
         pageId={pageId}
         slug={slug}
         projectTitle={content.hero?.title}
         lang={lang}
+        backgroundUrl={settings.contactBgUrl}
       />
     </main>
   );
 }
+

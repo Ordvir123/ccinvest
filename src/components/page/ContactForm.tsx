@@ -61,6 +61,8 @@ interface Props {
   slug?: string;
   projectTitle?: string;
   lang?: ReadingLang;
+  /** Override background image (from template settings). */
+  backgroundUrl?: string;
 }
 
 export function ContactForm({
@@ -71,6 +73,7 @@ export function ContactForm({
   slug,
   projectTitle,
   lang = "fr",
+  backgroundUrl,
 }: Props) {
   const t = COPY[lang] ?? COPY.fr;
   const [name, setName] = useState("");
@@ -122,7 +125,7 @@ export function ContactForm({
       dir={isRtlReading(lang) ? "rtl" : "ltr"}
     >
       <img
-        src={contactBg.url}
+        src={backgroundUrl?.trim() ? backgroundUrl : contactBg.url}
         alt=""
         aria-hidden
         loading="lazy"

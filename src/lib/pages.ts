@@ -1,4 +1,5 @@
 import { supabase, isSupabaseConfigured } from "@/integrations/supabase/client";
+import { TEMPLATE_SETTINGS_SLUG } from "@/lib/template-settings";
 import { compressImage } from "@/lib/image-compress";
 import { SEED_PAGES } from "@/lib/seed/montefiore-allenby";
 import {
@@ -167,7 +168,9 @@ export async function listPages(): Promise<PageListItem[]> {
     .order("updated_at", { ascending: false });
 
   if (error) throw error;
-  return (data ?? []).map((row) => {
+  return (data ?? [])
+    .filter((row) => row.slug !== TEMPLATE_SETTINGS_SLUG)
+    .map((row) => {
     const content = (row.content ?? {}) as PageContent;
     return {
       id: row.id as string,
@@ -421,7 +424,9 @@ export async function listPublishedPages(): Promise<PublishedCard[]> {
       .eq("status", "published")
       .order("updated_at", { ascending: false });
     if (error) throw error;
-    return (data ?? []).map((row) => toCard(row as Page));
+    return (data ?? [])
+      .filter((row) => row.slug !== TEMPLATE_SETTINGS_SLUG)
+      .map((row) => toCard(row as Page));
   } catch (err) {
     console.warn("[pages] published list falling back to seed:", err);
     return Object.values(SEED_PAGES)

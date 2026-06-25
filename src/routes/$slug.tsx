@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { PageRenderer } from "@/components/page/PageRenderer";
 import { ReadingLanguageSwitcher } from "@/components/page/ReadingLanguageSwitcher";
 import { fetchPublishedPage } from "@/lib/pages";
+import { fetchTemplateSettings } from "@/lib/template-settings";
 import { resolveTranslation } from "@/lib/translate";
 import {
   isRtlReading,
@@ -132,6 +133,13 @@ function ProjectPage() {
     queryFn: () => fetchPublishedPage(slug),
   });
 
+  const settingsQuery = useQuery({
+    queryKey: ["template-settings"],
+    queryFn: fetchTemplateSettings,
+    staleTime: 5 * 60 * 1000,
+  });
+
+
   const page = pageQuery.data;
   const sourceLang = (page?.source_lang ?? "fr") as ReadingLang;
   const activeLang: ReadingLang = lang ?? sourceLang;
@@ -184,7 +192,9 @@ function ProjectPage() {
         pageId={page.id}
         slug={page.slug}
         lang={activeLang}
+        settings={settingsQuery.data}
       />
+
 
       {isTranslating && (
         <div className="fixed bottom-5 z-40 flex items-center gap-2 rounded-md border border-border bg-card/95 px-3 py-1.5 text-xs text-muted-foreground shadow ltr:right-5 rtl:left-5">
