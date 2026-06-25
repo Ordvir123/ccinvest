@@ -54,6 +54,7 @@ const COPY: Record<ReadingLang, Labels> = {
 
 interface Props {
   heading?: string;
+  subheading?: string;
   /** When false (editor preview), the form is inert. */
   interactive?: boolean;
   pageId?: string | null;
@@ -64,6 +65,7 @@ interface Props {
 
 export function ContactForm({
   heading,
+  subheading,
   interactive = false,
   pageId,
   slug,
@@ -133,6 +135,9 @@ export function ContactForm({
           <h2 className="text-center text-3xl text-primary-foreground md:text-4xl">
             {heading ?? "Contact"}
           </h2>
+          {subheading && (
+            <p className="mt-3 text-center text-primary-foreground/85">{subheading}</p>
+          )}
 
           {done ? (
             <div className="mt-8 flex flex-col items-center gap-3 rounded-lg bg-card/95 p-8 text-center text-card-foreground">

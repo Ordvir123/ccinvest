@@ -46,6 +46,10 @@
       "title": "About",
       "body": "CC Invest guides its clients through the acquisition of exceptional real estate in Tel Aviv-Yafo. From rigorous project selection to personal support, our team puts its expertise at the service of your investment.",
       "cta": "Learn more"
+    },
+    "contact": {
+      "title": "Contact",
+      "subtitle": "Leave us your details and we'll get back to you shortly."
     }
   },
   "auth": {
