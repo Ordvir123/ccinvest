@@ -32,8 +32,11 @@ function AboutPage() {
         </div>
         <div className="mt-12 rounded-lg bg-background py-10">
           <img
-            src={teamPortrait.url}
+            src={teamPortrait}
             alt={t("public.about.title")}
+            loading="lazy"
+            width={1024}
+            height={768}
             className="mx-auto w-full max-w-sm rounded-lg"
           />
         </div>
