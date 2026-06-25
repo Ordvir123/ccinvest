@@ -125,6 +125,7 @@ export function PageEditor({
   const [previewLang, setPreviewLang] = useState<ReadingLang>(
     (initialPage?.source_lang as ReadingLang) ?? (initialSourceLang as ReadingLang) ?? "fr",
   );
+  const [previewDevice, setPreviewDevice] = useState<"desktop" | "mobile">("desktop");
   const [saving, setSaving] = useState(false);
 
 
