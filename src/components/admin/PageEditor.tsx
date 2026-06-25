@@ -406,10 +406,19 @@ export function PageEditor({
         <Field label="Body">
           <Textarea rows={4} value={content.about?.body ?? ""} onChange={(e) => patchAbout({ body: e.target.value })} />
         </Field>
-        <Field label="Features">
+        <Field label="Features" hint="Icons auto-match the text; override per row.">
           <div className="space-y-2">
             {(content.about?.features ?? []).map((f, i) => (
               <div key={i} className="flex items-center gap-2">
+                <IconPicker
+                  value={content.about?.feature_icons?.[i]}
+                  onChange={(icon) => {
+                    const icons = (content.about?.feature_icons ?? []).slice();
+                    while (icons.length <= i) icons.push(undefined as unknown as string);
+                    icons[i] = icon as string;
+                    patchAbout({ feature_icons: icons });
+                  }}
+                />
                 <Input
                   value={f}
                   onChange={(e) => {
@@ -422,8 +431,14 @@ export function PageEditor({
                   type="button"
                   variant="ghost"
                   size="icon"
-                  className="h-8 w-8"
-                  onClick={() => patchAbout({ features: (content.about?.features ?? []).filter((_, idx) => idx !== i) })}
+                  className="h-8 w-8 shrink-0"
+                  onClick={() => {
+                    const icons = (content.about?.feature_icons ?? []).filter((_, idx) => idx !== i);
+                    patchAbout({
+                      features: (content.about?.features ?? []).filter((_, idx) => idx !== i),
+                      feature_icons: icons,
+                    });
+                  }}
                 >
                   <Trash2 className="h-4 w-4" />
                 </Button>
@@ -440,6 +455,7 @@ export function PageEditor({
           </div>
         </Field>
       </SectionCard>
+
 
       <SectionCard title="Gallery" defaultOpen={false}>
         <GalleryUpload
