@@ -54,6 +54,7 @@ const COPY: Record<ReadingLang, Labels> = {
 
 interface Props {
   heading?: string;
+  subheading?: string;
   /** When false (editor preview), the form is inert. */
   interactive?: boolean;
   pageId?: string | null;
@@ -64,6 +65,7 @@ interface Props {
 
 export function ContactForm({
   heading,
+  subheading,
   interactive = false,
   pageId,
   slug,
