@@ -178,6 +178,20 @@ Deno.serve(async (req) => {
       return json({ error: "Server is missing ANTHROPIC_API_KEY." }, 500);
     }
 
+    // Require an authenticated user — this is an admin-only, cost-bearing endpoint.
+    const authHeader = req.headers.get("Authorization") ?? "";
+    const token = authHeader.replace(/^Bearer\s+/i, "").trim();
+    const supaUrl = Deno.env.get("SUPABASE_URL");
+    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    if (!token || !supaUrl || !serviceKey) {
+      return json({ error: "Unauthorized." }, 401);
+    }
+    const authClient = createClient(supaUrl, serviceKey);
+    const { data: userData, error: authError } = await authClient.auth.getUser(token);
+    if (authError || !userData?.user) {
+      return json({ error: "Unauthorized." }, 401);
+    }
+
     const input = await req.json().catch(() => null);
     const text = typeof input?.text === "string" ? input.text.trim() : "";
     const sourceLang = ["fr", "he", "en"].includes(input?.source_lang)
@@ -185,6 +199,9 @@ Deno.serve(async (req) => {
       : undefined;
 
     if (!text) return json({ error: "No text provided." }, 400);
+    if (text.length > MAX_TEXT_LENGTH) {
+      return json({ error: "Text exceeds the maximum allowed length." }, 400);
+    }
 
     // Call model, parse JSON, retry once on parse failure.
     let parsed: unknown = null;
