@@ -212,19 +212,29 @@ export function PageEditor({
     }
     setPublishing(true);
     try {
-      // Save current edits first, then flip status to published.
-      const savedId = await onSave();
-      const id = pageId ?? savedId;
-      if (!id) throw new Error("Save the page before publishing.");
-      const next = await setPageStatus(id, "published");
-      setStatus(next);
+      // Save AND publish in a single write so a brand-new page is created with
+      // status 'published' (avoids a save→navigate→status-flip race).
+      const saved = await savePage({
+        id: pageId,
+        slug,
+        source_lang: sourceLang,
+        status: "published",
+        content,
+        seo,
+      });
+      setStatus("published");
       toast.success("Page published — it's now live.");
+      if (!pageId) {
+        setPageId(saved.id);
+        navigate({ to: "/admin/pages/$id", params: { id: saved.id }, replace: true });
+      }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to publish.");
     } finally {
       setPublishing(false);
     }
   };
+
 
   const onUnpublish = async () => {
     if (!pageId) return;
