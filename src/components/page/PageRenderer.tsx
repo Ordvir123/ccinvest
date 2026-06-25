@@ -65,8 +65,15 @@ const scrollToContact = () => {
   document.getElementById("contact")?.scrollIntoView({ behavior: "smooth" });
 };
 
-function Hero({ hero }: { hero: PageContent["hero"] }) {
+function Hero({
+  hero,
+  settings,
+}: {
+  hero: PageContent["hero"];
+  settings: TemplateSettings;
+}) {
   const bg = hero.background?.url;
+  const ctaLabel = hasText(hero.cta_label) ? hero.cta_label : settings.defaultCtaLabel;
   return (
     <section className="relative overflow-hidden bg-gradient-brand text-primary-foreground">
       {bg && (
@@ -85,8 +92,8 @@ function Hero({ hero }: { hero: PageContent["hero"] }) {
       )}
       <Section className="relative z-10 flex min-h-[80vh] flex-col justify-center py-20 text-center md:py-24">
         <img
-          src="/brand/cc-invest-logo.png"
-          alt="CC Invest"
+          src={settings.brandLogoUrl}
+          alt={settings.brandName}
           className="mx-auto mb-8 h-10 w-auto rounded bg-card px-3 py-2 shadow-sm md:mb-10 md:h-14"
         />
         {hasText(hero.kicker) && (
