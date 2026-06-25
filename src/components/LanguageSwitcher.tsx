@@ -8,15 +8,13 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
+import { Flag } from "@/components/Flag";
 import {
   applyDocumentDirection,
   SUPPORTED_UI_LANGS,
   UI_LANG_STORAGE_KEY,
   type UiLang,
 } from "@/i18n";
-
-/** Flag per UI language: France / Israel / USA. */
-const FLAGS: Record<UiLang, string> = { fr: "🇫🇷", he: "🇮🇱", en: "🇺🇸" };
 
 export function LanguageSwitcher() {
   const { i18n, t } = useTranslation();
@@ -34,9 +32,7 @@ export function LanguageSwitcher() {
         aria-label={t("language.label")}
         className="inline-flex items-center gap-1.5 rounded-md border border-border bg-background px-2.5 py-1.5 text-sm font-medium transition-colors hover:bg-muted"
       >
-        <span className="text-base leading-none" aria-hidden>
-          {FLAGS[current]}
-        </span>
+        <Flag code={current} />
         <span className="hidden sm:inline">{t(`language.${current}`)}</span>
         <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" aria-hidden />
       </DropdownMenuTrigger>
@@ -50,9 +46,7 @@ export function LanguageSwitcher() {
               current === lang && "font-semibold text-primary",
             )}
           >
-            <span className="text-base leading-none" aria-hidden>
-              {FLAGS[lang]}
-            </span>
+            <Flag code={lang} />
             {t(`language.${lang}`)}
           </DropdownMenuItem>
         ))}
