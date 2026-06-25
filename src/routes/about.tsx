@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 
 import { SiteHeader } from "@/components/site/SiteHeader";
 import { SiteFooter } from "@/components/site/SiteFooter";
+import teamPortrait from "@/assets/team-portrait.png.asset.json";
 
 export const Route = createFileRoute("/about")({
   head: () => ({
@@ -28,6 +29,13 @@ function AboutPage() {
         </h1>
         <div className="whitespace-pre-line text-lg leading-relaxed text-muted-foreground">
           {t("public.about.body")}
+        </div>
+        <div className="mt-12 rounded-lg bg-background py-10">
+          <img
+            src={teamPortrait.url}
+            alt={t("public.about.title")}
+            className="mx-auto w-full max-w-sm rounded-lg"
+          />
         </div>
       </main>
       <SiteFooter />

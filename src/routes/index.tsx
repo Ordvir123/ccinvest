@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { listPublishedPages } from "@/lib/pages";
 import heroImage from "@/assets/hero-apartment.jpg";
+import teamPortrait from "@/assets/team-portrait.png.asset.json";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -185,6 +186,18 @@ function Home() {
           </Button>
         </div>
       </section>
+
+      {/* Team portrait */}
+      <section className="bg-background py-20">
+        <div className="container mx-auto max-w-xl px-4">
+          <img
+            src={teamPortrait.url}
+            alt={t("public.about.title")}
+            className="mx-auto w-full max-w-sm rounded-lg"
+          />
+        </div>
+      </section>
+
 
       <SiteFooter />
     </div>
