@@ -333,16 +333,19 @@ export function UnitFileUpload({
           </Button>
         </div>
       ) : (
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          disabled={disabled || busy}
-          onClick={() => inputRef.current?.click()}
-        >
-          {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImagePlus className="h-4 w-4" />}
-          Upload {label}
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            disabled={disabled || busy}
+            onClick={() => inputRef.current?.click()}
+          >
+            {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImagePlus className="h-4 w-4" />}
+            Upload {label}
+          </Button>
+          <PasteButton onImage={(f) => onFile(f)} disabled={disabled} busy={busy} label="Paste" />
+        </div>
       )}
       <input
         ref={inputRef}
