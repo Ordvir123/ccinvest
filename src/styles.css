@@ -7,7 +7,7 @@
 /*
  * CC Invest — design system ported from "Landing Page Architect".
  * Deep navy + lime CTA. Playfair Display (display) + Inter (body).
- * Hebrew swaps to Frank Ruhl Libre / Heebo. All colors are oklch tokens.
+ * Hebrew swaps to Frank Ruhl Libre / Assistant. All colors are oklch tokens.
  */
 
 @theme inline {
@@ -123,8 +123,8 @@
 :root:lang(he),
 [lang="he"] {
   --font-heading: "Frank Ruhl Libre", "Playfair Display", serif;
-  --font-body: "Heebo", system-ui, sans-serif;
-  --font-label: "Heebo", system-ui, sans-serif;
+  --font-body: "Assistant", system-ui, sans-serif;
+  --font-label: "Assistant", system-ui, sans-serif;
 }
 
 @layer base {
