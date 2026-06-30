@@ -417,12 +417,19 @@ function toCard(page: Page): PublishedCard {
   };
 }
 
-/** Published pages for the public home grid (anon-readable). */
-export async function listPublishedPages(): Promise<PublishedCard[]> {
+/** Published pages for the public listing grids (anon-readable). */
+export async function listPublishedPages(
+  category?: PageCategory,
+): Promise<PublishedCard[]> {
+  const byCategory = (cards: PublishedCard[]) =>
+    category ? cards.filter((c) => c.category === category) : cards;
+
   if (!isSupabaseConfigured) {
-    return Object.values(SEED_PAGES)
-      .filter((p) => p.status === "published")
-      .map(toCard);
+    return byCategory(
+      Object.values(SEED_PAGES)
+        .filter((p) => p.status === "published")
+        .map(toCard),
+    );
   }
   try {
     const { data, error } = await supabase
@@ -431,14 +438,18 @@ export async function listPublishedPages(): Promise<PublishedCard[]> {
       .eq("status", "published")
       .order("updated_at", { ascending: false });
     if (error) throw error;
-    return (data ?? [])
-      .filter((row) => row.slug !== TEMPLATE_SETTINGS_SLUG)
-      .map((row) => toCard(row as Page));
+    return byCategory(
+      (data ?? [])
+        .filter((row) => row.slug !== TEMPLATE_SETTINGS_SLUG)
+        .map((row) => toCard(row as Page)),
+    );
   } catch (err) {
     console.warn("[pages] published list falling back to seed:", err);
-    return Object.values(SEED_PAGES)
-      .filter((p) => p.status === "published")
-      .map(toCard);
+    return byCategory(
+      Object.values(SEED_PAGES)
+        .filter((p) => p.status === "published")
+        .map(toCard),
+    );
   }
 }
 
