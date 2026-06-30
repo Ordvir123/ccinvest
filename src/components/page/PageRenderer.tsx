@@ -42,6 +42,7 @@ const LABELS: Record<ReadingLang, Record<string, string>> = {
     balcony: "Balcon",
     parking: "Parking",
     notFound: "Page introuvable.",
+    floorPlan: "Plan",
   },
   he: {
     gallery: "גלריה",
@@ -54,6 +55,7 @@ const LABELS: Record<ReadingLang, Record<string, string>> = {
     balcony: "מרפסת",
     parking: "חניה",
     notFound: "הדף לא נמצא.",
+    floorPlan: "תוכנית דירה",
   },
   en: {
     gallery: "Gallery",
@@ -66,6 +68,7 @@ const LABELS: Record<ReadingLang, Record<string, string>> = {
     balcony: "Balcony",
     parking: "Parking",
     notFound: "Page not found.",
+    floorPlan: "Floor plan",
   },
 };
 
