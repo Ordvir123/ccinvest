@@ -424,8 +424,22 @@ export function PageEditor({
       </SectionCard>
 
       <SectionCard title="Hero">
-        <Field label="Kicker">
-          <Input value={content.hero.kicker ?? ""} onChange={(e) => patchHero({ kicker: e.target.value })} />
+        <Field
+          label="Kicker (per language)"
+          hint="Short eyebrow above the title. Enter each language; empty locales fall back to the source language."
+        >
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+            {READING_LANGS.map((l) => (
+              <Input
+                key={l}
+                dir={isRtlReading(l) ? "rtl" : "ltr"}
+                aria-label={`Kicker (${LANG_LABELS[l]})`}
+                placeholder={KICKER_PLACEHOLDERS[l]}
+                value={content.hero.kicker_i18n?.[l] ?? ""}
+                onChange={(e) => patchHeroI18n("kicker_i18n", l, e.target.value)}
+              />
+            ))}
+          </div>
         </Field>
         <Field label="Title" required>
           <Input value={content.hero.title} onChange={(e) => onTitleChange(e.target.value)} />
@@ -436,8 +450,22 @@ export function PageEditor({
         <Field label="Price">
           <Input value={content.hero.price ?? ""} onChange={(e) => patchHero({ price: e.target.value })} />
         </Field>
-        <Field label="CTA label">
-          <Input value={content.hero.cta_label ?? ""} onChange={(e) => patchHero({ cta_label: e.target.value })} />
+        <Field
+          label="CTA label (per language)"
+          hint="Button text. Enter each language; empty locales fall back to the source language."
+        >
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+            {READING_LANGS.map((l) => (
+              <Input
+                key={l}
+                dir={isRtlReading(l) ? "rtl" : "ltr"}
+                aria-label={`CTA label (${LANG_LABELS[l]})`}
+                placeholder={CTA_PLACEHOLDERS[l]}
+                value={content.hero.cta_label_i18n?.[l] ?? ""}
+                onChange={(e) => patchHeroI18n("cta_label_i18n", l, e.target.value)}
+              />
+            ))}
+          </div>
         </Field>
         <Field label="Background image" hint="Optional. Shown behind the hero with a dark overlay for readability.">
           <SingleImageUpload
