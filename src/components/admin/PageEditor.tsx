@@ -662,7 +662,7 @@ export function PageEditor({
             type="button"
             variant="outline"
             size="sm"
-            onClick={() => patch({ units: [...(content.units ?? []), { name: "" } as Unit] })}
+            onClick={() => patch({ units: [...(content.units ?? []), { name: "", unit_type: "apartment" } as Unit] })}
           >
             <Plus className="h-4 w-4" /> Add unit
           </Button>
