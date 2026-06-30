@@ -80,7 +80,8 @@ CRITICAL RULES — follow exactly:
 * Use ONLY information explicitly present in the text.
 * If a field is not clearly stated, OMIT it entirely. Do NOT guess, infer, approximate, or fill from general knowledge. An absent field is correct; a fabricated field is a failure.
 * Never invent prices, sizes, dates, names, URLs, or map coordinates.
-* Preserve the source language of the text; do NOT translate.
+* The source text may be in ANY language (French, Hebrew, English, etc.). Auto-detect it and ALWAYS write every output field in FRENCH. Translate any non-French content into natural, fluent French. Do NOT keep the original language.
+* Keep untranslated: numbers, prices, areas, dates, image URLs, youtube_id, map_query, and proper nouns (project/street/brand names).
 * gallery MUST be [] (empty array).
 * videos: include an entry only when an explicit YouTube URL is present; extract the 11-char id into youtube_id.
 * map_query: only if a clear street/location is stated; else omit.`;
@@ -144,7 +145,7 @@ export const extractPageContent = createServerFn({ method: "POST" })
     if (!apiKey) throw new Error("Server is missing LOVABLE_API_KEY.");
 
     const userPrompt =
-      (data.sourceLang ? `Source language: ${data.sourceLang}\n\n` : "") +
+      `Detect the language of the text below and produce the page entirely in French.\n\n` +
       `Property text:\n"""\n${data.text}\n"""`;
 
     let parsed: unknown = null;
