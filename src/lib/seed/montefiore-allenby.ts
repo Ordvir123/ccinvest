@@ -35,6 +35,11 @@ export const SEED_PAGES: Record<string, Page> = {
       location: {
         heading: "Emplacement idéal",
         map_query: "Montefiore Allenby Tel Aviv",
+        name_i18n: {
+          fr: "Montefiore / Allenby",
+          en: "Montefiore / Allenby",
+          he: "מונטיפיורי / אלנבי",
+        },
         text: "L'immeuble se situe à l'angle des rues Montefiore et Allenby près de la Grande Synagogue en cours de rénovation, à la fois près du marché et de la mer mais aussi des commerces et cafés au centre de la ville.",
       },
       about: {
