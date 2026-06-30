@@ -25,6 +25,13 @@ export const ORIENTATION_CODES: OrientationCode[] = [
 
 export const PARKING_CODES: ParkingCode[] = ["one", "none"];
 
+/** Per-locale heading for the single-apartment ("About the apartment") section. */
+export const ABOUT_APARTMENT_HEADING: Record<ReadingLang, string> = {
+  fr: "À propos de l'appartement",
+  he: "על הדירה",
+  en: "About the apartment",
+};
+
 const UNIT_TYPE_LABELS: Record<ReadingLang, Record<UnitType, string>> = {
   fr: { apartment: "Appartement", penthouse: "Penthouse", studio: "Studio", duplex: "Duplex", other: "" },
   he: { apartment: "דירה", penthouse: "פנטהאוז", studio: "סטודיו", duplex: "דופלקס", other: "" },
