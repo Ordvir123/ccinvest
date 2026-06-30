@@ -198,6 +198,18 @@ export function PageEditor({
     setContent((c) => ({ ...c, location: { ...c.location, ...p } }));
   const patchAbout = (p: Partial<NonNullable<PageContent["about"]>>) =>
     setContent((c) => ({ ...c, about: { ...c.about, ...p } }));
+  const patchContact = (p: Partial<NonNullable<PageContent["contact"]>>) =>
+    setContent((c) => ({ ...c, contact: { ...c.contact, ...p } }));
+  // Update one locale of a per-locale hero map (kicker_i18n / cta_label_i18n).
+  const patchHeroI18n = (
+    field: "kicker_i18n" | "cta_label_i18n",
+    lang: ReadingLang,
+    value: string,
+  ) =>
+    setContent((c) => ({
+      ...c,
+      hero: { ...c.hero, [field]: { ...(c.hero[field] ?? {}), [lang]: value } },
+    }));
 
   const publicUrl = slug ? `/${slug}` : "/<slug>";
 
