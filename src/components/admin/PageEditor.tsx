@@ -138,6 +138,39 @@ export function PageEditor({
   const [previewDevice, setPreviewDevice] = useState<"desktop" | "mobile">("desktop");
   const [saving, setSaving] = useState(false);
 
+  // AI corrections (apply a natural-language change to the current content).
+  const [aiInstruction, setAiInstruction] = useState("");
+  const [aiRunning, setAiRunning] = useState(false);
+  const [aiUndo, setAiUndo] = useState<PageContent | null>(null);
+
+  const runAiEdit = async () => {
+    if (!aiInstruction.trim()) {
+      toast.error("Describe the change you want first.");
+      return;
+    }
+    setAiRunning(true);
+    const before = content;
+    try {
+      const next = await applyAiEdit(content, aiInstruction.trim(), sourceLang as EditLang);
+      setContent(next);
+      setAiUndo(before);
+      setAiInstruction("");
+      toast.success("AI applied your change. Review the preview, then save.");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "AI edit failed.");
+    } finally {
+      setAiRunning(false);
+    }
+  };
+
+  const undoAiEdit = () => {
+    if (!aiUndo) return;
+    setContent(aiUndo);
+    setAiUndo(null);
+    toast.success("Reverted the AI change.");
+  };
+
+
 
   // Convenient typed updaters.
   const patch = (p: Partial<PageContent>) => setContent((c) => ({ ...c, ...p }));
