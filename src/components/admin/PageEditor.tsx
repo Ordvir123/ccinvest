@@ -432,6 +432,7 @@ export function PageEditor({
               />
             ))}
           </div>
+        </Field>
         {content.location?.map_query && (
           <iframe
             title="Map preview"
