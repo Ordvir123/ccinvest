@@ -145,10 +145,10 @@ function Home() {
       {/* Stats strip */}
       <section className="bg-primary py-12 text-primary-foreground md:py-16">
         <div className="container mx-auto grid grid-cols-2 gap-8 px-4 md:grid-cols-4">
-          <StatItem value={count} label={t("public.stats.projects")} />
-          <StatItem value={12} label={t("public.stats.years")} />
-          <StatItem value={250} label={t("public.stats.clients")} />
-          <StatItem value={8} label={t("public.stats.cities")} />
+          <StatItem value="98%" label={t("public.stats.satisfaction")} />
+          <StatItem value={12} label={t("public.stats.experience")} />
+          <StatItem value="350+" label={t("public.stats.deals")} />
+          <StatItem value="150+" label={t("public.stats.aliyah")} />
         </div>
       </section>
 
