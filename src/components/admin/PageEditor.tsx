@@ -150,10 +150,6 @@ export function PageEditor({
   const [seo, setSeo] = useState<PageSeo>(
     normalizeSeo(initialPage?.seo, initialPage?.source_lang ?? initialSourceLang ?? "he"),
   );
-  const [previewLang, setPreviewLang] = useState<ReadingLang>(
-    (initialPage?.source_lang as ReadingLang) ?? (initialSourceLang as ReadingLang) ?? "he",
-  );
-  const [previewDevice, setPreviewDevice] = useState<"desktop" | "mobile">("desktop");
   const [saving, setSaving] = useState(false);
 
   // AI corrections (apply a natural-language change to the current content).
