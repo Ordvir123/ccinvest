@@ -33,10 +33,10 @@ function AboutPage() {
       <main className="flex-1">
         <div className="container mx-auto max-w-3xl px-4 py-20">
           <h1 className="mb-6 font-display text-4xl md:text-5xl">
-            {t("public.about.title")}
+            {t("public.aboutPage.title")}
           </h1>
           <div className="whitespace-pre-line text-lg leading-relaxed text-muted-foreground">
-            {t("public.about.body")}
+            {t("public.aboutPage.body")}
           </div>
           <div className="mt-12 rounded-lg bg-background py-10">
             <img

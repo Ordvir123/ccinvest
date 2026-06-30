@@ -44,8 +44,12 @@
     },
     "about": {
       "title": "À propos",
-      "body": "CC Invest accompagne ses clients dans l'acquisition de biens immobiliers d'exception à Tel Aviv-Yafo. De la sélection rigoureuse des projets à l'accompagnement personnalisé, notre équipe met son expertise au service de votre investissement.",
+      "body": "Chez Cohen Invest, nous vous accompagnons dans l'acquisition de votre bien à Tel Aviv — de la définition de vos besoins à la remise des clés, avec un suivi personnel et professionnel à chaque étape.",
       "cta": "En savoir plus"
+    },
+    "aboutPage": {
+      "title": "Pourquoi choisir Cohen Invest ?",
+      "body": "Chez Cohen Invest, nous vous accompagnons à chaque étape de l'acquisition de votre bien — de la définition de vos besoins à la remise des clés. Nous identifions pour chaque client le bien qui lui convient, selon son budget, son objectif d'investissement ou de résidence, l'emplacement souhaité et ses besoins personnels.\n\nUne fois le bien choisi, nous vous accompagnons à chaque étape de la transaction aux côtés de professionnels reconnus — vérifications juridiques, accompagnement financier et hypothécaire, expertises techniques, et tout ce qui est nécessaire à un achat sûr et avisé.\n\nÀ la tête de la société, Corinne Cohen possède plus de 12 ans d'expérience dans l'immobilier en Israël et en France, ayant accompagné des centaines de clients dans leurs acquisitions. Ses relations étroites avec des promoteurs et constructeurs de premier plan offrent à ses clients un accès à des opportunités de qualité et un accompagnement personnel, professionnel et fiable à chaque étape."
     },
     "contact": {
       "title": "Contact",
