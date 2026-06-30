@@ -786,7 +786,7 @@ export function PageEditor({
             </a>
           )}
         </div>
-        <div class="flex items-center gap-2" className="flex items-center gap-2">
+        <div className="flex items-center gap-2">
           <Button
             type="button"
             variant="outline"
