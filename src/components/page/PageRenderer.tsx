@@ -174,12 +174,22 @@ function Stats({ stats }: { stats: PageContent["stats"] }) {
   );
 }
 
-function LocationBlock({ location }: { location: NonNullable<PageContent["location"]> }) {
+function LocationBlock({
+  location,
+  lang,
+}: {
+  location: NonNullable<PageContent["location"]>;
+  lang: ReadingLang;
+}) {
   const hasMap = hasText(location.map_query);
+  const properName = location.name_i18n?.[lang];
   return (
     <Section>
       <div className="grid items-center gap-10 md:grid-cols-2">
         <div>
+          {hasText(properName) && (
+            <p className="eyebrow mb-2 text-sm text-primary">{properName}</p>
+          )}
           {hasText(location.heading) && (
             <h2 className="text-3xl text-ink md:text-4xl">{location.heading}</h2>
           )}
