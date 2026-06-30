@@ -291,27 +291,44 @@ export function cleanContent(content: PageContent): PageContent {
     return s;
   };
 
-  const units = (content.units ?? [])
-    .filter((u) => t(u.name) || u.image?.url || u.unit_type)
-    .map((u) => {
-      const feats = (u.features ?? []).map(t).filter(Boolean);
-      return {
-        name: t(u.name),
-        unit_type: u.unit_type,
-        unit_number: keepText(u.unit_number),
-        floor: sanitizeNumber(u.floor, { floor: true }),
-        orientation: keepText(u.orientation),
-        rooms: sanitizeNumber(u.rooms),
-        area_m2: sanitizeNumber(u.area_m2),
-        balcony_m2: sanitizeNumber(u.balcony_m2),
-        parking: sanitizeParking(u.parking),
-        description: keepText(u.description),
-        price: keepText(u.price),
-        image: u.image?.url ? u.image : undefined,
-        attachment: u.attachment?.url ? u.attachment : undefined,
-        features: feats.length ? feats : undefined,
-      };
-    });
+  // Clean a single unit/apartment block (shared by units list and apartment).
+  const cleanUnit = (u: import("@/types/page").Unit) => {
+    const feats = (u.features ?? []).map(t).filter(Boolean);
+    return {
+      name: t(u.name),
+      unit_type: u.unit_type,
+      unit_number: keepText(u.unit_number),
+      floor: sanitizeNumber(u.floor, { floor: true }),
+      orientation: keepText(u.orientation),
+      rooms: sanitizeNumber(u.rooms),
+      area_m2: sanitizeNumber(u.area_m2),
+      balcony_m2: sanitizeNumber(u.balcony_m2),
+      parking: sanitizeParking(u.parking),
+      description: keepText(u.description),
+      price: keepText(u.price),
+      image: u.image?.url ? u.image : undefined,
+      attachment: u.attachment?.url ? u.attachment : undefined,
+      features: feats.length ? feats : undefined,
+    };
+  };
+
+  const category: PageContent["category"] =
+    content.category === "project" ? "project" : "apartment";
+  const isProject = category === "project";
+
+  // Units only exist on project pages; the single apartment only on apartment pages.
+  const units = isProject
+    ? (content.units ?? [])
+        .filter((u) => t(u.name) || u.image?.url || u.unit_type)
+        .map(cleanUnit)
+    : [];
+
+  const apartment =
+    !isProject && content.apartment
+      ? cleanUnit({ ...content.apartment, unit_type: content.apartment.unit_type ?? "apartment" })
+      : undefined;
+  const apartment_image_side =
+    content.apartment_image_side === "left" ? "left" : "right";
 
   const videos = (content.videos ?? []).filter((v) => t(v.youtube_id));
 
@@ -321,10 +338,19 @@ export function cleanContent(content: PageContent): PageContent {
       ? { heading: keepText(content.contact.heading), heading_i18n: contactHeadingI18n }
       : undefined;
 
-  const category: PageContent["category"] =
-    content.category === "project" ? "project" : "apartment";
-
-  return { category, hero, stats, location, about, gallery, units, videos, contact };
+  return {
+    category,
+    hero,
+    stats,
+    location,
+    about,
+    gallery,
+    units,
+    apartment,
+    apartment_image_side,
+    videos,
+    contact,
+  };
 }
 
 function cleanSeo(seo: PageSeo, sourceLang: string): PageSeo {
