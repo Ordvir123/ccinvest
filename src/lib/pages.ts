@@ -280,7 +280,10 @@ export function cleanContent(content: PageContent): PageContent {
       ? { heading: keepText(content.contact.heading) }
       : undefined;
 
-  return { hero, stats, location, about, gallery, units, videos, contact };
+  const category: PageContent["category"] =
+    content.category === "project" ? "project" : "apartment";
+
+  return { category, hero, stats, location, about, gallery, units, videos, contact };
 }
 
 function cleanSeo(seo: PageSeo, sourceLang: string): PageSeo {
