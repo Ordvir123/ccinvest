@@ -128,9 +128,8 @@ function Hero({
         {hasText(ctaLabel) && (
           <div className="mt-10">
             <Button
-              variant="secondary"
               size="lg"
-              className="bg-card text-primary hover:bg-card/90"
+              className="bg-cta uppercase tracking-wider text-cta-foreground hover:bg-cta/90"
               onClick={scrollToContact}
             >
               {ctaLabel}
