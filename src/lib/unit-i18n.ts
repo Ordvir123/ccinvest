@@ -10,7 +10,7 @@ import type {
   UnitType,
 } from "@/types/page";
 
-export const UNIT_TYPES: UnitType[] = ["apartment", "penthouse", "studio", "duplex"];
+export const UNIT_TYPES: UnitType[] = ["apartment", "penthouse", "studio", "duplex", "other"];
 
 export const ORIENTATION_CODES: OrientationCode[] = [
   "north",
@@ -26,9 +26,9 @@ export const ORIENTATION_CODES: OrientationCode[] = [
 export const PARKING_CODES: ParkingCode[] = ["one", "none"];
 
 const UNIT_TYPE_LABELS: Record<ReadingLang, Record<UnitType, string>> = {
-  fr: { apartment: "Appartement", penthouse: "Penthouse", studio: "Studio", duplex: "Duplex" },
-  he: { apartment: "דירה", penthouse: "פנטהאוז", studio: "סטודיו", duplex: "דופלקס" },
-  en: { apartment: "Apartment", penthouse: "Penthouse", studio: "Studio", duplex: "Duplex" },
+  fr: { apartment: "Appartement", penthouse: "Penthouse", studio: "Studio", duplex: "Duplex", other: "" },
+  he: { apartment: "דירה", penthouse: "פנטהאוז", studio: "סטודיו", duplex: "דופלקס", other: "" },
+  en: { apartment: "Apartment", penthouse: "Penthouse", studio: "Studio", duplex: "Duplex", other: "" },
 };
 
 const ORIENTATION_LABELS: Record<ReadingLang, Record<OrientationCode, string>> = {
@@ -76,6 +76,7 @@ export const UNIT_TYPE_OPTION_LABELS: Record<UnitType, string> = {
   penthouse: "Penthouse",
   studio: "Studio",
   duplex: "Duplex",
+  other: "Other (custom name)",
 };
 
 export const ORIENTATION_OPTION_LABELS: Record<OrientationCode, string> = {
@@ -98,7 +99,8 @@ const has = (v?: string | null): v is string => typeof v === "string" && v.trim(
 
 /** Compose the localized unit title: "{translated type} {number}" with fallback. */
 export function unitTitle(unit: Unit, lang: ReadingLang): string {
-  if (unit.unit_type) {
+  // "Other" (or legacy unset) uses the free-text custom name verbatim.
+  if (unit.unit_type && unit.unit_type !== "other") {
     const type = UNIT_TYPE_LABELS[lang]?.[unit.unit_type] ?? UNIT_TYPE_LABELS.fr[unit.unit_type];
     return has(unit.unit_number) ? `${type} ${unit.unit_number.trim()}` : type;
   }

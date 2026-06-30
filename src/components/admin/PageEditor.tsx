@@ -66,6 +66,24 @@ import {
 const SOURCE_LANGS = ["fr", "he", "en"] as const;
 const SITE_ORIGIN = "https://ccinvest.lovable.app";
 
+/** Localized placeholders (guidance only — admin's entered value wins). */
+const KICKER_PLACEHOLDERS: Record<ReadingLang, string> = {
+  fr: "À VENDRE - TLV",
+  he: "למכירה - תל אביב",
+  en: "FOR SALE - TLV",
+};
+const CTA_PLACEHOLDERS: Record<ReadingLang, string> = {
+  fr: "Contact",
+  he: "צור קשר",
+  en: "Contact",
+};
+const CONTACT_HEADING_PLACEHOLDERS: Record<ReadingLang, string> = {
+  fr: "Plus d'informations sur ce projet ?",
+  he: "מידע נוסף על פרויקט זה?",
+  en: "More information on this project?",
+};
+const LANG_LABELS: Record<ReadingLang, string> = { fr: "Français", he: "עברית", en: "English" };
+
 function MoveRemove({
   onUp,
   onDown,
