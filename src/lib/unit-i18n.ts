@@ -90,7 +90,7 @@ export const ORIENTATION_OPTION_LABELS: Record<OrientationCode, string> = {
 };
 
 export const PARKING_OPTION_LABELS: Record<ParkingCode, string> = {
-  one: "One parking space",
+  one: "1 space",
   none: "None",
 };
 
