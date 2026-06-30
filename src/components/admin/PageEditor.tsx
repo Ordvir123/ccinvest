@@ -24,7 +24,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
 import { cn } from "@/lib/utils";
 
-import { PageRenderer } from "@/components/page/PageRenderer";
+
 import { SectionCard, Field } from "@/components/admin/editor-parts";
 import { SingleImageUpload, GalleryUpload, UnitFileUpload } from "@/components/admin/MediaUpload";
 import { IconPicker } from "@/components/admin/IconPicker";
