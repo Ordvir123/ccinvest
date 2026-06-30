@@ -69,6 +69,16 @@ export function listTranslatableFields(c: PageContent): TransField[] {
     );
   });
 
+  // Single apartment block (apartment-type pages). Same logic as a unit.
+  const apt = c.apartment;
+  if (apt) {
+    if (!apt.unit_type) push("apartment.name", "Apartment · Name", apt.name);
+    push("apartment.description", "Apartment · Description", apt.description);
+    (apt.features ?? []).forEach((f, j) =>
+      push(`apartment.features.${j}`, `Apartment · Feature ${j + 1}`, f),
+    );
+  }
+
   (c.videos ?? []).forEach((v, i) => push(`videos.${i}.title`, `Video ${i + 1} · Title`, v.title));
 
   // contact.heading is authored per-locale (heading_i18n) — not machine-translated.
