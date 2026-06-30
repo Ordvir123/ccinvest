@@ -30,10 +30,10 @@
       "cta": "View apartments"
     },
     "stats": {
-      "projects": "Available projects",
-      "years": "Years of experience",
-      "clients": "Happy clients",
-      "cities": "Sought-after neighborhoods"
+      "satisfaction": "Satisfaction rate",
+      "experience": "Years of experience",
+      "deals": "Deals closed",
+      "aliyah": "Families who made Aliyah"
     },
     "properties": {
       "title": "Our apartments",
