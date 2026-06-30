@@ -26,8 +26,16 @@ import { cn } from "@/lib/utils";
 
 import { PageRenderer } from "@/components/page/PageRenderer";
 import { SectionCard, Field } from "@/components/admin/editor-parts";
-import { SingleImageUpload, GalleryUpload } from "@/components/admin/MediaUpload";
+import { SingleImageUpload, GalleryUpload, UnitFileUpload } from "@/components/admin/MediaUpload";
 import { IconPicker } from "@/components/admin/IconPicker";
+import {
+  UNIT_TYPES,
+  ORIENTATION_CODES,
+  PARKING_CODES,
+  UNIT_TYPE_OPTION_LABELS,
+  ORIENTATION_OPTION_LABELS,
+  PARKING_OPTION_LABELS,
+} from "@/lib/unit-i18n";
 import { TranslationsTab } from "@/components/admin/TranslationsTab";
 import { SeoEditor } from "@/components/admin/SeoEditor";
 import {
