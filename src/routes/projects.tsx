@@ -8,24 +8,29 @@ import { ProjectCard } from "@/components/site/ProjectCard";
 import { Skeleton } from "@/components/ui/skeleton";
 import { listPublishedPages } from "@/lib/pages";
 
-export const Route = createFileRoute("/appartements")({
+export const Route = createFileRoute("/projects")({
   head: () => ({
     meta: [
-      { title: "Appartements — CC Invest" },
+      { title: "Projets — CC Invest" },
       {
         name: "description",
-        content: "Découvrez tous nos appartements à vendre à Tel Aviv.",
+        content: "Découvrez tous nos projets immobiliers à Tel Aviv.",
+      },
+      { property: "og:title", content: "Projets — CC Invest" },
+      {
+        property: "og:description",
+        content: "Découvrez tous nos projets immobiliers à Tel Aviv.",
       },
     ],
   }),
-  component: PropertiesPage,
+  component: ProjectsPage,
 });
 
-function PropertiesPage() {
+function ProjectsPage() {
   const { t } = useTranslation();
   const { data, isLoading } = useQuery({
-    queryKey: ["published-pages", "apartment"],
-    queryFn: () => listPublishedPages("apartment"),
+    queryKey: ["published-pages", "project"],
+    queryFn: () => listPublishedPages("project"),
   });
 
   return (
@@ -33,10 +38,10 @@ function PropertiesPage() {
       <SiteHeader />
       <main className="container mx-auto flex-1 px-4 py-16">
         <h1 className="mb-2 font-display text-4xl md:text-5xl">
-          {t("public.properties.title")}
+          {t("public.projects.title")}
         </h1>
         <p className="mb-10 text-muted-foreground">
-          {t("public.properties.subtitle")}
+          {t("public.projects.subtitle")}
         </p>
 
         {isLoading ? (
@@ -47,7 +52,7 @@ function PropertiesPage() {
           </div>
         ) : !data || data.length === 0 ? (
           <p className="py-20 text-center text-muted-foreground">
-            {t("public.properties.empty")}
+            {t("public.projects.empty")}
           </p>
         ) : (
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">

@@ -20,7 +20,14 @@ export type Unit = {
 
 export type Video = { title?: string; youtube_id: string };
 
+/** Which public listing page a page belongs to. */
+export type PageCategory = "apartment" | "project";
+
+export const PAGE_CATEGORIES: PageCategory[] = ["apartment", "project"];
+
 export type PageContent = {
+  /** Public listing this page appears in. Defaults to "apartment". */
+  category?: PageCategory;
   hero: {
     kicker?: string;
     title: string;

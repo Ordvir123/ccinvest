@@ -97,7 +97,7 @@ function Home() {
 
   const { data: projects, isLoading } = useQuery({
     queryKey: ["published-pages"],
-    queryFn: listPublishedPages,
+    queryFn: () => listPublishedPages(),
   });
 
   const count = projects?.length ?? 0;

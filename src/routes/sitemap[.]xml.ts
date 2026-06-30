@@ -28,6 +28,9 @@ export const Route = createFileRoute("/sitemap.xml")({
 
         const urls: string[] = [
           `  <url><loc>${BASE_URL}/</loc><changefreq>weekly</changefreq><priority>1.0</priority></url>`,
+          `  <url><loc>${BASE_URL}/appartements</loc><changefreq>weekly</changefreq><priority>0.9</priority></url>`,
+          `  <url><loc>${BASE_URL}/projects</loc><changefreq>weekly</changefreq><priority>0.9</priority></url>`,
+          `  <url><loc>${BASE_URL}/about</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>`,
         ];
 
         for (const { slug, source_lang } of slugs) {

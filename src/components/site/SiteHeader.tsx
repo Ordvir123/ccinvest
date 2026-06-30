@@ -16,6 +16,7 @@ export function SiteHeader() {
   const items = [
     { to: "/", label: t("nav.home") },
     { to: "/appartements", label: t("nav.properties") },
+    { to: "/projects", label: t("nav.projects") },
     { to: "/about", label: t("nav.about") },
   ] as const;
 
