@@ -65,9 +65,9 @@ const ORIENTATION_LABELS: Record<ReadingLang, Record<OrientationCode, string>> =
 };
 
 const PARKING_LABELS: Record<ReadingLang, Record<ParkingCode, string>> = {
-  fr: { one: "Une place de parking", none: "Sans" },
-  he: { one: "מקום חניה אחד", none: "ללא" },
-  en: { one: "One parking space", none: "None" },
+  fr: { one: "1", none: "—" },
+  he: { one: "1", none: "ללא" },
+  en: { one: "1", none: "None" },
 };
 
 /** Admin-facing English labels for the editor dropdowns. */
@@ -90,7 +90,7 @@ export const ORIENTATION_OPTION_LABELS: Record<OrientationCode, string> = {
 };
 
 export const PARKING_OPTION_LABELS: Record<ParkingCode, string> = {
-  one: "One parking space",
+  one: "1 space",
   none: "None",
 };
 
@@ -105,9 +105,23 @@ export function unitTitle(unit: Unit, lang: ReadingLang): string {
   return unit.name ?? "";
 }
 
-/** Localized rooms value, e.g. "חדרים 2" / "2 pièces" / "2 rooms". */
+/**
+ * Parse a stored numeric field into a clean number. Returns null when the value
+ * is not a bare number (legacy text like "2 pièces" / "1er étage"), so callers
+ * can render it as-is without appending a (duplicate) unit label.
+ */
+export function parseNumericField(raw?: string | null): number | null {
+  if (typeof raw !== "string") return null;
+  const s = raw.trim().replace(",", ".");
+  if (!/^-?\d+(\.\d+)?$/.test(s)) return null;
+  const n = Number(s);
+  return Number.isFinite(n) ? n : null;
+}
+
+/** Localized rooms value, e.g. "2 חדרים" / "2 pièces" / "2 rooms". */
 export function roomsValue(rooms: string, lang: ReadingLang): string {
-  const n = rooms.trim();
+  const n = parseNumericField(rooms);
+  if (n === null) return rooms.trim(); // legacy/edge value — never append a unit
   if (lang === "fr") return `${n} pièces`;
   if (lang === "he") return `${n} חדרים`;
   return `${n} rooms`;
@@ -115,15 +129,18 @@ export function roomsValue(rooms: string, lang: ReadingLang): string {
 
 /** Localized floor value. */
 export function floorValue(floor: string, lang: ReadingLang): string {
-  const n = floor.trim();
-  if (lang === "fr") return n === "1" ? "1er étage" : `${n}e étage`;
-  if (lang === "he") return `קומה ${n}`;
-  return `${n} floor`;
+  const n = parseNumericField(floor);
+  if (n === null) return floor.trim(); // legacy/edge value — never append a unit
+  if (lang === "fr") return n === 0 ? "RDC" : n === 1 ? "1er étage" : `${n}e étage`;
+  if (lang === "he") return n === 0 ? "קומת קרקע" : `קומה ${n}`;
+  return n === 0 ? "Ground floor" : `Floor ${n}`;
 }
 
 /** Localized area / balcony value (m² in all locales). */
 export function areaValue(area: string): string {
-  return `${area.trim()} m²`;
+  const n = parseNumericField(area);
+  if (n === null) return area.trim(); // legacy/edge value — never append a unit
+  return `${n} m²`;
 }
 
 /** Localized orientation; falls back to raw text (handled by AI translation). */
@@ -132,10 +149,17 @@ export function orientationValue(value: string, lang: ReadingLang): string {
   return (map as Record<string, string>)[value] ?? value;
 }
 
-/** Localized parking; falls back to raw text. */
+/** Localized parking; short token next to the "Parking" label (no repetition). */
 export function parkingValue(value: string, lang: ReadingLang): string {
   const map = PARKING_LABELS[lang] ?? PARKING_LABELS.fr;
-  return (map as Record<string, string>)[value] ?? value;
+  if (value in map) return (map as Record<string, string>)[value];
+  const n = parseNumericField(value);
+  if (n !== null) return String(n);
+  // Legacy free-text values (e.g. "Une place de parking", "Sans") -> short token.
+  const s = value.trim();
+  if (/sans|aucun|none|ללא/i.test(s)) return map.none;
+  if (/place|parking|חני|space/i.test(s)) return map.one;
+  return s;
 }
 
 export const isOrientationCode = (v?: string): v is OrientationCode =>

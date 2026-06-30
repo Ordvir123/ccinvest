@@ -875,12 +875,20 @@ function UnitBlock({
 }) {
   const [open, setOpen] = useState(true);
   const set = (p: Partial<Unit>) => onChange({ ...unit, ...p });
-  const numericFields: [keyof Unit, string][] = [
-    ["floor", "Floor (number)"],
-    ["rooms", "Rooms (number)"],
-    ["area_m2", "Area (m², number)"],
-    ["balcony_m2", "Balcony (m², number)"],
+  const numericFields: [keyof Unit, string, boolean, string][] = [
+    // [key, label, allowDecimal, placeholder]
+    ["floor", "Floor (number only, 0 = ground)", false, "1"],
+    ["rooms", "Rooms (number only)", false, "2"],
+    ["area_m2", "Area (m², number only)", true, "61"],
+    ["balcony_m2", "Balcony (m², number only)", true, "6.5"],
   ];
+  const sanitizeNumeric = (val: string, allowDecimal: boolean) => {
+    let s = val.replace(/[^\d.,]/g, "").replace(",", ".");
+    if (!allowDecimal) return s.replace(/\./g, "");
+    const parts = s.split(".");
+    if (parts.length > 2) s = parts[0] + "." + parts.slice(1).join("");
+    return s;
+  };
   const NONE = "__none__";
   const title =
     (unit.unit_type
@@ -932,12 +940,15 @@ function UnitBlock({
             </Field>
           )}
           <div className="grid grid-cols-2 gap-2">
-            {numericFields.map(([key, label]) => (
+            {numericFields.map(([key, label, allowDecimal, placeholder]) => (
               <Field key={key} label={label}>
                 <Input
-                  inputMode="numeric"
+                  inputMode={allowDecimal ? "decimal" : "numeric"}
+                  placeholder={placeholder}
                   value={(unit[key] as string) ?? ""}
-                  onChange={(e) => set({ [key]: e.target.value } as Partial<Unit>)}
+                  onChange={(e) =>
+                    set({ [key]: sanitizeNumeric(e.target.value, allowDecimal) } as Partial<Unit>)
+                  }
                 />
               </Field>
             ))}
