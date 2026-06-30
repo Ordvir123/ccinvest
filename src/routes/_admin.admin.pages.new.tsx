@@ -1,13 +1,13 @@
 import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { toast } from "sonner";
-import { Sparkles, PencilLine, Loader2 } from "lucide-react";
+import { Sparkles, PencilLine, Loader2, Building2, Home } from "lucide-react";
 
 import { PageEditor } from "@/components/admin/PageEditor";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
-import { extractPageFromText, mergeAiContent } from "@/lib/extract-page";
+import { extractPageFromText, mergeAiContent, type ExtractCategory } from "@/lib/extract-page";
 import type { PageContent } from "@/types/page";
 
 export const Route = createFileRoute("/_admin/admin/pages/new")({
@@ -19,6 +19,7 @@ type Mode = "choose" | "ai" | "manual";
 function NewPage() {
   const [mode, setMode] = useState<Mode>("choose");
   const [text, setText] = useState("");
+  const [category, setCategory] = useState<ExtractCategory>("project");
   const [processing, setProcessing] = useState(false);
   const [prefill, setPrefill] = useState<PageContent | null>(null);
 
@@ -36,8 +37,8 @@ function NewPage() {
     setProcessing(true);
     try {
       // Source language is auto-detected server-side; output is always French.
-      const partial = await extractPageFromText(text);
-      setPrefill(mergeAiContent(partial));
+      const partial = await extractPageFromText(text, { category });
+      setPrefill(mergeAiContent(partial, category));
       toast.success("AI built the page in French. Review, then translate to HE/EN.");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "AI extraction failed.");
@@ -45,6 +46,8 @@ function NewPage() {
       setProcessing(false);
     }
   };
+
+
 
 
   return (
