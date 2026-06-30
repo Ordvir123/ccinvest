@@ -22,9 +22,9 @@ function NewPage() {
   const [processing, setProcessing] = useState(false);
   const [prefill, setPrefill] = useState<PageContent | null>(null);
 
-  // The page is always built in French first; Hebrew/English come from the
-  // Translations tab. So manual + AI both start in French.
-  if (mode === "manual") return <PageEditor initialSourceLang="fr" />;
+  // Manual pages are authored in Hebrew by default (most common). The AI flow
+  // detects the pasted language and always outputs French, so it stays "fr".
+  if (mode === "manual") return <PageEditor initialSourceLang="he" />;
   if (prefill)
     return <PageEditor initialContent={prefill} initialSourceLang="fr" showAiNote />;
 

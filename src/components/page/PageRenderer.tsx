@@ -76,15 +76,29 @@ const scrollToContact = () => {
   document.getElementById("contact")?.scrollIntoView({ behavior: "smooth" });
 };
 
+/** Pick a per-locale authored value, falling back to the base (source) value. */
+function pickI18n(
+  map: Partial<Record<ReadingLang, string>> | undefined,
+  base: string | undefined,
+  lang: ReadingLang,
+): string | undefined {
+  const v = map?.[lang];
+  return hasText(v) ? v : base;
+}
+
 function Hero({
   hero,
   settings,
+  lang,
 }: {
   hero: PageContent["hero"];
   settings: TemplateSettings;
+  lang: ReadingLang;
 }) {
   const bg = hero.background?.url;
-  const ctaLabel = hasText(hero.cta_label) ? hero.cta_label : settings.defaultCtaLabel;
+  const kicker = pickI18n(hero.kicker_i18n, hero.kicker, lang);
+  const ctaResolved = pickI18n(hero.cta_label_i18n, hero.cta_label, lang);
+  const ctaLabel = hasText(ctaResolved) ? ctaResolved : settings.defaultCtaLabel;
   return (
     <section className="relative overflow-hidden bg-gradient-brand text-primary-foreground">
       {bg && (
@@ -107,9 +121,9 @@ function Hero({
           alt={settings.brandName}
           className="mx-auto mb-8 h-20 w-auto rounded-lg bg-card px-6 py-4 shadow-sm md:mb-10 md:h-28"
         />
-        {hasText(hero.kicker) && (
+        {hasText(kicker) && (
           <p className="eyebrow mb-5 text-xs text-primary-foreground/80">
-            {hero.kicker}
+            {kicker}
           </p>
         )}
         <h1 className="mx-auto max-w-3xl text-balance text-4xl !text-primary-foreground [text-shadow:0_2px_12px_oklch(0.15_0.03_265/0.5)] sm:text-5xl md:text-7xl">
@@ -484,7 +498,7 @@ export function PageRenderer({
     : undefined;
   return (
     <main className="bg-background" style={brandStyle}>
-      <Hero hero={content.hero} settings={settings} />
+      <Hero hero={content.hero} settings={settings} lang={lang} />
       <Stats stats={content.stats} />
       {content.location &&
         (hasText(content.location.heading) ||
@@ -500,7 +514,10 @@ export function PageRenderer({
       <Units units={content.units} labels={labels} lang={lang} />
       <Videos videos={content.videos} labels={labels} />
       <ContactForm
-        heading={content.contact?.heading ?? (hasText(settings.defaultContactHeading) ? settings.defaultContactHeading : undefined)}
+        heading={
+          pickI18n(content.contact?.heading_i18n, content.contact?.heading, lang) ??
+          (hasText(settings.defaultContactHeading) ? settings.defaultContactHeading : undefined)
+        }
         interactive={interactive}
         pageId={pageId}
         slug={slug}

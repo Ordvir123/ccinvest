@@ -41,10 +41,10 @@ export function listTranslatableFields(c: PageContent): TransField[] {
     if (v && v.trim()) out.push({ path, label, source: v });
   };
 
-  push("hero.kicker", "Hero · Kicker", c.hero?.kicker);
+  // hero.kicker and hero.cta_label are authored per-locale (kicker_i18n /
+  // cta_label_i18n) — not machine-translated here.
   push("hero.title", "Hero · Title", c.hero?.title);
   push("hero.subtitle", "Hero · Subtitle", c.hero?.subtitle);
-  push("hero.cta_label", "Hero · CTA label", c.hero?.cta_label);
 
   (c.stats ?? []).forEach((s, i) => push(`stats.${i}.label`, `Stat ${i + 1} · Label`, s.label));
 
@@ -71,7 +71,7 @@ export function listTranslatableFields(c: PageContent): TransField[] {
 
   (c.videos ?? []).forEach((v, i) => push(`videos.${i}.title`, `Video ${i + 1} · Title`, v.title));
 
-  push("contact.heading", "Contact · Heading", c.contact?.heading);
+  // contact.heading is authored per-locale (heading_i18n) — not machine-translated.
   return out;
 }
 
@@ -140,6 +140,15 @@ export function preserveStableFields(
   translated: PageContent,
 ): PageContent {
   const out = structuredClone(translated) as PageContent;
+  // Hero kicker + CTA are authored per-locale; restore base + i18n from source so
+  // the renderer picks the authored locale value (or falls back to the source).
+  out.hero = {
+    ...out.hero,
+    kicker: source.hero?.kicker,
+    kicker_i18n: source.hero?.kicker_i18n,
+    cta_label: source.hero?.cta_label,
+    cta_label_i18n: source.hero?.cta_label_i18n,
+  };
   if (source.hero?.background) {
     out.hero = { ...out.hero, background: source.hero.background };
   }
@@ -177,6 +186,12 @@ export function preserveStableFields(
   if (source.location?.name_i18n) {
     out.location = { ...out.location, name_i18n: source.location.name_i18n };
   }
+  // Contact heading is authored per-locale; restore base + i18n from source.
+  out.contact = {
+    ...out.contact,
+    heading: source.contact?.heading,
+    heading_i18n: source.contact?.heading_i18n,
+  };
   return out;
 }
 

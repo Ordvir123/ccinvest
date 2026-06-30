@@ -114,14 +114,14 @@ export const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
 export function emptyPageContent(): PageContent {
   return {
     category: "apartment",
-    hero: { kicker: "", title: "", subtitle: "", price: "", cta_label: "" },
+    hero: { kicker: "", kicker_i18n: {}, title: "", subtitle: "", price: "", cta_label: "", cta_label_i18n: {} },
     stats: [],
     location: { heading: "", text: "", map_query: "" },
     about: { heading: "", body: "", features: [] },
     gallery: [],
     units: [],
     videos: [],
-    contact: { heading: "" },
+    contact: { heading: "", heading_i18n: {} },
   };
 }
 
@@ -212,13 +212,27 @@ export function cleanContent(content: PageContent): PageContent {
     const s = t(v);
     return s.length > 0 ? s : undefined;
   };
+  // Keep only locales that hold a non-empty value; drop the map if all empty.
+  const cleanI18n = (
+    map?: Partial<Record<ReadingLang, string>>,
+  ): Partial<Record<ReadingLang, string>> | undefined => {
+    if (!map) return undefined;
+    const out: Partial<Record<ReadingLang, string>> = {};
+    for (const l of READING_LANGS) {
+      const s = keepText(map[l]);
+      if (s) out[l] = s;
+    }
+    return Object.keys(out).length ? out : undefined;
+  };
 
   const hero = {
     kicker: keepText(content.hero.kicker),
+    kicker_i18n: cleanI18n(content.hero.kicker_i18n),
     title: t(content.hero.title),
     subtitle: keepText(content.hero.subtitle),
     price: keepText(content.hero.price),
     cta_label: keepText(content.hero.cta_label),
+    cta_label_i18n: cleanI18n(content.hero.cta_label_i18n),
     background: content.hero.background?.url ? content.hero.background : undefined,
   };
 
@@ -299,9 +313,10 @@ export function cleanContent(content: PageContent): PageContent {
 
   const videos = (content.videos ?? []).filter((v) => t(v.youtube_id));
 
+  const contactHeadingI18n = cleanI18n(content.contact?.heading_i18n);
   const contact =
-    content.contact && keepText(content.contact.heading)
-      ? { heading: keepText(content.contact.heading) }
+    content.contact && (keepText(content.contact.heading) || contactHeadingI18n)
+      ? { heading: keepText(content.contact.heading), heading_i18n: contactHeadingI18n }
       : undefined;
 
   const category: PageContent["category"] =

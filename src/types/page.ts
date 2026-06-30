@@ -5,7 +5,7 @@ export type Media = { url: string; alt?: string };
 export type Stat = { value: string; label: string; icon?: string };
 
 /** Closed dictionaries so admin-picked values translate reliably per locale. */
-export type UnitType = "apartment" | "penthouse" | "studio" | "duplex";
+export type UnitType = "apartment" | "penthouse" | "studio" | "duplex" | "other";
 
 export type OrientationCode =
   | "north"
@@ -57,10 +57,14 @@ export type PageContent = {
   category?: PageCategory;
   hero: {
     kicker?: string;
+    /** Per-locale kicker (he/en/fr). Authored manually; falls back to `kicker`. */
+    kicker_i18n?: Partial<Record<ReadingLang, string>>;
     title: string;
     subtitle?: string;
     price?: string;
     cta_label?: string;
+    /** Per-locale CTA label. Authored manually; falls back to `cta_label`. */
+    cta_label_i18n?: Partial<Record<ReadingLang, string>>;
     /** Optional hero background image. */
     background?: Media;
   };
@@ -76,7 +80,11 @@ export type PageContent = {
   gallery: Media[];
   units?: Unit[];
   videos?: Video[];
-  contact?: { heading?: string };
+  contact?: {
+    heading?: string;
+    /** Per-locale contact heading. Authored manually; falls back to `heading`. */
+    heading_i18n?: Partial<Record<ReadingLang, string>>;
+  };
 };
 
 /** SEO + social fields authored per reading language. */

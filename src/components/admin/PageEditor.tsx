@@ -66,6 +66,24 @@ import {
 const SOURCE_LANGS = ["fr", "he", "en"] as const;
 const SITE_ORIGIN = "https://ccinvest.lovable.app";
 
+/** Localized placeholders (guidance only — admin's entered value wins). */
+const KICKER_PLACEHOLDERS: Record<ReadingLang, string> = {
+  fr: "À VENDRE - TLV",
+  he: "למכירה - תל אביב",
+  en: "FOR SALE - TLV",
+};
+const CTA_PLACEHOLDERS: Record<ReadingLang, string> = {
+  fr: "Contact",
+  he: "צור קשר",
+  en: "Contact",
+};
+const CONTACT_HEADING_PLACEHOLDERS: Record<ReadingLang, string> = {
+  fr: "Plus d'informations sur ce projet ?",
+  he: "מידע נוסף על פרויקט זה?",
+  en: "More information on this project?",
+};
+const LANG_LABELS: Record<ReadingLang, string> = { fr: "Français", he: "עברית", en: "English" };
+
 function MoveRemove({
   onUp,
   onDown,
@@ -118,7 +136,7 @@ export function PageEditor({
   const [slugTouched, setSlugTouched] = useState(!!initialPage);
   const [slugError, setSlugError] = useState<string | null>(null);
   const [sourceLang, setSourceLang] = useState(
-    initialPage?.source_lang ?? initialSourceLang ?? "fr",
+    initialPage?.source_lang ?? initialSourceLang ?? "he",
   );
   const [status, setStatus] = useState<PageStatus>(initialPage?.status ?? "draft");
   const [publishing, setPublishing] = useState(false);
@@ -130,10 +148,10 @@ export function PageEditor({
         : emptyPageContent(),
   );
   const [seo, setSeo] = useState<PageSeo>(
-    normalizeSeo(initialPage?.seo, initialPage?.source_lang ?? initialSourceLang ?? "fr"),
+    normalizeSeo(initialPage?.seo, initialPage?.source_lang ?? initialSourceLang ?? "he"),
   );
   const [previewLang, setPreviewLang] = useState<ReadingLang>(
-    (initialPage?.source_lang as ReadingLang) ?? (initialSourceLang as ReadingLang) ?? "fr",
+    (initialPage?.source_lang as ReadingLang) ?? (initialSourceLang as ReadingLang) ?? "he",
   );
   const [previewDevice, setPreviewDevice] = useState<"desktop" | "mobile">("desktop");
   const [saving, setSaving] = useState(false);
@@ -180,6 +198,18 @@ export function PageEditor({
     setContent((c) => ({ ...c, location: { ...c.location, ...p } }));
   const patchAbout = (p: Partial<NonNullable<PageContent["about"]>>) =>
     setContent((c) => ({ ...c, about: { ...c.about, ...p } }));
+  const patchContact = (p: Partial<NonNullable<PageContent["contact"]>>) =>
+    setContent((c) => ({ ...c, contact: { ...c.contact, ...p } }));
+  // Update one locale of a per-locale hero map (kicker_i18n / cta_label_i18n).
+  const patchHeroI18n = (
+    field: "kicker_i18n" | "cta_label_i18n",
+    lang: ReadingLang,
+    value: string,
+  ) =>
+    setContent((c) => ({
+      ...c,
+      hero: { ...c.hero, [field]: { ...(c.hero[field] ?? {}), [lang]: value } },
+    }));
 
   const publicUrl = slug ? `/${slug}` : "/<slug>";
 
@@ -394,8 +424,22 @@ export function PageEditor({
       </SectionCard>
 
       <SectionCard title="Hero">
-        <Field label="Kicker">
-          <Input value={content.hero.kicker ?? ""} onChange={(e) => patchHero({ kicker: e.target.value })} />
+        <Field
+          label="Kicker (per language)"
+          hint="Short eyebrow above the title. Enter each language; empty locales fall back to the source language."
+        >
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+            {READING_LANGS.map((l) => (
+              <Input
+                key={l}
+                dir={isRtlReading(l) ? "rtl" : "ltr"}
+                aria-label={`Kicker (${LANG_LABELS[l]})`}
+                placeholder={KICKER_PLACEHOLDERS[l]}
+                value={content.hero.kicker_i18n?.[l] ?? ""}
+                onChange={(e) => patchHeroI18n("kicker_i18n", l, e.target.value)}
+              />
+            ))}
+          </div>
         </Field>
         <Field label="Title" required>
           <Input value={content.hero.title} onChange={(e) => onTitleChange(e.target.value)} />
@@ -406,8 +450,22 @@ export function PageEditor({
         <Field label="Price">
           <Input value={content.hero.price ?? ""} onChange={(e) => patchHero({ price: e.target.value })} />
         </Field>
-        <Field label="CTA label">
-          <Input value={content.hero.cta_label ?? ""} onChange={(e) => patchHero({ cta_label: e.target.value })} />
+        <Field
+          label="CTA label (per language)"
+          hint="Button text. Enter each language; empty locales fall back to the source language."
+        >
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+            {READING_LANGS.map((l) => (
+              <Input
+                key={l}
+                dir={isRtlReading(l) ? "rtl" : "ltr"}
+                aria-label={`CTA label (${LANG_LABELS[l]})`}
+                placeholder={CTA_PLACEHOLDERS[l]}
+                value={content.hero.cta_label_i18n?.[l] ?? ""}
+                onChange={(e) => patchHeroI18n("cta_label_i18n", l, e.target.value)}
+              />
+            ))}
+          </div>
         </Field>
         <Field label="Background image" hint="Optional. Shown behind the hero with a dark overlay for readability.">
           <SingleImageUpload
@@ -604,7 +662,7 @@ export function PageEditor({
             type="button"
             variant="outline"
             size="sm"
-            onClick={() => patch({ units: [...(content.units ?? []), { name: "" } as Unit] })}
+            onClick={() => patch({ units: [...(content.units ?? []), { name: "", unit_type: "apartment" } as Unit] })}
           >
             <Plus className="h-4 w-4" /> Add unit
           </Button>
@@ -639,11 +697,26 @@ export function PageEditor({
       </SectionCard>
 
       <SectionCard title="Contact" defaultOpen={false}>
-        <Field label="Heading">
-          <Input
-            value={content.contact?.heading ?? ""}
-            onChange={(e) => patch({ contact: { heading: e.target.value } })}
-          />
+        <Field
+          label="Heading (per language)"
+          hint="Shown above the contact form. Enter each language; empty locales fall back to the source language."
+        >
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+            {READING_LANGS.map((l) => (
+              <Input
+                key={l}
+                dir={isRtlReading(l) ? "rtl" : "ltr"}
+                aria-label={`Contact heading (${LANG_LABELS[l]})`}
+                placeholder={CONTACT_HEADING_PLACEHOLDERS[l]}
+                value={content.contact?.heading_i18n?.[l] ?? ""}
+                onChange={(e) =>
+                  patchContact({
+                    heading_i18n: { ...(content.contact?.heading_i18n ?? {}), [l]: e.target.value },
+                  })
+                }
+              />
+            ))}
+          </div>
         </Field>
       </SectionCard>
 
@@ -876,11 +949,11 @@ function UnitBlock({
   const [open, setOpen] = useState(true);
   const set = (p: Partial<Unit>) => onChange({ ...unit, ...p });
   const numericFields: [keyof Unit, string, boolean, string][] = [
-    // [key, label, allowDecimal, placeholder]
+    // [key, label, allowDecimal, placeholder] — placeholders are neutral hints, not data.
     ["floor", "Floor (number only, 0 = ground)", false, "1"],
     ["rooms", "Rooms (number only)", false, "2"],
-    ["area_m2", "Area (m², number only)", true, "61"],
-    ["balcony_m2", "Balcony (m², number only)", true, "6.5"],
+    ["area_m2", "Area (m², number only)", true, "0"],
+    ["balcony_m2", "Balcony (m², number only)", true, "0"],
   ];
   const sanitizeNumeric = (val: string, allowDecimal: boolean) => {
     let s = val.replace(/[^\d.,]/g, "").replace(",", ".");
@@ -890,10 +963,13 @@ function UnitBlock({
     return s;
   };
   const NONE = "__none__";
+  // Custom name only applies to "Other" (or legacy units saved without a type).
+  const isOther = !unit.unit_type || unit.unit_type === "other";
   const title =
-    (unit.unit_type
-      ? `${UNIT_TYPE_OPTION_LABELS[unit.unit_type]}${unit.unit_number ? " " + unit.unit_number : ""}`
-      : unit.name?.trim()) || `Unit ${index + 1}`;
+    (isOther
+      ? unit.name?.trim()
+      : `${UNIT_TYPE_OPTION_LABELS[unit.unit_type!]}${unit.unit_number ? " " + unit.unit_number : ""}`) ||
+    `Unit ${index + 1}`;
 
   return (
     <div className="rounded-md border border-border p-3">
@@ -906,18 +982,15 @@ function UnitBlock({
       {open && (
         <div className="mt-3 space-y-3">
           <div className="grid grid-cols-2 gap-2">
-            <Field label="Unit type">
+            <Field label="Unit type" required>
               <Select
-                value={unit.unit_type ?? NONE}
-                onValueChange={(v) =>
-                  set({ unit_type: v === NONE ? undefined : (v as Unit["unit_type"]) })
-                }
+                value={unit.unit_type ?? "apartment"}
+                onValueChange={(v) => set({ unit_type: v as Unit["unit_type"] })}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select type" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value={NONE}>— (use custom name)</SelectItem>
                   {UNIT_TYPES.map((tpe) => (
                     <SelectItem key={tpe} value={tpe}>
                       {UNIT_TYPE_OPTION_LABELS[tpe]}
@@ -928,15 +1001,16 @@ function UnitBlock({
             </Field>
             <Field label="Number">
               <Input
+                inputMode="numeric"
                 value={unit.unit_number ?? ""}
                 onChange={(e) => set({ unit_number: e.target.value })}
-                placeholder="4"
+                placeholder="№"
               />
             </Field>
           </div>
-          {!unit.unit_type && (
-            <Field label="Custom name" hint="Used when no unit type is selected.">
-              <Input value={unit.name} onChange={(e) => set({ name: e.target.value })} />
+          {isOther && (
+            <Field label="Custom name" hint="Shown verbatim across all languages — only used for “Other”.">
+              <Input value={unit.name ?? ""} onChange={(e) => set({ name: e.target.value })} />
             </Field>
           )}
           <div className="grid grid-cols-2 gap-2">
