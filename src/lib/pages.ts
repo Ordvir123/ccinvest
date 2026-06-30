@@ -362,6 +362,29 @@ export async function uploadPageMedia(file: File, slug: string): Promise<Media> 
   // Auto-compress before upload so served images load fast without quality loss.
   const compressed = await compressImage(file);
   file = compressed;
+  return uploadToBucket(file, slug);
+}
+
+export const ACCEPTED_ATTACHMENT_TYPES = [...ACCEPTED_IMAGE_TYPES, "application/pdf"];
+
+/** Upload a unit floor-plan file: image (compressed) or PDF (as-is). */
+export async function uploadUnitAttachment(
+  file: File,
+  slug: string,
+): Promise<{ url: string; type: "image" | "pdf" }> {
+  if (!ACCEPTED_ATTACHMENT_TYPES.includes(file.type)) {
+    throw new Error("Unsupported file type. Use JPG, PNG, WEBP or PDF.");
+  }
+  if (file.size > MAX_UPLOAD_BYTES) {
+    throw new Error("File is too large (max 10MB).");
+  }
+  const isPdf = file.type === "application/pdf";
+  const toUpload = isPdf ? file : await compressImage(file);
+  const media = await uploadToBucket(toUpload, slug);
+  return { url: media.url, type: isPdf ? "pdf" : "image" };
+}
+
+async function uploadToBucket(file: File, slug: string): Promise<Media> {
   const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "-");
   const folder = slug || `tmp-${crypto.randomUUID()}`;
   const path = `${folder}/${crypto.randomUUID()}-${safeName}`;

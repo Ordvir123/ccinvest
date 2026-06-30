@@ -1,7 +1,15 @@
 import { useState } from "react";
-import { Check, ChevronRight } from "lucide-react";
+import { Check, ChevronRight, FileText } from "lucide-react";
 
 import { getIcon, guessIcon } from "@/lib/page-icons";
+import {
+  unitTitle,
+  floorValue,
+  orientationValue,
+  roomsValue,
+  areaValue,
+  parkingValue,
+} from "@/lib/unit-i18n";
 
 import { Section } from "@/components/ui/section";
 import { Button } from "@/components/ui/button";
@@ -34,6 +42,7 @@ const LABELS: Record<ReadingLang, Record<string, string>> = {
     balcony: "Balcon",
     parking: "Parking",
     notFound: "Page introuvable.",
+    floorPlan: "Plan",
   },
   he: {
     gallery: "גלריה",
@@ -46,6 +55,7 @@ const LABELS: Record<ReadingLang, Record<string, string>> = {
     balcony: "מרפסת",
     parking: "חניה",
     notFound: "הדף לא נמצא.",
+    floorPlan: "תוכנית דירה",
   },
   en: {
     gallery: "Gallery",
@@ -58,6 +68,7 @@ const LABELS: Record<ReadingLang, Record<string, string>> = {
     balcony: "Balcony",
     parking: "Parking",
     notFound: "Page not found.",
+    floorPlan: "Floor plan",
   },
 };
 
@@ -94,7 +105,7 @@ function Hero({
         <img
           src={settings.brandLogoUrl}
           alt={settings.brandName}
-          className="mx-auto mb-8 h-10 w-auto rounded bg-card px-3 py-2 shadow-sm md:mb-10 md:h-14"
+          className="mx-auto mb-8 h-20 w-auto rounded-lg bg-card px-6 py-4 shadow-sm md:mb-10 md:h-28"
         />
         {hasText(hero.kicker) && (
           <p className="eyebrow mb-5 text-xs text-primary-foreground/80">
@@ -117,9 +128,8 @@ function Hero({
         {hasText(ctaLabel) && (
           <div className="mt-10">
             <Button
-              variant="secondary"
               size="lg"
-              className="bg-card text-primary hover:bg-card/90"
+              className="bg-cta uppercase tracking-wider text-cta-foreground hover:bg-cta/90"
               onClick={scrollToContact}
             >
               {ctaLabel}
@@ -137,7 +147,14 @@ function Stats({ stats }: { stats: PageContent["stats"] }) {
     <section className="border-y border-border bg-secondary">
       <div className="mx-auto grid max-w-6xl grid-cols-2 divide-x divide-border md:grid-cols-4 rtl:divide-x-reverse">
         {stats.map((s, i) => {
-          const Icon = getIcon(s.icon) ?? getIcon(guessIcon(s.label, "sparkles"));
+          // Prefer a meaningful guess from the label when no icon is set or the
+          // stored icon is the generic "sparkles" default (avoids repeated icons).
+          const guessed = guessIcon(s.label, "");
+          const preferGuess = (!s.icon || s.icon === "sparkles") && !!guessed;
+          const Icon =
+            (preferGuess ? getIcon(guessed) : getIcon(s.icon)) ??
+            getIcon(s.icon) ??
+            getIcon(guessIcon(s.label, "sparkles"));
           return (
             <div key={i} className="flex flex-col items-center px-3 py-8 text-center md:px-4 md:py-10">
               {Icon && (
@@ -157,12 +174,22 @@ function Stats({ stats }: { stats: PageContent["stats"] }) {
   );
 }
 
-function LocationBlock({ location }: { location: NonNullable<PageContent["location"]> }) {
+function LocationBlock({
+  location,
+  lang,
+}: {
+  location: NonNullable<PageContent["location"]>;
+  lang: ReadingLang;
+}) {
   const hasMap = hasText(location.map_query);
+  const properName = location.name_i18n?.[lang];
   return (
     <Section>
       <div className="grid items-center gap-10 md:grid-cols-2">
         <div>
+          {hasText(properName) && (
+            <p className="eyebrow mb-2 text-sm text-primary">{properName}</p>
+          )}
           {hasText(location.heading) && (
             <h2 className="text-3xl text-ink md:text-4xl">{location.heading}</h2>
           )}
@@ -267,29 +294,40 @@ function Gallery({ gallery, labels }: { gallery: PageContent["gallery"]; labels:
   );
 }
 
-function UnitCard({ unit, labels }: { unit: Unit; labels: Record<string, string> }) {
+function UnitCard({
+  unit,
+  labels,
+  lang,
+}: {
+  unit: Unit;
+  labels: Record<string, string>;
+  lang: ReadingLang;
+}) {
+  const [planOpen, setPlanOpen] = useState(false);
+  const title = unitTitle(unit, lang);
   const rows: [string, string | undefined][] = [
-    [labels.floor, unit.floor],
-    [labels.orientation, unit.orientation],
-    [labels.rooms, unit.rooms],
-    [labels.surface, hasText(unit.area_m2) ? `${unit.area_m2} m²` : undefined],
-    [labels.balcony, hasText(unit.balcony_m2) ? `${unit.balcony_m2} m²` : undefined],
-    [labels.parking, unit.parking],
+    [labels.floor, hasText(unit.floor) ? floorValue(unit.floor!, lang) : undefined],
+    [labels.orientation, hasText(unit.orientation) ? orientationValue(unit.orientation!, lang) : undefined],
+    [labels.rooms, hasText(unit.rooms) ? roomsValue(unit.rooms!, lang) : undefined],
+    [labels.surface, hasText(unit.area_m2) ? areaValue(unit.area_m2!) : undefined],
+    [labels.balcony, hasText(unit.balcony_m2) ? areaValue(unit.balcony_m2!) : undefined],
+    [labels.parking, hasText(unit.parking) ? parkingValue(unit.parking!, lang) : undefined],
   ];
   const visibleRows = rows.filter(([, v]) => hasText(v));
+  const plan = unit.attachment;
 
   return (
     <Card className="flex flex-col overflow-hidden">
       {unit.image?.url && (
         <img
           src={unit.image.url}
-          alt={unit.image.alt ?? unit.name}
+          alt={unit.image.alt ?? title}
           loading="lazy"
           className="aspect-video w-full object-cover"
         />
       )}
       <CardContent className="flex flex-1 flex-col p-6">
-        <h3 className="font-serif text-2xl text-ink">{unit.name}</h3>
+        <h3 className="font-serif text-2xl text-ink">{title}</h3>
         {hasText(unit.price) && (
           <p className="mt-1 text-lg font-semibold text-primary">{unit.price}</p>
         )}
@@ -316,12 +354,61 @@ function UnitCard({ unit, labels }: { unit: Unit; labels: Record<string, string>
             ))}
           </ul>
         )}
+        {plan?.url && plan.type === "image" && (
+          <button
+            type="button"
+            onClick={() => setPlanOpen(true)}
+            className="mt-4 block overflow-hidden rounded-md border border-border"
+          >
+            <img
+              src={plan.url}
+              alt={labels.floorPlan}
+              loading="lazy"
+              className="aspect-video w-full object-cover transition-transform duration-300 hover:scale-[1.03]"
+            />
+            <span className="block bg-secondary px-3 py-1.5 text-xs font-medium text-muted-foreground">
+              {labels.floorPlan}
+            </span>
+          </button>
+        )}
+        {plan?.url && plan.type === "pdf" && (
+          <a
+            href={plan.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-4 flex items-center gap-3 rounded-md border border-border bg-secondary px-4 py-3 text-sm font-medium text-foreground transition-colors hover:bg-secondary/70"
+          >
+            <FileText className="h-5 w-5 shrink-0 text-primary" aria-hidden />
+            {labels.floorPlan}
+          </a>
+        )}
       </CardContent>
+
+      {plan?.url && plan.type === "image" && (
+        <Dialog open={planOpen} onOpenChange={setPlanOpen}>
+          <DialogContent className="max-w-4xl border-none bg-transparent p-0 shadow-none">
+            <DialogTitle className="sr-only">{labels.floorPlan}</DialogTitle>
+            <img
+              src={plan.url}
+              alt={labels.floorPlan}
+              className="max-h-[85vh] w-full rounded-lg object-contain"
+            />
+          </DialogContent>
+        </Dialog>
+      )}
     </Card>
   );
 }
 
-function Units({ units, labels }: { units: PageContent["units"]; labels: Record<string, string> }) {
+function Units({
+  units,
+  labels,
+  lang,
+}: {
+  units: PageContent["units"];
+  labels: Record<string, string>;
+  lang: ReadingLang;
+}) {
   if (!hasItems(units)) return null;
   return (
     <section className="bg-secondary">
@@ -329,13 +416,14 @@ function Units({ units, labels }: { units: PageContent["units"]; labels: Record<
         <h2 className="mb-10 text-center text-3xl text-ink md:text-4xl">{labels.units}</h2>
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {units!.map((u, i) => (
-            <UnitCard key={i} unit={u} labels={labels} />
+            <UnitCard key={i} unit={u} labels={labels} lang={lang} />
           ))}
         </div>
       </Section>
     </section>
   );
 }
+
 
 function Videos({ videos, labels }: { videos: PageContent["videos"]; labels: Record<string, string> }) {
   if (!hasItems(videos)) return null;
@@ -402,14 +490,14 @@ export function PageRenderer({
         (hasText(content.location.heading) ||
           hasText(content.location.text) ||
           hasText(content.location.map_query)) && (
-          <LocationBlock location={content.location} />
+          <LocationBlock location={content.location} lang={lang} />
         )}
       {content.about &&
         (hasText(content.about.heading) ||
           hasText(content.about.body) ||
           hasItems(content.about.features)) && <About about={content.about} />}
       <Gallery gallery={content.gallery} labels={labels} />
-      <Units units={content.units} labels={labels} />
+      <Units units={content.units} labels={labels} lang={lang} />
       <Videos videos={content.videos} labels={labels} />
       <ContactForm
         heading={content.contact?.heading ?? (hasText(settings.defaultContactHeading) ? settings.defaultContactHeading : undefined)}

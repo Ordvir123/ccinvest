@@ -4,17 +4,44 @@ export type Media = { url: string; alt?: string };
 
 export type Stat = { value: string; label: string; icon?: string };
 
+/** Closed dictionaries so admin-picked values translate reliably per locale. */
+export type UnitType = "apartment" | "penthouse" | "studio" | "duplex";
+
+export type OrientationCode =
+  | "north"
+  | "south"
+  | "east"
+  | "west"
+  | "north_east"
+  | "north_west"
+  | "south_east"
+  | "south_west";
+
+export type ParkingCode = "one" | "none";
+
+/** Optional per-unit preview file (floor plan): image thumbnail or PDF. */
+export type UnitAttachment = { url: string; type: "image" | "pdf" };
+
 export type Unit = {
+  /** Legacy free-text title; used as fallback when unit_type is unset. */
   name: string;
+  /** Dictionary-driven unit type. Rendered as "{type} {unit_number}". */
+  unit_type?: UnitType;
+  /** Number/identifier appended after the translated type, e.g. "4". */
+  unit_number?: string;
   floor?: string;
+  /** Dictionary code (north/south/...) or legacy free text. */
   orientation?: string;
   rooms?: string;
   area_m2?: string;
   balcony_m2?: string;
+  /** Dictionary code (one/none) or legacy free text. */
   parking?: string;
   description?: string;
   price?: string;
   image?: Media;
+  /** Optional floor-plan file (image or pdf). */
+  attachment?: UnitAttachment;
   features?: string[];
 };
 
@@ -38,7 +65,13 @@ export type PageContent = {
     background?: Media;
   };
   stats: Stat[];
-  location?: { heading?: string; text?: string; map_query?: string };
+  location?: {
+    heading?: string;
+    text?: string;
+    map_query?: string;
+    /** Per-locale proper names (streets etc.) — never machine-translated. */
+    name_i18n?: Partial<Record<ReadingLang, string>>;
+  };
   about?: { heading?: string; body?: string; features?: string[]; feature_icons?: string[] };
   gallery: Media[];
   units?: Unit[];

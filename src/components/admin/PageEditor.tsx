@@ -26,8 +26,16 @@ import { cn } from "@/lib/utils";
 
 import { PageRenderer } from "@/components/page/PageRenderer";
 import { SectionCard, Field } from "@/components/admin/editor-parts";
-import { SingleImageUpload, GalleryUpload } from "@/components/admin/MediaUpload";
+import { SingleImageUpload, GalleryUpload, UnitFileUpload } from "@/components/admin/MediaUpload";
 import { IconPicker } from "@/components/admin/IconPicker";
+import {
+  UNIT_TYPES,
+  ORIENTATION_CODES,
+  PARKING_CODES,
+  UNIT_TYPE_OPTION_LABELS,
+  ORIENTATION_OPTION_LABELS,
+  PARKING_OPTION_LABELS,
+} from "@/lib/unit-i18n";
 import { TranslationsTab } from "@/components/admin/TranslationsTab";
 import { SeoEditor } from "@/components/admin/SeoEditor";
 import {
@@ -406,6 +414,25 @@ export function PageEditor({
         <Field label="Map query" hint="Used to build a Google Maps embed.">
           <Input value={content.location?.map_query ?? ""} onChange={(e) => patchLocation({ map_query: e.target.value })} />
         </Field>
+        <Field
+          label="Street / location name (per language)"
+          hint="Proper nouns (Montefiore, Allenby…). Entered manually per locale — never machine-translated."
+        >
+          <div className="grid grid-cols-3 gap-2">
+            {READING_LANGS.map((l) => (
+              <Input
+                key={l}
+                placeholder={l.toUpperCase()}
+                value={content.location?.name_i18n?.[l] ?? ""}
+                onChange={(e) =>
+                  patchLocation({
+                    name_i18n: { ...(content.location?.name_i18n ?? {}), [l]: e.target.value },
+                  })
+                }
+              />
+            ))}
+          </div>
+        </Field>
         {content.location?.map_query && (
           <iframe
             title="Map preview"
@@ -777,36 +804,114 @@ function UnitBlock({
 }) {
   const [open, setOpen] = useState(true);
   const set = (p: Partial<Unit>) => onChange({ ...unit, ...p });
-  const textFields: [keyof Unit, string][] = [
-    ["floor", "Floor"],
-    ["orientation", "Orientation"],
-    ["rooms", "Rooms"],
-    ["area_m2", "Area (m²)"],
-    ["balcony_m2", "Balcony (m²)"],
-    ["parking", "Parking"],
-    ["price", "Price"],
+  const numericFields: [keyof Unit, string][] = [
+    ["floor", "Floor (number)"],
+    ["rooms", "Rooms (number)"],
+    ["area_m2", "Area (m², number)"],
+    ["balcony_m2", "Balcony (m², number)"],
   ];
+  const NONE = "__none__";
+  const title =
+    (unit.unit_type
+      ? `${UNIT_TYPE_OPTION_LABELS[unit.unit_type]}${unit.unit_number ? " " + unit.unit_number : ""}`
+      : unit.name?.trim()) || `Unit ${index + 1}`;
 
   return (
     <div className="rounded-md border border-border p-3">
       <div className="flex items-center justify-between gap-2">
         <button type="button" className="text-sm font-medium text-foreground" onClick={() => setOpen((v) => !v)}>
-          {unit.name?.trim() || `Unit ${index + 1}`}
+          {title}
         </button>
         <MoveRemove onUp={onUp} onDown={onDown} onRemove={onRemove} />
       </div>
       {open && (
         <div className="mt-3 space-y-3">
-          <Field label="Name" required>
-            <Input value={unit.name} onChange={(e) => set({ name: e.target.value })} />
-          </Field>
           <div className="grid grid-cols-2 gap-2">
-            {textFields.map(([key, label]) => (
+            <Field label="Unit type">
+              <Select
+                value={unit.unit_type ?? NONE}
+                onValueChange={(v) =>
+                  set({ unit_type: v === NONE ? undefined : (v as Unit["unit_type"]) })
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={NONE}>— (use custom name)</SelectItem>
+                  {UNIT_TYPES.map((tpe) => (
+                    <SelectItem key={tpe} value={tpe}>
+                      {UNIT_TYPE_OPTION_LABELS[tpe]}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </Field>
+            <Field label="Number">
+              <Input
+                value={unit.unit_number ?? ""}
+                onChange={(e) => set({ unit_number: e.target.value })}
+                placeholder="4"
+              />
+            </Field>
+          </div>
+          {!unit.unit_type && (
+            <Field label="Custom name" hint="Used when no unit type is selected.">
+              <Input value={unit.name} onChange={(e) => set({ name: e.target.value })} />
+            </Field>
+          )}
+          <div className="grid grid-cols-2 gap-2">
+            {numericFields.map(([key, label]) => (
               <Field key={key} label={label}>
-                <Input value={(unit[key] as string) ?? ""} onChange={(e) => set({ [key]: e.target.value } as Partial<Unit>)} />
+                <Input
+                  inputMode="numeric"
+                  value={(unit[key] as string) ?? ""}
+                  onChange={(e) => set({ [key]: e.target.value } as Partial<Unit>)}
+                />
               </Field>
             ))}
           </div>
+          <div className="grid grid-cols-2 gap-2">
+            <Field label="Orientation">
+              <Select
+                value={unit.orientation ?? NONE}
+                onValueChange={(v) => set({ orientation: v === NONE ? undefined : v })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={NONE}>—</SelectItem>
+                  {ORIENTATION_CODES.map((c) => (
+                    <SelectItem key={c} value={c}>
+                      {ORIENTATION_OPTION_LABELS[c]}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </Field>
+            <Field label="Parking">
+              <Select
+                value={unit.parking ?? NONE}
+                onValueChange={(v) => set({ parking: v === NONE ? undefined : v })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={NONE}>—</SelectItem>
+                  {PARKING_CODES.map((c) => (
+                    <SelectItem key={c} value={c}>
+                      {PARKING_OPTION_LABELS[c]}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </Field>
+          </div>
+          <Field label="Price">
+            <Input value={unit.price ?? ""} onChange={(e) => set({ price: e.target.value })} />
+          </Field>
           <Field label="Description">
             <Textarea rows={2} value={unit.description ?? ""} onChange={(e) => set({ description: e.target.value })} />
           </Field>
@@ -840,6 +945,15 @@ function UnitBlock({
           </Field>
           <Field label="Image">
             <SingleImageUpload slug={slug} value={unit.image} onChange={(image) => set({ image })} disabled={!canUpload} />
+          </Field>
+          <Field label="Floor plan" hint="Optional image or PDF shown on the unit card.">
+            <UnitFileUpload
+              slug={slug}
+              value={unit.attachment}
+              label="floor plan"
+              onChange={(attachment) => set({ attachment })}
+              disabled={!canUpload}
+            />
           </Field>
         </div>
       )}

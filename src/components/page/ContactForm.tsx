@@ -132,8 +132,8 @@ export function ContactForm({
         className="absolute inset-0 h-full w-full object-cover"
       />
       <div className="absolute inset-0 bg-primary/85" />
-      <Section className="relative z-10 pb-40 md:pb-56">
-        <div className="mx-auto max-w-xl">
+      <Section className="relative z-10 pb-48 md:pb-64">
+        <div className="mx-auto max-w-xl pb-8 md:pb-12">
 
           <h2 className="text-center text-3xl text-primary-foreground md:text-4xl">
             {heading ?? "Contact"}

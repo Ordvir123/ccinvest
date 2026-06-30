@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { ImagePlus, Loader2, Trash2, ArrowUp, ArrowDown } from "lucide-react";
+import { ImagePlus, FileText, Loader2, Trash2, ArrowUp, ArrowDown } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -8,9 +8,12 @@ import { Label } from "@/components/ui/label";
 import type { Media } from "@/types/page";
 import {
   ACCEPTED_IMAGE_TYPES,
+  ACCEPTED_ATTACHMENT_TYPES,
   uploadPageMedia,
+  uploadUnitAttachment,
   removePageMedia,
 } from "@/lib/pages";
+import type { UnitAttachment } from "@/types/page";
 
 const ACCEPT = ACCEPTED_IMAGE_TYPES.join(",");
 
@@ -192,6 +195,87 @@ export function GalleryUpload({
         className="hidden"
         onChange={(e) => {
           onFiles(e.target.files);
+          e.target.value = "";
+        }}
+      />
+    </div>
+  );
+}
+
+/** Optional per-unit floor-plan file: image or PDF. */
+export function UnitFileUpload({
+  slug,
+  value,
+  label,
+  onChange,
+  disabled,
+}: {
+  slug: string;
+  value?: UnitAttachment;
+  label: string;
+  onChange: (attachment?: UnitAttachment) => void;
+  disabled?: boolean;
+}) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [busy, setBusy] = useState(false);
+
+  const onFile = async (file?: File) => {
+    if (!file) return;
+    setBusy(true);
+    try {
+      const attachment = await uploadUnitAttachment(file, slug);
+      onChange(attachment);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Upload failed");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const onRemove = async () => {
+    if (value?.url) await removePageMedia(value.url);
+    onChange(undefined);
+  };
+
+  return (
+    <div className="space-y-2">
+      {value?.url ? (
+        <div className="space-y-2 rounded-md border border-border p-2">
+          {value.type === "image" ? (
+            <img src={value.url} alt={label} className="aspect-video w-full rounded object-cover" />
+          ) : (
+            <a
+              href={value.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 rounded bg-secondary px-3 py-2 text-sm font-medium text-foreground"
+            >
+              <FileText className="h-5 w-5 text-primary" /> {label} (PDF)
+            </a>
+          )}
+          <Button type="button" variant="ghost" size="sm" onClick={onRemove}>
+            <Trash2 className="h-4 w-4" /> Remove
+          </Button>
+        </div>
+      ) : (
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          disabled={disabled || busy}
+          onClick={() => inputRef.current?.click()}
+        >
+          {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImagePlus className="h-4 w-4" />}
+          Upload {label}
+        </Button>
+      )}
+      <input
+        ref={inputRef}
+        type="file"
+        accept={ACCEPTED_ATTACHMENT_TYPES.join(",")}
+        className="hidden"
+        onChange={(e) => {
+          onFile(e.target.files?.[0]);
           e.target.value = "";
         }}
       />
