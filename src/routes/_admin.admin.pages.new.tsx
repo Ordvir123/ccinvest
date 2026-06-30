@@ -6,19 +6,8 @@ import { Sparkles, PencilLine, Loader2 } from "lucide-react";
 import { PageEditor } from "@/components/admin/PageEditor";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { cn } from "@/lib/utils";
-import {
-  extractPageFromText,
-  mergeAiContent,
-  type ExtractLang,
-} from "@/lib/extract-page";
+import { extractPageFromText, mergeAiContent } from "@/lib/extract-page";
 import type { PageContent } from "@/types/page";
 
 export const Route = createFileRoute("/_admin/admin/pages/new")({
@@ -30,14 +19,14 @@ type Mode = "choose" | "ai" | "manual";
 function NewPage() {
   const [mode, setMode] = useState<Mode>("choose");
   const [text, setText] = useState("");
-  const [lang, setLang] = useState<ExtractLang>("fr");
   const [processing, setProcessing] = useState(false);
   const [prefill, setPrefill] = useState<PageContent | null>(null);
 
-  // Once we have content (AI-filled) or chose manual, render the editor.
-  if (mode === "manual") return <PageEditor initialSourceLang={lang} />;
+  // The page is always built in French first; Hebrew/English come from the
+  // Translations tab. So manual + AI both start in French.
+  if (mode === "manual") return <PageEditor initialSourceLang="fr" />;
   if (prefill)
-    return <PageEditor initialContent={prefill} initialSourceLang={lang} showAiNote />;
+    return <PageEditor initialContent={prefill} initialSourceLang="fr" showAiNote />;
 
   const runAi = async () => {
     if (!text.trim()) {
@@ -46,15 +35,17 @@ function NewPage() {
     }
     setProcessing(true);
     try {
-      const partial = await extractPageFromText(text, lang);
+      // Source language is auto-detected server-side; output is always French.
+      const partial = await extractPageFromText(text);
       setPrefill(mergeAiContent(partial));
-      toast.success("AI filled what it found. Review and complete the rest.");
+      toast.success("AI built the page in French. Review, then translate to HE/EN.");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "AI extraction failed.");
     } finally {
       setProcessing(false);
     }
   };
+
 
   return (
     <div className="mx-auto max-w-3xl space-y-6 p-4 md:p-8">
@@ -106,21 +97,15 @@ function NewPage() {
 
       {mode === "ai" && (
         <div className="space-y-3 rounded-lg border border-border p-4">
-          <div className="flex items-center justify-between gap-3">
+          <div className="space-y-1">
             <label className="text-sm font-medium text-foreground">
               Paste the property text in any language
             </label>
-            <Select value={lang} onValueChange={(v) => setLang(v as ExtractLang)}>
-              <SelectTrigger className="w-32">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="fr">French</SelectItem>
-                <SelectItem value="he">Hebrew</SelectItem>
-                <SelectItem value="en">English</SelectItem>
-              </SelectContent>
-            </Select>
+            <p className="text-xs text-muted-foreground">
+              The language is detected automatically and the page is built in French.
+            </p>
           </div>
+
           <Textarea
             value={text}
             onChange={(e) => setText(e.target.value)}
@@ -142,8 +127,9 @@ function NewPage() {
             </Button>
           </div>
           <p className="text-xs text-muted-foreground">
-            AI extracts only facts present in the text. Missing fields stay empty for
-            you to complete. Nothing is saved or published automatically.
+            AI extracts only facts present in the text and writes the page in French.
+            Use the Translations tab for Hebrew and English. Missing fields stay empty
+            for you to complete. Nothing is saved or published automatically.
           </p>
         </div>
       )}
