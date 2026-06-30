@@ -51,9 +51,10 @@ Deno.serve(async (req) => {
   }
 
   const supaUrl = Deno.env.get("SUPABASE_URL")!;
-  const supaKey =
-    Deno.env.get("SUPABASE_ANON_KEY") ??
-    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+  const supaKey = Deno.env.get("SUPABASE_ANON_KEY");
+  if (!supaKey) {
+    return new Response("Server misconfiguration", { status: 500 });
+  }
 
   const restUrl =
     `${supaUrl}/rest/v1/pages?slug=eq.${encodeURIComponent(slug)}` +
