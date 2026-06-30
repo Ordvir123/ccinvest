@@ -50,6 +50,7 @@ function PagesList() {
     mutationFn: (id: string) => setPageStatus(id, "archived"),
     onSuccess: () => {
       toast.success("Page moved to archive.");
+      setShowArchived(true);
       refresh();
     },
     onError: (e) => toast.error(e instanceof Error ? e.message : "Failed to archive."),
