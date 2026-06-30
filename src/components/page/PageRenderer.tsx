@@ -439,6 +439,132 @@ function Units({
   );
 }
 
+/** Single-apartment section ("About the apartment") — wide two-column layout. */
+function ApartmentSection({
+  apartment,
+  imageSide,
+  labels,
+  lang,
+}: {
+  apartment: Unit;
+  imageSide: "left" | "right";
+  labels: Record<string, string>;
+  lang: ReadingLang;
+}) {
+  const [planOpen, setPlanOpen] = useState(false);
+  const title = unitTitle(apartment, lang);
+  const rows: [string, string | undefined][] = [
+    [labels.floor, hasText(apartment.floor) ? floorValue(apartment.floor!, lang) : undefined],
+    [labels.orientation, hasText(apartment.orientation) ? orientationValue(apartment.orientation!, lang) : undefined],
+    [labels.rooms, hasText(apartment.rooms) ? roomsValue(apartment.rooms!, lang) : undefined],
+    [labels.surface, hasText(apartment.area_m2) ? areaValue(apartment.area_m2!) : undefined],
+    [labels.balcony, hasText(apartment.balcony_m2) ? areaValue(apartment.balcony_m2!) : undefined],
+    [labels.parking, hasText(apartment.parking) ? parkingValue(apartment.parking!, lang) : undefined],
+  ];
+  const visibleRows = rows.filter(([, v]) => hasText(v));
+  const plan = apartment.attachment;
+  // DOM order is details → image (mobile stacks details first, image below).
+  // On desktop, "left" puts the image first; RTL mirrors via flex-row + dir.
+  const imageOrder = imageSide === "left" ? "md:order-1" : "md:order-2";
+  const detailsOrder = imageSide === "left" ? "md:order-2" : "md:order-1";
+
+  return (
+    <section className="bg-secondary">
+      <Section>
+        <h2 className="mb-10 text-center text-3xl text-ink md:text-4xl">
+          {ABOUT_APARTMENT_HEADING[lang] ?? ABOUT_APARTMENT_HEADING.fr}
+        </h2>
+        <Card className="overflow-hidden">
+          <div className="flex flex-col gap-0 md:flex-row md:items-stretch">
+            <div className={`flex flex-col p-6 md:w-1/2 md:p-10 ${detailsOrder}`}>
+              <h3 className="font-serif text-3xl text-ink md:text-4xl">{title}</h3>
+              {hasText(apartment.price) && (
+                <p className="mt-2 text-xl font-semibold text-primary">{apartment.price}</p>
+              )}
+              {visibleRows.length > 0 && (
+                <dl className="mt-6 grid grid-cols-2 gap-x-6 gap-y-4">
+                  {visibleRows.map(([label, value]) => (
+                    <div key={label} className="flex flex-col gap-0.5 border-b border-border/60 pb-2">
+                      <dt className="text-xs uppercase tracking-wide text-muted-foreground">{label}</dt>
+                      <dd className="text-base font-medium text-foreground">{value}</dd>
+                    </div>
+                  ))}
+                </dl>
+              )}
+              {hasText(apartment.description) && (
+                <p className="mt-6 text-base leading-relaxed text-muted-foreground">{apartment.description}</p>
+              )}
+              {hasItems(apartment.features) && (
+                <ul className="mt-6 space-y-2">
+                  {apartment.features!.map((f, i) => (
+                    <li key={i} className="flex items-center gap-2 text-foreground">
+                      <ChevronRight className="h-4 w-4 text-primary rtl:rotate-180" aria-hidden />
+                      {f}
+                    </li>
+                  ))}
+                </ul>
+              )}
+              {plan?.url && plan.type === "image" && (
+                <button
+                  type="button"
+                  onClick={() => setPlanOpen(true)}
+                  className="mt-6 block overflow-hidden rounded-md border border-border"
+                >
+                  <img
+                    src={plan.url}
+                    alt={labels.floorPlan}
+                    loading="lazy"
+                    className="aspect-video w-full object-cover transition-transform duration-300 hover:scale-[1.03]"
+                  />
+                  <span className="block bg-secondary px-3 py-1.5 text-xs font-medium text-muted-foreground">
+                    {labels.floorPlan}
+                  </span>
+                </button>
+              )}
+              {plan?.url && plan.type === "pdf" && (
+                <a
+                  href={plan.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-6 flex items-center gap-3 rounded-md border border-border bg-background px-4 py-3 text-sm font-medium text-foreground transition-colors hover:bg-secondary/70"
+                >
+                  <FileText className="h-5 w-5 shrink-0 text-primary" aria-hidden />
+                  {labels.floorPlan}
+                </a>
+              )}
+            </div>
+            {apartment.image?.url && (
+              <div className={`md:w-1/2 ${imageOrder}`}>
+                <img
+                  src={apartment.image.url}
+                  alt={apartment.image.alt ?? title}
+                  loading="lazy"
+                  className="h-64 w-full object-cover md:h-full"
+                />
+              </div>
+            )}
+          </div>
+        </Card>
+
+        {plan?.url && plan.type === "image" && (
+          <Dialog open={planOpen} onOpenChange={setPlanOpen}>
+            <DialogContent className="max-w-4xl border-none bg-transparent p-0 shadow-none">
+              <DialogTitle className="sr-only">{labels.floorPlan}</DialogTitle>
+              <img
+                src={plan.url}
+                alt={labels.floorPlan}
+                className="max-h-[85vh] w-full rounded-lg object-contain"
+              />
+            </DialogContent>
+          </Dialog>
+        )}
+      </Section>
+    </section>
+  );
+}
+
+
+
 
 function Videos({ videos, labels }: { videos: PageContent["videos"]; labels: Record<string, string> }) {
   if (!hasItems(videos)) return null;
