@@ -117,6 +117,7 @@ function prune(value: unknown): unknown {
 const inputSchema = z.object({
   text: z.string().min(1).max(MAX_TEXT_LENGTH),
   sourceLang: z.enum(["fr", "he", "en"]).optional(),
+  category: z.enum(["apartment", "project"]).optional(),
   accessToken: z.string().min(1),
 });
 
@@ -144,9 +145,15 @@ export const extractPageContent = createServerFn({ method: "POST" })
     const apiKey = process.env.LOVABLE_API_KEY;
     if (!apiKey) throw new Error("Server is missing LOVABLE_API_KEY.");
 
+    const unitsHint =
+      data.category === "apartment"
+        ? `\n\nThis page describes a SINGLE apartment. Output AT MOST ONE entry in "units" capturing that apartment's details (floor, rooms, area, balcony, parking, description, features, price). Never output multiple units.`
+        : `\n\nThis page describes a PROJECT (a building). Output one entry in "units" per distinct apartment/unit you find.`;
+
     const userPrompt =
-      `Detect the language of the text below and produce the page entirely in French.\n\n` +
-      `Property text:\n"""\n${data.text}\n"""`;
+      `Detect the language of the text below and produce the page entirely in French.` +
+      unitsHint +
+      `\n\nProperty text:\n"""\n${data.text}\n"""`;
 
     let parsed: unknown = null;
     let lastRaw = "";

@@ -69,6 +69,16 @@ export function listTranslatableFields(c: PageContent): TransField[] {
     );
   });
 
+  // Single apartment block (apartment-type pages). Same logic as a unit.
+  const apt = c.apartment;
+  if (apt) {
+    if (!apt.unit_type) push("apartment.name", "Apartment · Name", apt.name);
+    push("apartment.description", "Apartment · Description", apt.description);
+    (apt.features ?? []).forEach((f, j) =>
+      push(`apartment.features.${j}`, `Apartment · Feature ${j + 1}`, f),
+    );
+  }
+
   (c.videos ?? []).forEach((v, i) => push(`videos.${i}.title`, `Video ${i + 1} · Title`, v.title));
 
   // contact.heading is authored per-locale (heading_i18n) — not machine-translated.
@@ -182,6 +192,28 @@ export function preserveStableFields(
       };
     });
   }
+  // Single apartment: restore stable (non-AI-translated) fields + media, and the
+  // image-side toggle (a layout choice, never translated).
+  if (out.apartment && source.apartment) {
+    const src = source.apartment;
+    out.apartment = {
+      ...out.apartment,
+      unit_type: src.unit_type,
+      unit_number: src.unit_number,
+      floor: src.floor,
+      orientation: src.orientation,
+      rooms: src.rooms,
+      area_m2: src.area_m2,
+      balcony_m2: src.balcony_m2,
+      parking: src.parking,
+      price: src.price,
+      image: src.image ?? out.apartment.image,
+      attachment: src.attachment,
+    };
+  } else if (source.apartment) {
+    out.apartment = source.apartment;
+  }
+  out.apartment_image_side = source.apartment_image_side;
   // Per-locale proper names are authored manually, not machine-translated.
   if (source.location?.name_i18n) {
     out.location = { ...out.location, name_i18n: source.location.name_i18n };

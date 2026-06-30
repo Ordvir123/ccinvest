@@ -639,35 +639,70 @@ export function PageEditor({
         />
       </SectionCard>
 
-      <SectionCard title="Units" description="Repeatable apartment blocks." defaultOpen={false}>
-        <div className="space-y-4">
-          {(content.units ?? []).map((u, i) => (
+      {content.category === "project" ? (
+        <SectionCard title="Units" description="Repeatable apartment blocks." defaultOpen={false}>
+          <div className="space-y-4">
+            {(content.units ?? []).map((u, i) => (
+              <UnitBlock
+                key={i}
+                index={i}
+                unit={u}
+                slug={slug}
+                canUpload={canUpload}
+                onChange={(unit) => {
+                  const next = (content.units ?? []).slice();
+                  next[i] = unit;
+                  patch({ units: next });
+                }}
+                onUp={() => patch({ units: moveItem(content.units ?? [], i, -1) })}
+                onDown={() => patch({ units: moveItem(content.units ?? [], i, 1) })}
+                onRemove={() => patch({ units: (content.units ?? []).filter((_, idx) => idx !== i) })}
+              />
+            ))}
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => patch({ units: [...(content.units ?? []), { name: "", unit_type: "apartment" } as Unit] })}
+            >
+              <Plus className="h-4 w-4" /> Add unit
+            </Button>
+          </div>
+        </SectionCard>
+      ) : (
+        <SectionCard
+          title="About the apartment"
+          description="The single apartment shown on this page."
+          defaultOpen
+        >
+          <div className="space-y-4">
+            <Field label="Image side (desktop)" hint="Which side the main image sits on. Mirrored automatically in Hebrew (RTL).">
+              <Select
+                value={content.apartment_image_side ?? "right"}
+                onValueChange={(v) => patch({ apartment_image_side: v as "left" | "right" })}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="right">Image on the right</SelectItem>
+                  <SelectItem value="left">Image on the left</SelectItem>
+                </SelectContent>
+              </Select>
+            </Field>
             <UnitBlock
-              key={i}
-              index={i}
-              unit={u}
+              index={0}
+              unit={content.apartment ?? ({ name: "", unit_type: "apartment" } as Unit)}
               slug={slug}
               canUpload={canUpload}
-              onChange={(unit) => {
-                const next = (content.units ?? []).slice();
-                next[i] = unit;
-                patch({ units: next });
-              }}
-              onUp={() => patch({ units: moveItem(content.units ?? [], i, -1) })}
-              onDown={() => patch({ units: moveItem(content.units ?? [], i, 1) })}
-              onRemove={() => patch({ units: (content.units ?? []).filter((_, idx) => idx !== i) })}
+              titleOverride="Apartment details"
+              forceOpen
+              onChange={(apartment) => patch({ apartment })}
             />
-          ))}
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => patch({ units: [...(content.units ?? []), { name: "", unit_type: "apartment" } as Unit] })}
-          >
-            <Plus className="h-4 w-4" /> Add unit
-          </Button>
-        </div>
-      </SectionCard>
+          </div>
+        </SectionCard>
+      )}
+
 
       <SectionCard title="Videos" description="YouTube links (any format)." defaultOpen={false}>
         <div className="space-y-3">
@@ -936,15 +971,21 @@ function UnitBlock({
   onUp,
   onDown,
   onRemove,
+  titleOverride,
+  forceOpen = false,
 }: {
   index: number;
   unit: Unit;
   slug: string;
   canUpload: boolean;
   onChange: (u: Unit) => void;
-  onUp: () => void;
-  onDown: () => void;
-  onRemove: () => void;
+  onUp?: () => void;
+  onDown?: () => void;
+  onRemove?: () => void;
+  /** When set, shows this title instead of the derived unit title. */
+  titleOverride?: string;
+  /** When true, the block renders expanded and without a collapse toggle. */
+  forceOpen?: boolean;
 }) {
   const [open, setOpen] = useState(true);
   const set = (p: Partial<Unit>) => onChange({ ...unit, ...p });
@@ -966,20 +1007,27 @@ function UnitBlock({
   // Custom name only applies to "Other" (or legacy units saved without a type).
   const isOther = !unit.unit_type || unit.unit_type === "other";
   const title =
-    (isOther
+    titleOverride ??
+    ((isOther
       ? unit.name?.trim()
       : `${UNIT_TYPE_OPTION_LABELS[unit.unit_type!]}${unit.unit_number ? " " + unit.unit_number : ""}`) ||
-    `Unit ${index + 1}`;
+      `Unit ${index + 1}`);
+  const showControls = !!(onUp && onDown && onRemove);
+  const isOpen = forceOpen || open;
 
   return (
     <div className="rounded-md border border-border p-3">
       <div className="flex items-center justify-between gap-2">
-        <button type="button" className="text-sm font-medium text-foreground" onClick={() => setOpen((v) => !v)}>
-          {title}
-        </button>
-        <MoveRemove onUp={onUp} onDown={onDown} onRemove={onRemove} />
+        {forceOpen ? (
+          <span className="text-sm font-medium text-foreground">{title}</span>
+        ) : (
+          <button type="button" className="text-sm font-medium text-foreground" onClick={() => setOpen((v) => !v)}>
+            {title}
+          </button>
+        )}
+        {showControls && <MoveRemove onUp={onUp!} onDown={onDown!} onRemove={onRemove!} />}
       </div>
-      {open && (
+      {isOpen && (
         <div className="mt-3 space-y-3">
           <div className="grid grid-cols-2 gap-2">
             <Field label="Unit type" required>
