@@ -50,6 +50,7 @@ function PagesList() {
     mutationFn: (id: string) => setPageStatus(id, "archived"),
     onSuccess: () => {
       toast.success("Page moved to archive.");
+      setShowArchived(true);
       refresh();
     },
     onError: (e) => toast.error(e instanceof Error ? e.message : "Failed to archive."),
@@ -205,16 +206,15 @@ function PagesList() {
                               <Pencil className="h-4 w-4" /> Edit
                             </Link>
                           </Button>
-                          {p.status === "draft" && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => archiveMut.mutate(p.id)}
-                              disabled={archiveMut.isPending}
-                            >
-                              <Archive className="h-4 w-4" /> Archive
-                            </Button>
-                          )}
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => archiveMut.mutate(p.id)}
+                            disabled={archiveMut.isPending}
+                          >
+                            <Archive className="h-4 w-4" /> Archive
+                          </Button>
+
                         </>
                       )}
                     </TableCell>
