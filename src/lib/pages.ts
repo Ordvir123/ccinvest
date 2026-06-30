@@ -10,6 +10,7 @@ import {
   type Page,
   type PageContent,
   type PageSeo,
+  type PageCategory,
   type PageStatus,
   type ReadingLang,
   type SeoFields,
