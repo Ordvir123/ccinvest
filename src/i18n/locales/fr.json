@@ -30,10 +30,10 @@
       "cta": "Voir les appartements"
     },
     "stats": {
-      "projects": "Projets disponibles",
-      "years": "Années d'expérience",
-      "clients": "Clients satisfaits",
-      "cities": "Quartiers couverts"
+      "satisfaction": "Clients satisfaits",
+      "experience": "Années d'expérience",
+      "deals": "Transactions réalisées",
+      "aliyah": "Familles ayant fait leur Alyah"
     },
     "properties": {
       "title": "Nos appartements",
