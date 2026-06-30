@@ -1,4 +1,5 @@
 import {
+  ArrowUpDown,
   Award,
   Bath,
   BedDouble,
@@ -64,6 +65,7 @@ export const ICON_MAP: Record<string, LucideIcon> = {
   check: Check,
   layers: Layers,
   clock: Clock,
+  elevator: ArrowUpDown,
 };
 
 export const ICON_NAMES = Object.keys(ICON_MAP);
@@ -90,7 +92,9 @@ const KEYWORDS: [RegExp, string][] = [
   [/prime|award|prix|prestige|פרס|יוקרה|luxe|luxury/i, "award"],
   [/sécur|secure|safe|shield|אבטחה|בטיחות/i, "shield"],
   [/clé|key|מפתח|access/i, "key"],
-  [/étage|floor|level|קומה/i, "layers"],
+  [/ascenseur|elevator|lift|מעלית/i, "elevator"],
+  [/neuf|nouveau|new build|new building|brand new|חדש|בנייה חדשה/i, "sparkles"],
+  [/étage|floor|level|קומה/i, "building"],
   [/résident|resident|family|tenant|דייר|תושב|people/i, "users"],
   [/wifi|internet|fiber|אינטרנט/i, "wifi"],
   [/gym|sport|fitness|כושר|מכון/i, "gym"],
