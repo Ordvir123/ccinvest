@@ -136,7 +136,7 @@ export function PageEditor({
   const [slugTouched, setSlugTouched] = useState(!!initialPage);
   const [slugError, setSlugError] = useState<string | null>(null);
   const [sourceLang, setSourceLang] = useState(
-    initialPage?.source_lang ?? initialSourceLang ?? "fr",
+    initialPage?.source_lang ?? initialSourceLang ?? "he",
   );
   const [status, setStatus] = useState<PageStatus>(initialPage?.status ?? "draft");
   const [publishing, setPublishing] = useState(false);
@@ -148,10 +148,10 @@ export function PageEditor({
         : emptyPageContent(),
   );
   const [seo, setSeo] = useState<PageSeo>(
-    normalizeSeo(initialPage?.seo, initialPage?.source_lang ?? initialSourceLang ?? "fr"),
+    normalizeSeo(initialPage?.seo, initialPage?.source_lang ?? initialSourceLang ?? "he"),
   );
   const [previewLang, setPreviewLang] = useState<ReadingLang>(
-    (initialPage?.source_lang as ReadingLang) ?? (initialSourceLang as ReadingLang) ?? "fr",
+    (initialPage?.source_lang as ReadingLang) ?? (initialSourceLang as ReadingLang) ?? "he",
   );
   const [previewDevice, setPreviewDevice] = useState<"desktop" | "mobile">("desktop");
   const [saving, setSaving] = useState(false);
