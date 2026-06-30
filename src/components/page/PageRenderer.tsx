@@ -105,7 +105,7 @@ function Hero({
         <img
           src={settings.brandLogoUrl}
           alt={settings.brandName}
-          className="mx-auto mb-8 h-10 w-auto rounded bg-card px-3 py-2 shadow-sm md:mb-10 md:h-14"
+          className="mx-auto mb-8 h-20 w-auto rounded-lg bg-card px-6 py-4 shadow-sm md:mb-10 md:h-28"
         />
         {hasText(hero.kicker) && (
           <p className="eyebrow mb-5 text-xs text-primary-foreground/80">
