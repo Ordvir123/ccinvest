@@ -120,6 +120,8 @@ export function emptyPageContent(): PageContent {
     about: { heading: "", body: "", features: [] },
     gallery: [],
     units: [],
+    apartment: { name: "", unit_type: "apartment" },
+    apartment_image_side: "right",
     videos: [],
     contact: { heading: "", heading_i18n: {} },
   };
