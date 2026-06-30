@@ -200,7 +200,7 @@ export function ContactForm({
                 type="submit"
                 size="lg"
                 disabled={sending || !interactive}
-                className="w-full bg-card text-primary hover:bg-card/90"
+                className="w-full bg-cta uppercase tracking-wider text-cta-foreground hover:bg-cta/90"
               >
                 {sending ? (
                   <>
