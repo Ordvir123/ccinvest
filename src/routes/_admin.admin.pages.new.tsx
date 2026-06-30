@@ -99,14 +99,50 @@ function NewPage() {
       </div>
 
       {mode === "ai" && (
-        <div className="space-y-3 rounded-lg border border-border p-4">
-          <div className="space-y-1">
-            <label className="text-sm font-medium text-foreground">
-              Paste the property text in any language
-            </label>
-            <p className="text-xs text-muted-foreground">
-              The language is detected automatically and the page is built in French.
-            </p>
+        <div className="space-y-4 rounded-lg border border-border p-4">
+          <div className="grid gap-4 md:grid-cols-[1fr_auto]">
+            <div className="space-y-1">
+              <label className="text-sm font-medium text-foreground">
+                Paste the property text in any language
+              </label>
+              <p className="text-xs text-muted-foreground">
+                The language is detected automatically and the page is built in French.
+              </p>
+            </div>
+            <div className="space-y-1">
+              <span className="block text-sm font-medium text-foreground">Property type</span>
+              <div className="inline-flex rounded-md border border-border p-1">
+                <button
+                  type="button"
+                  onClick={() => setCategory("apartment")}
+                  className={cn(
+                    "flex items-center gap-1.5 rounded px-3 py-1.5 text-sm font-medium transition",
+                    category === "apartment"
+                      ? "bg-primary text-primary-foreground"
+                      : "text-muted-foreground hover:text-foreground",
+                  )}
+                >
+                  <Home className="h-4 w-4" /> Apartments
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setCategory("project")}
+                  className={cn(
+                    "flex items-center gap-1.5 rounded px-3 py-1.5 text-sm font-medium transition",
+                    category === "project"
+                      ? "bg-primary text-primary-foreground"
+                      : "text-muted-foreground hover:text-foreground",
+                  )}
+                >
+                  <Building2 className="h-4 w-4" /> Projects
+                </button>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                {category === "apartment"
+                  ? "Single listing (/appartements) — one apartment section."
+                  : "Building (/projects) — repeatable units section."}
+              </p>
+            </div>
           </div>
 
           <Textarea
