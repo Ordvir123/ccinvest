@@ -97,21 +97,15 @@ function NewPage() {
 
       {mode === "ai" && (
         <div className="space-y-3 rounded-lg border border-border p-4">
-          <div className="flex items-center justify-between gap-3">
+          <div className="space-y-1">
             <label className="text-sm font-medium text-foreground">
               Paste the property text in any language
             </label>
-            <Select value={lang} onValueChange={(v) => setLang(v as ExtractLang)}>
-              <SelectTrigger className="w-32">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="fr">French</SelectItem>
-                <SelectItem value="he">Hebrew</SelectItem>
-                <SelectItem value="en">English</SelectItem>
-              </SelectContent>
-            </Select>
+            <p className="text-xs text-muted-foreground">
+              The language is detected automatically and the page is built in French.
+            </p>
           </div>
+
           <Textarea
             value={text}
             onChange={(e) => setText(e.target.value)}
