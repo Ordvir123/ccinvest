@@ -240,16 +240,26 @@ export function GalleryUpload({
         </div>
       )}
       <div className="space-y-1">
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          disabled={disabled || busy}
-          onClick={() => inputRef.current?.click()}
-        >
-          {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImagePlus className="h-4 w-4" />}
-          Add images
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            disabled={disabled || busy}
+            onClick={() => inputRef.current?.click()}
+          >
+            {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImagePlus className="h-4 w-4" />}
+            Add images
+          </Button>
+          <PasteButton
+            onImage={async (f) => {
+              const media = await upload(f);
+              if (media) onChange([...value, media]);
+            }}
+            disabled={disabled}
+            busy={busy}
+          />
+        </div>
         {disabled && <Label className="block text-xs text-muted-foreground">Set a slug first to enable uploads.</Label>}
       </div>
       <input
