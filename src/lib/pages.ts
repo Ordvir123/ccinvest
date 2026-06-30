@@ -493,7 +493,7 @@ export async function validateForPublish(input: {
   return null;
 }
 
-/** Flip a page's status (publish/unpublish). Returns the new status. */
+/** Flip a page's status (publish/unpublish/archive/restore). Returns the new status. */
 export async function setPageStatus(
   id: string,
   status: PageStatus,
@@ -506,4 +506,10 @@ export async function setPageStatus(
     .single();
   if (error) throw error;
   return data.status as PageStatus;
+}
+
+/** Permanently delete a page and its translations. Irreversible. */
+export async function deletePage(id: string): Promise<void> {
+  const { error } = await supabase.from("pages").delete().eq("id", id);
+  if (error) throw error;
 }

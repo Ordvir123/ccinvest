@@ -1,7 +1,8 @@
+import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { FilePlus2, Pencil, Copy, ExternalLink } from "lucide-react";
+import { FilePlus2, Pencil, Copy, ExternalLink, Archive, ArchiveRestore, Trash2 } from "lucide-react";
 
 const SITE_ORIGIN = "https://ccinvest.lovable.app";
 
@@ -17,17 +18,67 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { listPages } from "@/lib/pages";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { listPages, setPageStatus, deletePage, type PageListItem } from "@/lib/pages";
 
 export const Route = createFileRoute("/_admin/admin/pages/")({
   component: PagesList,
 });
 
 function PagesList() {
+  const queryClient = useQueryClient();
+  const [showArchived, setShowArchived] = useState(false);
+  const [toDelete, setToDelete] = useState<PageListItem | null>(null);
+
   const { data, isLoading, error } = useQuery({
     queryKey: ["admin-pages"],
     queryFn: listPages,
   });
+
+  const refresh = () => queryClient.invalidateQueries({ queryKey: ["admin-pages"] });
+
+  const archiveMut = useMutation({
+    mutationFn: (id: string) => setPageStatus(id, "archived"),
+    onSuccess: () => {
+      toast.success("Page moved to archive.");
+      refresh();
+    },
+    onError: (e) => toast.error(e instanceof Error ? e.message : "Failed to archive."),
+  });
+
+  const restoreMut = useMutation({
+    mutationFn: (id: string) => setPageStatus(id, "draft"),
+    onSuccess: () => {
+      toast.success("Page restored as a draft.");
+      refresh();
+    },
+    onError: (e) => toast.error(e instanceof Error ? e.message : "Failed to restore."),
+  });
+
+  const deleteMut = useMutation({
+    mutationFn: (id: string) => deletePage(id),
+    onSuccess: () => {
+      toast.success("Page permanently deleted.");
+      setToDelete(null);
+      refresh();
+    },
+    onError: (e) => toast.error(e instanceof Error ? e.message : "Failed to delete."),
+  });
+
+  const all = data ?? [];
+  const rows = all.filter((p) =>
+    showArchived ? p.status === "archived" : p.status !== "archived",
+  );
+  const archivedCount = all.filter((p) => p.status === "archived").length;
 
   return (
     <Section>
@@ -43,7 +94,24 @@ function PagesList() {
         </Button>
       </div>
 
-      <Card className="mt-8">
+      <div className="mt-6 flex gap-2">
+        <Button
+          variant={showArchived ? "outline" : "default"}
+          size="sm"
+          onClick={() => setShowArchived(false)}
+        >
+          Active
+        </Button>
+        <Button
+          variant={showArchived ? "default" : "outline"}
+          size="sm"
+          onClick={() => setShowArchived(true)}
+        >
+          <Archive className="h-4 w-4" /> Archive{archivedCount ? ` (${archivedCount})` : ""}
+        </Button>
+      </div>
+
+      <Card className="mt-4">
         <CardContent className="p-0">
           {isLoading ? (
             <div className="py-12 text-center text-muted-foreground">Loading…</div>
@@ -51,8 +119,10 @@ function PagesList() {
             <div className="py-12 text-center text-destructive">
               Could not load pages. Check the Supabase connection.
             </div>
-          ) : !data || data.length === 0 ? (
-            <div className="py-12 text-center text-muted-foreground">No pages yet.</div>
+          ) : rows.length === 0 ? (
+            <div className="py-12 text-center text-muted-foreground">
+              {showArchived ? "No archived pages." : "No pages yet."}
+            </div>
           ) : (
             <Table>
               <TableHeader>
@@ -65,43 +135,88 @@ function PagesList() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {data.map((p) => (
+                {rows.map((p) => (
                   <TableRow key={p.id}>
                     <TableCell className="font-medium text-foreground">{p.title}</TableCell>
                     <TableCell className="text-muted-foreground">/{p.slug}</TableCell>
                     <TableCell>
-                      <Badge variant={p.status === "published" ? "default" : "secondary"}>
-                        {p.status === "published" ? "Published" : "Draft"}
+                      <Badge
+                        variant={
+                          p.status === "published"
+                            ? "default"
+                            : p.status === "archived"
+                              ? "outline"
+                              : "secondary"
+                        }
+                      >
+                        {p.status === "published"
+                          ? "Published"
+                          : p.status === "archived"
+                            ? "Archived"
+                            : "Draft"}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-muted-foreground">
                       {new Date(p.updated_at).toLocaleDateString()}
                     </TableCell>
                     <TableCell className="text-end">
-                      {p.status === "published" && (
+                      {p.status === "archived" ? (
                         <>
-                          <Button asChild variant="ghost" size="sm">
-                            <a href={`${SITE_ORIGIN}/${p.slug}`} target="_blank" rel="noreferrer">
-                              <ExternalLink className="h-4 w-4" /> View
-                            </a>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => restoreMut.mutate(p.id)}
+                            disabled={restoreMut.isPending}
+                          >
+                            <ArchiveRestore className="h-4 w-4" /> Restore
                           </Button>
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={async () => {
-                              await navigator.clipboard.writeText(`${SITE_ORIGIN}/${p.slug}`);
-                              toast.success("Share link copied.");
-                            }}
+                            className="text-destructive hover:text-destructive"
+                            onClick={() => setToDelete(p)}
                           >
-                            <Copy className="h-4 w-4" /> Link
+                            <Trash2 className="h-4 w-4" /> Delete
                           </Button>
                         </>
+                      ) : (
+                        <>
+                          {p.status === "published" && (
+                            <>
+                              <Button asChild variant="ghost" size="sm">
+                                <a href={`${SITE_ORIGIN}/${p.slug}`} target="_blank" rel="noreferrer">
+                                  <ExternalLink className="h-4 w-4" /> View
+                                </a>
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={async () => {
+                                  await navigator.clipboard.writeText(`${SITE_ORIGIN}/${p.slug}`);
+                                  toast.success("Share link copied.");
+                                }}
+                              >
+                                <Copy className="h-4 w-4" /> Link
+                              </Button>
+                            </>
+                          )}
+                          <Button asChild variant="ghost" size="sm">
+                            <Link to="/admin/pages/$id" params={{ id: p.id }}>
+                              <Pencil className="h-4 w-4" /> Edit
+                            </Link>
+                          </Button>
+                          {p.status === "draft" && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => archiveMut.mutate(p.id)}
+                              disabled={archiveMut.isPending}
+                            >
+                              <Archive className="h-4 w-4" /> Archive
+                            </Button>
+                          )}
+                        </>
                       )}
-                      <Button asChild variant="ghost" size="sm">
-                        <Link to="/admin/pages/$id" params={{ id: p.id }}>
-                          <Pencil className="h-4 w-4" /> Edit
-                        </Link>
-                      </Button>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -110,6 +225,35 @@ function PagesList() {
           )}
         </CardContent>
       </Card>
+
+      <AlertDialog open={!!toDelete} onOpenChange={(open) => !open && setToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete this page permanently?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {toDelete ? (
+                <>
+                  “{toDelete.title}” (/{toDelete.slug}) will be permanently removed. This action
+                  cannot be undone.
+                </>
+              ) : null}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleteMut.isPending}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={deleteMut.isPending}
+              onClick={(e) => {
+                e.preventDefault();
+                if (toDelete) deleteMut.mutate(toDelete.id);
+              }}
+            >
+              {deleteMut.isPending ? "Deleting…" : "Delete permanently"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Section>
   );
 }

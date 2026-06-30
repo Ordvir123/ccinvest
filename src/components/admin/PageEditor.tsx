@@ -657,8 +657,8 @@ export function PageEditor({
           <h1 className="text-lg font-semibold text-foreground">
             {isEdit ? "Edit page" : "New page"}
           </h1>
-          <Badge variant={status === "published" ? "default" : "secondary"}>
-            {status === "published" ? "Published" : "Draft"}
+          <Badge variant={status === "published" ? "default" : status === "archived" ? "outline" : "secondary"}>
+            {status === "published" ? "Published" : status === "archived" ? "Archived" : "Draft"}
           </Badge>
           {status === "published" && liveUrl && (
             <a

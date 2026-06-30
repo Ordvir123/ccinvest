@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { ImagePlus, FileText, Loader2, Trash2, ArrowUp, ArrowDown } from "lucide-react";
+import { ImagePlus, FileText, Loader2, Trash2, ArrowUp, ArrowDown, ClipboardPaste } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -16,6 +16,68 @@ import {
 import type { UnitAttachment } from "@/types/page";
 
 const ACCEPT = ACCEPTED_IMAGE_TYPES.join(",");
+
+/** Read an image File from the system clipboard (no local file needed). */
+async function readClipboardImageFile(): Promise<File | null> {
+  const anyNav = navigator as Navigator & {
+    clipboard?: { read?: () => Promise<ClipboardItem[]> };
+  };
+  if (!anyNav.clipboard?.read) {
+    throw new Error("Clipboard paste isn't supported in this browser.");
+  }
+  const items = await anyNav.clipboard.read();
+  for (const item of items) {
+    const type = item.types.find((t) => t.startsWith("image/"));
+    if (type) {
+      const blob = await item.getType(type);
+      const ext = type.split("/")[1]?.replace("jpeg", "jpg") || "png";
+      return new File([blob], `pasted-${Date.now()}.${ext}`, { type });
+    }
+  }
+  return null;
+}
+
+/** Small "paste from clipboard" button shared by the upload controls. */
+function PasteButton({
+  onImage,
+  disabled,
+  busy,
+  label = "Paste image",
+}: {
+  onImage: (file: File) => void | Promise<void>;
+  disabled?: boolean;
+  busy?: boolean;
+  label?: string;
+}) {
+  const [reading, setReading] = useState(false);
+  const onClick = async () => {
+    setReading(true);
+    try {
+      const file = await readClipboardImageFile();
+      if (!file) {
+        toast.error("No image found on the clipboard. Copy an image first.");
+        return;
+      }
+      await onImage(file);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not read clipboard.");
+    } finally {
+      setReading(false);
+    }
+  };
+  return (
+    <Button
+      type="button"
+      variant="outline"
+      size="sm"
+      disabled={disabled || busy || reading}
+      onClick={onClick}
+    >
+      {reading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ClipboardPaste className="h-4 w-4" />}
+      {label}
+    </Button>
+  );
+}
 
 function useUploader(slug: string) {
   const [busy, setBusy] = useState(false);
@@ -75,16 +137,19 @@ export function SingleImageUpload({
           </Button>
         </div>
       ) : (
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          disabled={disabled || busy}
-          onClick={() => inputRef.current?.click()}
-        >
-          {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImagePlus className="h-4 w-4" />}
-          Upload image
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            disabled={disabled || busy}
+            onClick={() => inputRef.current?.click()}
+          >
+            {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImagePlus className="h-4 w-4" />}
+            Upload image
+          </Button>
+          <PasteButton onImage={(f) => onFile(f)} disabled={disabled} busy={busy} />
+        </div>
       )}
       <input
         ref={inputRef}
@@ -175,16 +240,26 @@ export function GalleryUpload({
         </div>
       )}
       <div className="space-y-1">
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          disabled={disabled || busy}
-          onClick={() => inputRef.current?.click()}
-        >
-          {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImagePlus className="h-4 w-4" />}
-          Add images
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            disabled={disabled || busy}
+            onClick={() => inputRef.current?.click()}
+          >
+            {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImagePlus className="h-4 w-4" />}
+            Add images
+          </Button>
+          <PasteButton
+            onImage={async (f) => {
+              const media = await upload(f);
+              if (media) onChange([...value, media]);
+            }}
+            disabled={disabled}
+            busy={busy}
+          />
+        </div>
         {disabled && <Label className="block text-xs text-muted-foreground">Set a slug first to enable uploads.</Label>}
       </div>
       <input
@@ -258,16 +333,19 @@ export function UnitFileUpload({
           </Button>
         </div>
       ) : (
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          disabled={disabled || busy}
-          onClick={() => inputRef.current?.click()}
-        >
-          {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImagePlus className="h-4 w-4" />}
-          Upload {label}
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            disabled={disabled || busy}
+            onClick={() => inputRef.current?.click()}
+          >
+            {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImagePlus className="h-4 w-4" />}
+            Upload {label}
+          </Button>
+          <PasteButton onImage={(f) => onFile(f)} disabled={disabled} busy={busy} label="Paste" />
+        </div>
       )}
       <input
         ref={inputRef}
