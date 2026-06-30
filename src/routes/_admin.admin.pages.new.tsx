@@ -127,8 +127,9 @@ function NewPage() {
             </Button>
           </div>
           <p className="text-xs text-muted-foreground">
-            AI extracts only facts present in the text. Missing fields stay empty for
-            you to complete. Nothing is saved or published automatically.
+            AI extracts only facts present in the text and writes the page in French.
+            Use the Translations tab for Hebrew and English. Missing fields stay empty
+            for you to complete. Nothing is saved or published automatically.
           </p>
         </div>
       )}
