@@ -1,7 +1,15 @@
 import { useState } from "react";
-import { Check, ChevronRight } from "lucide-react";
+import { Check, ChevronRight, FileText } from "lucide-react";
 
 import { getIcon, guessIcon } from "@/lib/page-icons";
+import {
+  unitTitle,
+  floorValue,
+  orientationValue,
+  roomsValue,
+  areaValue,
+  parkingValue,
+} from "@/lib/unit-i18n";
 
 import { Section } from "@/components/ui/section";
 import { Button } from "@/components/ui/button";
