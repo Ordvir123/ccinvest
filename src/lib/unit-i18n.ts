@@ -155,7 +155,11 @@ export function parkingValue(value: string, lang: ReadingLang): string {
   if (value in map) return (map as Record<string, string>)[value];
   const n = parseNumericField(value);
   if (n !== null) return String(n);
-  return value;
+  // Legacy free-text values (e.g. "Une place de parking", "Sans") -> short token.
+  const s = value.trim();
+  if (/sans|aucun|none|ללא/i.test(s)) return map.none;
+  if (/place|parking|חני|space/i.test(s)) return map.one;
+  return s;
 }
 
 export const isOrientationCode = (v?: string): v is OrientationCode =>
