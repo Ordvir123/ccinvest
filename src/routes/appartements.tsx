@@ -24,8 +24,8 @@ export const Route = createFileRoute("/appartements")({
 function PropertiesPage() {
   const { t } = useTranslation();
   const { data, isLoading } = useQuery({
-    queryKey: ["published-pages"],
-    queryFn: listPublishedPages,
+    queryKey: ["published-pages", "apartment"],
+    queryFn: () => listPublishedPages("apartment"),
   });
 
   return (
