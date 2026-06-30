@@ -137,16 +137,19 @@ export function SingleImageUpload({
           </Button>
         </div>
       ) : (
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          disabled={disabled || busy}
-          onClick={() => inputRef.current?.click()}
-        >
-          {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImagePlus className="h-4 w-4" />}
-          Upload image
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            disabled={disabled || busy}
+            onClick={() => inputRef.current?.click()}
+          >
+            {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImagePlus className="h-4 w-4" />}
+            Upload image
+          </Button>
+          <PasteButton onImage={(f) => onFile(f)} disabled={disabled} busy={busy} />
+        </div>
       )}
       <input
         ref={inputRef}
