@@ -862,27 +862,9 @@ export function PageEditor({
         </div>
 
         <TabsContent value="editor" className="mt-0">
-          {/* Desktop: two panes. Mobile: tabs. */}
-          <div className="hidden flex-1 gap-6 p-4 md:flex md:p-6">
-            <div className="w-1/2 min-w-0">{formPanel}</div>
-            <div className="w-1/2 min-w-0">{previewPanel}</div>
-          </div>
-
-          <div className="flex-1 p-4 md:hidden">
-            <Tabs defaultValue="form">
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="form">Form</TabsTrigger>
-                <TabsTrigger value="preview">Preview</TabsTrigger>
-              </TabsList>
-              <TabsContent value="form" className="mt-4">
-                {formPanel}
-              </TabsContent>
-              <TabsContent value="preview" className="mt-4">
-                {previewPanel}
-              </TabsContent>
-            </Tabs>
-          </div>
+          <div className="mx-auto max-w-3xl flex-1 p-4 md:p-6">{formPanel}</div>
         </TabsContent>
+
 
         <TabsContent value="translations" className="mt-0 p-4 md:p-6">
           <TranslationsTab
