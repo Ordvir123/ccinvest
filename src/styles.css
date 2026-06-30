@@ -123,8 +123,8 @@
 :root:lang(he),
 [lang="he"] {
   --font-heading: "Frank Ruhl Libre", "Playfair Display", serif;
-  --font-body: "Heebo", system-ui, sans-serif;
-  --font-label: "Heebo", system-ui, sans-serif;
+  --font-body: "Assistant", system-ui, sans-serif;
+  --font-label: "Assistant", system-ui, sans-serif;
 }
 
 @layer base {
