@@ -147,7 +147,14 @@ function Stats({ stats }: { stats: PageContent["stats"] }) {
     <section className="border-y border-border bg-secondary">
       <div className="mx-auto grid max-w-6xl grid-cols-2 divide-x divide-border md:grid-cols-4 rtl:divide-x-reverse">
         {stats.map((s, i) => {
-          const Icon = getIcon(s.icon) ?? getIcon(guessIcon(s.label, "sparkles"));
+          // Prefer a meaningful guess from the label when no icon is set or the
+          // stored icon is the generic "sparkles" default (avoids repeated icons).
+          const guessed = guessIcon(s.label, "");
+          const preferGuess = (!s.icon || s.icon === "sparkles") && !!guessed;
+          const Icon =
+            (preferGuess ? getIcon(guessed) : getIcon(s.icon)) ??
+            getIcon(s.icon) ??
+            getIcon(guessIcon(s.label, "sparkles"));
           return (
             <div key={i} className="flex flex-col items-center px-3 py-8 text-center md:px-4 md:py-10">
               {Icon && (
