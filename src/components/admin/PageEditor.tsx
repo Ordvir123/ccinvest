@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
-import { Plus, Trash2, ArrowUp, ArrowDown, Save, Globe, EyeOff, Copy, ExternalLink, Monitor, Smartphone, RefreshCw, Sparkles, Loader2 } from "lucide-react";
+import { Plus, Trash2, ArrowUp, ArrowDown, Save, Globe, EyeOff, Eye, Copy, ExternalLink, RefreshCw, Sparkles, Loader2 } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -24,7 +24,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
 import { cn } from "@/lib/utils";
 
-import { PageRenderer } from "@/components/page/PageRenderer";
+
 import { SectionCard, Field } from "@/components/admin/editor-parts";
 import { SingleImageUpload, GalleryUpload, UnitFileUpload } from "@/components/admin/MediaUpload";
 import { IconPicker } from "@/components/admin/IconPicker";
@@ -150,10 +150,6 @@ export function PageEditor({
   const [seo, setSeo] = useState<PageSeo>(
     normalizeSeo(initialPage?.seo, initialPage?.source_lang ?? initialSourceLang ?? "he"),
   );
-  const [previewLang, setPreviewLang] = useState<ReadingLang>(
-    (initialPage?.source_lang as ReadingLang) ?? (initialSourceLang as ReadingLang) ?? "he",
-  );
-  const [previewDevice, setPreviewDevice] = useState<"desktop" | "mobile">("desktop");
   const [saving, setSaving] = useState(false);
 
   // AI corrections (apply a natural-language change to the current content).
@@ -766,67 +762,7 @@ export function PageEditor({
     </div>
   );
 
-  /* ---------- preview panel ---------- */
-  const previewPanel = (
-    <div className="space-y-3">
-      <div className="flex flex-wrap items-center gap-2">
-        <div className="flex items-center gap-1">
-          <span className="text-xs text-muted-foreground">Reading language:</span>
-          {READING_LANGS.map((l) => (
-            <button
-              key={l}
-              type="button"
-              onClick={() => setPreviewLang(l)}
-              className={cn(
-                "rounded px-2 py-0.5 text-xs font-medium",
-                previewLang === l ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted",
-              )}
-            >
-              {l.toUpperCase()}
-            </button>
-          ))}
-        </div>
-        <div className="ms-auto flex items-center gap-1 rounded-md border border-border p-0.5">
-          <button
-            type="button"
-            onClick={() => setPreviewDevice("desktop")}
-            aria-pressed={previewDevice === "desktop"}
-            aria-label="Desktop preview"
-            className={cn(
-              "rounded px-2 py-1",
-              previewDevice === "desktop" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted",
-            )}
-          >
-            <Monitor className="h-4 w-4" />
-          </button>
-          <button
-            type="button"
-            onClick={() => setPreviewDevice("mobile")}
-            aria-pressed={previewDevice === "mobile"}
-            aria-label="Mobile preview"
-            className={cn(
-              "rounded px-2 py-1",
-              previewDevice === "mobile" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted",
-            )}
-          >
-            <Smartphone className="h-4 w-4" />
-          </button>
-        </div>
-      </div>
-      <div className="max-h-[calc(100vh-12rem)] overflow-auto rounded-lg border border-border bg-muted/30 p-2">
-        <div
-          dir={isRtlReading(previewLang) ? "rtl" : "ltr"}
-          className={cn(
-            "mx-auto overflow-hidden bg-background transition-all",
-            previewDevice === "mobile" ? "w-[390px] max-w-full rounded-2xl border border-border shadow-lg" : "w-full",
-          )}
-        >
-          <PageRenderer content={content} lang={previewLang} />
-        </div>
-      </div>
-    </div>
 
-  );
 
   return (
     <div className="flex h-full min-h-screen flex-col">
@@ -851,7 +787,24 @@ export function PageEditor({
           )}
         </div>
         <div className="flex items-center gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            disabled={!pageId}
+            onClick={() => {
+              if (!pageId) {
+                toast.error("Save the draft first to get a preview link.");
+                return;
+              }
+              window.open(`/preview/${pageId}`, "_blank", "noopener");
+            }}
+            title={pageId ? "Open a temporary draft preview in a new tab" : "Save first"}
+          >
+            <Eye className="h-4 w-4" /> Preview draft
+          </Button>
           <DropdownMenu>
+
             <DropdownMenuTrigger asChild>
               <Button type="button" variant="outline" size="sm" disabled={!slug}>
                 <Copy className="h-4 w-4" /> Copy share link
@@ -926,27 +879,9 @@ export function PageEditor({
         </div>
 
         <TabsContent value="editor" className="mt-0">
-          {/* Desktop: two panes. Mobile: tabs. */}
-          <div className="hidden flex-1 gap-6 p-4 md:flex md:p-6">
-            <div className="w-1/2 min-w-0">{formPanel}</div>
-            <div className="w-1/2 min-w-0">{previewPanel}</div>
-          </div>
-
-          <div className="flex-1 p-4 md:hidden">
-            <Tabs defaultValue="form">
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="form">Form</TabsTrigger>
-                <TabsTrigger value="preview">Preview</TabsTrigger>
-              </TabsList>
-              <TabsContent value="form" className="mt-4">
-                {formPanel}
-              </TabsContent>
-              <TabsContent value="preview" className="mt-4">
-                {previewPanel}
-              </TabsContent>
-            </Tabs>
-          </div>
+          <div className="mx-auto max-w-3xl flex-1 p-4 md:p-6">{formPanel}</div>
         </TabsContent>
+
 
         <TabsContent value="translations" className="mt-0 p-4 md:p-6">
           <TranslationsTab
