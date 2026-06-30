@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
-import { Plus, Trash2, ArrowUp, ArrowDown, Save, Globe, EyeOff, Copy, ExternalLink, Monitor, Smartphone, RefreshCw } from "lucide-react";
+import { Plus, Trash2, ArrowUp, ArrowDown, Save, Globe, EyeOff, Copy, ExternalLink, Monitor, Smartphone, RefreshCw, Sparkles, Loader2 } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -48,6 +48,7 @@ import {
   setPageStatus,
   validateForPublish,
 } from "@/lib/pages";
+import { applyAiEdit, type EditLang } from "@/lib/edit-page";
 import {
   READING_LANGS,
   isRtlReading,
@@ -136,6 +137,39 @@ export function PageEditor({
   );
   const [previewDevice, setPreviewDevice] = useState<"desktop" | "mobile">("desktop");
   const [saving, setSaving] = useState(false);
+
+  // AI corrections (apply a natural-language change to the current content).
+  const [aiInstruction, setAiInstruction] = useState("");
+  const [aiRunning, setAiRunning] = useState(false);
+  const [aiUndo, setAiUndo] = useState<PageContent | null>(null);
+
+  const runAiEdit = async () => {
+    if (!aiInstruction.trim()) {
+      toast.error("Describe the change you want first.");
+      return;
+    }
+    setAiRunning(true);
+    const before = content;
+    try {
+      const next = await applyAiEdit(content, aiInstruction.trim(), sourceLang as EditLang);
+      setContent(next);
+      setAiUndo(before);
+      setAiInstruction("");
+      toast.success("AI applied your change. Review the preview, then save.");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "AI edit failed.");
+    } finally {
+      setAiRunning(false);
+    }
+  };
+
+  const undoAiEdit = () => {
+    if (!aiUndo) return;
+    setContent(aiUndo);
+    setAiUndo(null);
+    toast.success("Reverted the AI change.");
+  };
+
 
 
   // Convenient typed updaters.
@@ -276,6 +310,43 @@ export function PageEditor({
   /* ---------- form panel ---------- */
   const formPanel = (
     <div className="space-y-4">
+      <SectionCard
+        title="AI corrections"
+        description="Describe a change in plain language and AI will apply it to the fields below. Review the preview, then save."
+      >
+        <Field
+          label="Instruction"
+          hint="e.g. “Change the hero subtitle to mention sea views” or “Shorten the about text”. Images and prices are preserved."
+        >
+          <Textarea
+            rows={3}
+            value={aiInstruction}
+            onChange={(e) => setAiInstruction(e.target.value)}
+            placeholder="Describe the correction to apply to this page…"
+            disabled={aiRunning}
+          />
+        </Field>
+        <div className="flex items-center gap-2">
+          <Button type="button" size="sm" onClick={runAiEdit} disabled={aiRunning}>
+            {aiRunning ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" /> Applying…
+              </>
+            ) : (
+              <>
+                <Sparkles className="h-4 w-4" /> Apply with AI
+              </>
+            )}
+          </Button>
+          {aiUndo && !aiRunning && (
+            <Button type="button" size="sm" variant="outline" onClick={undoAiEdit}>
+              <RefreshCw className="h-4 w-4" /> Undo AI change
+            </Button>
+          )}
+        </div>
+      </SectionCard>
+
+
       <SectionCard title="Page meta">
         <Field label="Slug" required hint={`Public URL: ${publicUrl}`}>
           <Input
