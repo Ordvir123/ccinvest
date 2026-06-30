@@ -65,9 +65,9 @@ const ORIENTATION_LABELS: Record<ReadingLang, Record<OrientationCode, string>> =
 };
 
 const PARKING_LABELS: Record<ReadingLang, Record<ParkingCode, string>> = {
-  fr: { one: "Une place de parking", none: "Sans" },
-  he: { one: "מקום חניה אחד", none: "ללא" },
-  en: { one: "One parking space", none: "None" },
+  fr: { one: "1", none: "—" },
+  he: { one: "1", none: "ללא" },
+  en: { one: "1", none: "None" },
 };
 
 /** Admin-facing English labels for the editor dropdowns. */
