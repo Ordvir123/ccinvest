@@ -112,6 +112,7 @@ export const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
 /** Build an empty PageContent matching the schema exactly. */
 export function emptyPageContent(): PageContent {
   return {
+    category: "apartment",
     hero: { kicker: "", title: "", subtitle: "", price: "", cta_label: "" },
     stats: [],
     location: { heading: "", text: "", map_query: "" },
