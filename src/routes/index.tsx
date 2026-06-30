@@ -38,8 +38,15 @@ export const Route = createFileRoute("/")({
   component: Home,
 });
 
-function useCountUp(target: number, duration = 1500) {
-  const [value, setValue] = useState(0);
+function useCountUp(target: string | number, duration = 1500) {
+  const isNumber = typeof target === 'number';
+  const match = !isNumber ? String(target).match(/^(\D*)(\d+)(\D*)$/) : null;
+  const prefix = match?.[1] ?? '';
+  const numTarget = match ? parseInt(match[2], 10) : (isNumber ? target : 0);
+  const suffix = match?.[3] ?? '';
+  const initial = isNumber ? 0 : (match ? prefix + '0' + suffix : target);
+
+  const [value, setValue] = useState<string | number>(initial);
   const ref = useRef<HTMLDivElement>(null);
   const [inView, setInView] = useState(false);
 
@@ -61,18 +68,18 @@ function useCountUp(target: number, duration = 1500) {
     let raf = 0;
     const tick = (now: number) => {
       const p = Math.min((now - start) / duration, 1);
-      setValue(Math.floor(p * target));
+      const currentNum = Math.floor(p * numTarget);
+      setValue(isNumber ? currentNum : prefix + currentNum + suffix);
       if (p < 1) raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, [inView, target, duration]);
+  }, [inView, numTarget, isNumber, prefix, suffix, duration]);
 
   return { value, ref };
 }
 
-
-function StatItem({ value, label }: { value: number; label: string }) {
+function StatItem({ value, label }: { value: string | number; label: string }) {
   const { value: v, ref } = useCountUp(value);
   return (
     <div ref={ref} className="text-center">
