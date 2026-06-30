@@ -638,7 +638,22 @@ export function PageRenderer({
           hasText(content.about.body) ||
           hasItems(content.about.features)) && <About about={content.about} />}
       <Gallery gallery={content.gallery} labels={labels} />
-      <Units units={content.units} labels={labels} lang={lang} />
+      {content.category === "project" ? (
+        <Units units={content.units} labels={labels} lang={lang} />
+      ) : (
+        content.apartment &&
+        (hasText(content.apartment.unit_type) ||
+          hasText(content.apartment.name) ||
+          hasText(content.apartment.description) ||
+          hasText(content.apartment.image?.url)) && (
+          <ApartmentSection
+            apartment={content.apartment}
+            imageSide={content.apartment_image_side === "left" ? "left" : "right"}
+            labels={labels}
+            lang={lang}
+          />
+        )
+      )}
       <Videos videos={content.videos} labels={labels} />
       <ContactForm
         heading={
