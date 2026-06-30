@@ -60,9 +60,9 @@ export function listTranslatableFields(c: PageContent): TransField[] {
   (c.gallery ?? []).forEach((m, i) => push(`gallery.${i}.alt`, `Gallery ${i + 1} · Alt`, m.alt));
 
   (c.units ?? []).forEach((u, i) => {
-    push(`units.${i}.name`, `Unit ${i + 1} · Name`, u.name);
-    push(`units.${i}.floor`, `Unit ${i + 1} · Floor`, u.floor);
-    push(`units.${i}.orientation`, `Unit ${i + 1} · Orientation`, u.orientation);
+    // Free-text title fallback only; dictionary-driven type/number, numeric
+    // attributes, orientation and parking codes are localized by the template.
+    if (!u.unit_type) push(`units.${i}.name`, `Unit ${i + 1} · Name`, u.name);
     push(`units.${i}.description`, `Unit ${i + 1} · Description`, u.description);
     (u.features ?? []).forEach((f, j) =>
       push(`units.${i}.features.${j}`, `Unit ${i + 1} · Feature ${j + 1}`, f),
@@ -153,10 +153,29 @@ export function preserveStableFields(
     out.about = { ...out.about, feature_icons: source.about.feature_icons };
   }
   if (Array.isArray(out.units)) {
-    out.units = out.units.map((u, i) => ({
-      ...u,
-      image: source.units?.[i]?.image ?? u.image,
-    }));
+    out.units = out.units.map((u, i) => {
+      const src = source.units?.[i];
+      if (!src) return u;
+      return {
+        ...u,
+        // Stable, non-AI-translated unit fields (dictionary codes, numbers, media).
+        unit_type: src.unit_type,
+        unit_number: src.unit_number,
+        floor: src.floor,
+        orientation: src.orientation,
+        rooms: src.rooms,
+        area_m2: src.area_m2,
+        balcony_m2: src.balcony_m2,
+        parking: src.parking,
+        price: src.price,
+        image: src.image ?? u.image,
+        attachment: src.attachment,
+      };
+    });
+  }
+  // Per-locale proper names are authored manually, not machine-translated.
+  if (source.location?.name_i18n) {
+    out.location = { ...out.location, name_i18n: source.location.name_i18n };
   }
   return out;
 }
