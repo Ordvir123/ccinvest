@@ -413,6 +413,7 @@ function toCard(page: Page): PublishedCard {
     location: hasText(c.location?.heading) ? c.location!.heading : undefined,
     priceFrom: priceFrom || undefined,
     cover: cover || undefined,
+    category: c.category === "project" ? "project" : "apartment",
   };
 }
 
