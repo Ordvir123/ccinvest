@@ -120,7 +120,7 @@ function Home() {
         />
         <div className="absolute inset-0 bg-gradient-overlay" />
         <div className="absolute inset-0 bg-gradient-hero" />
-        <div className="container relative z-10 mx-auto flex h-full items-end px-4 pb-20">
+        <div className="container relative z-10 mx-auto flex h-full items-center px-4">
           <div className="max-w-2xl text-primary-foreground">
             <p className="mb-4 text-sm uppercase tracking-[0.3em] text-cta">
               {t("public.hero.eyebrow")}
