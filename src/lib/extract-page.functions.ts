@@ -117,6 +117,7 @@ function prune(value: unknown): unknown {
 const inputSchema = z.object({
   text: z.string().min(1).max(MAX_TEXT_LENGTH),
   sourceLang: z.enum(["fr", "he", "en"]).optional(),
+  category: z.enum(["apartment", "project"]).optional(),
   accessToken: z.string().min(1),
 });
 
