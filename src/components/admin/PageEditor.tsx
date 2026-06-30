@@ -48,6 +48,7 @@ import {
   setPageStatus,
   validateForPublish,
 } from "@/lib/pages";
+import { applyAiEdit, type EditLang } from "@/lib/edit-page";
 import {
   READING_LANGS,
   isRtlReading,
