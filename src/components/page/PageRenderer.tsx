@@ -478,7 +478,7 @@ export function PageRenderer({
           hasText(content.about.body) ||
           hasItems(content.about.features)) && <About about={content.about} />}
       <Gallery gallery={content.gallery} labels={labels} />
-      <Units units={content.units} labels={labels} />
+      <Units units={content.units} labels={labels} lang={lang} />>
       <Videos videos={content.videos} labels={labels} />
       <ContactForm
         heading={content.contact?.heading ?? (hasText(settings.defaultContactHeading) ? settings.defaultContactHeading : undefined)}
