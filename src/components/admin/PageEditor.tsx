@@ -786,8 +786,25 @@ export function PageEditor({
             </a>
           )}
         </div>
-        <div className="flex items-center gap-2">
+        <div class="flex items-center gap-2" className="flex items-center gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            disabled={!pageId}
+            onClick={() => {
+              if (!pageId) {
+                toast.error("Save the draft first to get a preview link.");
+                return;
+              }
+              window.open(`/preview/${pageId}`, "_blank", "noopener");
+            }}
+            title={pageId ? "Open a temporary draft preview in a new tab" : "Save first"}
+          >
+            <Eye className="h-4 w-4" /> Preview draft
+          </Button>
           <DropdownMenu>
+
             <DropdownMenuTrigger asChild>
               <Button type="button" variant="outline" size="sm" disabled={!slug}>
                 <Copy className="h-4 w-4" /> Copy share link
