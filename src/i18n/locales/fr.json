@@ -10,6 +10,7 @@
     "leads": "Prospects",
     "home": "Accueil",
     "properties": "Appartements",
+    "projects": "Projets",
     "about": "À propos",
     "contact": "Contact"
   },
@@ -34,6 +35,13 @@
       "experience": "Années d'expérience",
       "deals": "Transactions réalisées",
       "aliyah": "Familles ayant fait leur Alyah"
+    },
+    "projects": {
+      "title": "Nos projets",
+      "subtitle": "Découvrez nos projets immobiliers à Tel Aviv.",
+      "empty": "Aucun projet publié pour le moment.",
+      "viewAll": "Voir tout",
+      "discover": "Découvrir"
     },
     "properties": {
       "title": "Nos appartements",
