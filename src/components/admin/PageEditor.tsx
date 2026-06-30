@@ -697,11 +697,26 @@ export function PageEditor({
       </SectionCard>
 
       <SectionCard title="Contact" defaultOpen={false}>
-        <Field label="Heading">
-          <Input
-            value={content.contact?.heading ?? ""}
-            onChange={(e) => patch({ contact: { heading: e.target.value } })}
-          />
+        <Field
+          label="Heading (per language)"
+          hint="Shown above the contact form. Enter each language; empty locales fall back to the source language."
+        >
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+            {READING_LANGS.map((l) => (
+              <Input
+                key={l}
+                dir={isRtlReading(l) ? "rtl" : "ltr"}
+                aria-label={`Contact heading (${LANG_LABELS[l]})`}
+                placeholder={CONTACT_HEADING_PLACEHOLDERS[l]}
+                value={content.contact?.heading_i18n?.[l] ?? ""}
+                onChange={(e) =>
+                  patchContact({
+                    heading_i18n: { ...(content.contact?.heading_i18n ?? {}), [l]: e.target.value },
+                  })
+                }
+              />
+            ))}
+          </div>
         </Field>
       </SectionCard>
 
