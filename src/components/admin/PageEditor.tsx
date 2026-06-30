@@ -936,15 +936,21 @@ function UnitBlock({
   onUp,
   onDown,
   onRemove,
+  titleOverride,
+  forceOpen = false,
 }: {
   index: number;
   unit: Unit;
   slug: string;
   canUpload: boolean;
   onChange: (u: Unit) => void;
-  onUp: () => void;
-  onDown: () => void;
-  onRemove: () => void;
+  onUp?: () => void;
+  onDown?: () => void;
+  onRemove?: () => void;
+  /** When set, shows this title instead of the derived unit title. */
+  titleOverride?: string;
+  /** When true, the block renders expanded and without a collapse toggle. */
+  forceOpen?: boolean;
 }) {
   const [open, setOpen] = useState(true);
   const set = (p: Partial<Unit>) => onChange({ ...unit, ...p });
@@ -966,20 +972,27 @@ function UnitBlock({
   // Custom name only applies to "Other" (or legacy units saved without a type).
   const isOther = !unit.unit_type || unit.unit_type === "other";
   const title =
-    (isOther
+    titleOverride ??
+    ((isOther
       ? unit.name?.trim()
       : `${UNIT_TYPE_OPTION_LABELS[unit.unit_type!]}${unit.unit_number ? " " + unit.unit_number : ""}`) ||
-    `Unit ${index + 1}`;
+      `Unit ${index + 1}`);
+  const showControls = !!(onUp && onDown && onRemove);
+  const isOpen = forceOpen || open;
 
   return (
     <div className="rounded-md border border-border p-3">
       <div className="flex items-center justify-between gap-2">
-        <button type="button" className="text-sm font-medium text-foreground" onClick={() => setOpen((v) => !v)}>
-          {title}
-        </button>
-        <MoveRemove onUp={onUp} onDown={onDown} onRemove={onRemove} />
+        {forceOpen ? (
+          <span className="text-sm font-medium text-foreground">{title}</span>
+        ) : (
+          <button type="button" className="text-sm font-medium text-foreground" onClick={() => setOpen((v) => !v)}>
+            {title}
+          </button>
+        )}
+        {showControls && <MoveRemove onUp={onUp!} onDown={onDown!} onRemove={onRemove!} />}
       </div>
-      {open && (
+      {isOpen && (
         <div className="mt-3 space-y-3">
           <div className="grid grid-cols-2 gap-2">
             <Field label="Unit type" required>
