@@ -206,16 +206,15 @@ function PagesList() {
                               <Pencil className="h-4 w-4" /> Edit
                             </Link>
                           </Button>
-                          {p.status === "draft" && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => archiveMut.mutate(p.id)}
-                              disabled={archiveMut.isPending}
-                            >
-                              <Archive className="h-4 w-4" /> Archive
-                            </Button>
-                          )}
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => archiveMut.mutate(p.id)}
+                            disabled={archiveMut.isPending}
+                          >
+                            <Archive className="h-4 w-4" /> Archive
+                          </Button>
+
                         </>
                       )}
                     </TableCell>
