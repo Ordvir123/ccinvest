@@ -295,6 +295,23 @@ export function PageEditor({
             </SelectContent>
           </Select>
         </Field>
+        <Field
+          label="Listing page"
+          hint="Choose where this page appears on the public site."
+        >
+          <Select
+            value={content.category ?? "apartment"}
+            onValueChange={(v) => patch({ category: v as PageContent["category"] })}
+          >
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="apartment">Apartments (/appartements)</SelectItem>
+              <SelectItem value="project">Projects (/projects)</SelectItem>
+            </SelectContent>
+          </Select>
+        </Field>
       </SectionCard>
 
       <SectionCard title="Hero">
