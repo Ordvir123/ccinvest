@@ -394,6 +394,7 @@ export type PublishedCard = {
   location?: string;
   priceFrom?: string;
   cover?: string;
+  category: PageCategory;
 };
 
 function toCard(page: Page): PublishedCard {
