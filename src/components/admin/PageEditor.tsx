@@ -940,12 +940,15 @@ function UnitBlock({
             </Field>
           )}
           <div className="grid grid-cols-2 gap-2">
-            {numericFields.map(([key, label]) => (
+            {numericFields.map(([key, label, allowDecimal, placeholder]) => (
               <Field key={key} label={label}>
                 <Input
-                  inputMode="numeric"
+                  inputMode={allowDecimal ? "decimal" : "numeric"}
+                  placeholder={placeholder}
                   value={(unit[key] as string) ?? ""}
-                  onChange={(e) => set({ [key]: e.target.value } as Partial<Unit>)}
+                  onChange={(e) =>
+                    set({ [key]: sanitizeNumeric(e.target.value, allowDecimal) } as Partial<Unit>)
+                  }
                 />
               </Field>
             ))}
