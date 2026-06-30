@@ -490,7 +490,7 @@ export function PageRenderer({
         (hasText(content.location.heading) ||
           hasText(content.location.text) ||
           hasText(content.location.map_query)) && (
-          <LocationBlock location={content.location} />
+          <LocationBlock location={content.location} lang={lang} />
         )}
       {content.about &&
         (hasText(content.about.heading) ||
