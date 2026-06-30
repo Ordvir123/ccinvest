@@ -949,11 +949,11 @@ function UnitBlock({
   const [open, setOpen] = useState(true);
   const set = (p: Partial<Unit>) => onChange({ ...unit, ...p });
   const numericFields: [keyof Unit, string, boolean, string][] = [
-    // [key, label, allowDecimal, placeholder]
+    // [key, label, allowDecimal, placeholder] — placeholders are neutral hints, not data.
     ["floor", "Floor (number only, 0 = ground)", false, "1"],
     ["rooms", "Rooms (number only)", false, "2"],
-    ["area_m2", "Area (m², number only)", true, "61"],
-    ["balcony_m2", "Balcony (m², number only)", true, "6.5"],
+    ["area_m2", "Area (m², number only)", true, "0"],
+    ["balcony_m2", "Balcony (m², number only)", true, "0"],
   ];
   const sanitizeNumeric = (val: string, allowDecimal: boolean) => {
     let s = val.replace(/[^\d.,]/g, "").replace(",", ".");
@@ -962,11 +962,13 @@ function UnitBlock({
     if (parts.length > 2) s = parts[0] + "." + parts.slice(1).join("");
     return s;
   };
-  const NONE = "__none__";
+  // Custom name only applies to "Other" (or legacy units saved without a type).
+  const isOther = !unit.unit_type || unit.unit_type === "other";
   const title =
-    (unit.unit_type
-      ? `${UNIT_TYPE_OPTION_LABELS[unit.unit_type]}${unit.unit_number ? " " + unit.unit_number : ""}`
-      : unit.name?.trim()) || `Unit ${index + 1}`;
+    (isOther
+      ? unit.name?.trim()
+      : `${UNIT_TYPE_OPTION_LABELS[unit.unit_type!]}${unit.unit_number ? " " + unit.unit_number : ""}`) ||
+    `Unit ${index + 1}`;
 
   return (
     <div className="rounded-md border border-border p-3">
@@ -979,18 +981,15 @@ function UnitBlock({
       {open && (
         <div className="mt-3 space-y-3">
           <div className="grid grid-cols-2 gap-2">
-            <Field label="Unit type">
+            <Field label="Unit type" required>
               <Select
-                value={unit.unit_type ?? NONE}
-                onValueChange={(v) =>
-                  set({ unit_type: v === NONE ? undefined : (v as Unit["unit_type"]) })
-                }
+                value={unit.unit_type ?? "apartment"}
+                onValueChange={(v) => set({ unit_type: v as Unit["unit_type"] })}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select type" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value={NONE}>— (use custom name)</SelectItem>
                   {UNIT_TYPES.map((tpe) => (
                     <SelectItem key={tpe} value={tpe}>
                       {UNIT_TYPE_OPTION_LABELS[tpe]}
@@ -1001,15 +1000,16 @@ function UnitBlock({
             </Field>
             <Field label="Number">
               <Input
+                inputMode="numeric"
                 value={unit.unit_number ?? ""}
                 onChange={(e) => set({ unit_number: e.target.value })}
-                placeholder="4"
+                placeholder="№"
               />
             </Field>
           </div>
-          {!unit.unit_type && (
-            <Field label="Custom name" hint="Used when no unit type is selected.">
-              <Input value={unit.name} onChange={(e) => set({ name: e.target.value })} />
+          {isOther && (
+            <Field label="Custom name" hint="Shown verbatim across all languages — only used for “Other”.">
+              <Input value={unit.name ?? ""} onChange={(e) => set({ name: e.target.value })} />
             </Field>
           )}
           <div className="grid grid-cols-2 gap-2">
