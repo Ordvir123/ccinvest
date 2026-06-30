@@ -9,6 +9,7 @@ import {
   roomsValue,
   areaValue,
   parkingValue,
+  ABOUT_APARTMENT_HEADING,
 } from "@/lib/unit-i18n";
 
 import { Section } from "@/components/ui/section";
