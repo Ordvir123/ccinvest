@@ -98,7 +98,7 @@ export type PageSeo = Partial<Record<ReadingLang, SeoFields>> & {
   canonical?: string;
 };
 
-export type PageStatus = "draft" | "published";
+export type PageStatus = "draft" | "published" | "archived";
 
 export type Page = {
   id: string;
