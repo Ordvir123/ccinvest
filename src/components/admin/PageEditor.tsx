@@ -962,6 +962,7 @@ function UnitBlock({
     if (parts.length > 2) s = parts[0] + "." + parts.slice(1).join("");
     return s;
   };
+  const NONE = "__none__";
   // Custom name only applies to "Other" (or legacy units saved without a type).
   const isOther = !unit.unit_type || unit.unit_type === "other";
   const title =
