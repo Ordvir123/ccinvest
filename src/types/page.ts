@@ -79,6 +79,10 @@ export type PageContent = {
   about?: { heading?: string; body?: string; features?: string[]; feature_icons?: string[] };
   gallery: Media[];
   units?: Unit[];
+  /** Single apartment block for apartment-type pages (mutually exclusive with units). */
+  apartment?: Unit;
+  /** Desktop image placement for the apartment section ("left"/"right" in LTR; mirrored in RTL). */
+  apartment_image_side?: "left" | "right";
   videos?: Video[];
   contact?: {
     heading?: string;
