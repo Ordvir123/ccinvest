@@ -255,21 +255,44 @@ export function cleanContent(content: PageContent): PageContent {
 
   const gallery = (content.gallery ?? []).filter((m) => t(m.url));
 
+  // Migrate legacy text in numeric fields to a bare number string.
+  // "1er étage" -> "1", "6ème étage" -> "6", "RDC"/"rez-de-chaussée" -> "0",
+  // "2 pièces" -> "2", "61 m²" -> "61", "50,7" -> "50.7". No number -> undefined.
+  const sanitizeNumber = (v?: string, opts?: { floor?: boolean }): string | undefined => {
+    const s = (v ?? "").trim();
+    if (!s) return undefined;
+    if (opts?.floor && /(^|\b)(rdc|rez[- ]?de[- ]?chauss)/i.test(s)) return "0";
+    const m = s.replace(",", ".").match(/-?\d+(\.\d+)?/);
+    return m ? m[0] : undefined;
+  };
+  // Migrate legacy parking text to a dictionary code.
+  const sanitizeParking = (v?: string): string | undefined => {
+    const s = (v ?? "").trim();
+    if (!s) return undefined;
+    if (s === "one" || s === "none") return s;
+    if (/sans|aucun|none|ללא|^0$/i.test(s)) return "none";
+    if (/place|parking|חני|space|^[1-9]/i.test(s)) return "one";
+    return s;
+  };
+
   const units = (content.units ?? [])
-    .filter((u) => t(u.name) || u.image?.url)
+    .filter((u) => t(u.name) || u.image?.url || u.unit_type)
     .map((u) => {
       const feats = (u.features ?? []).map(t).filter(Boolean);
       return {
         name: t(u.name),
-        floor: keepText(u.floor),
+        unit_type: u.unit_type,
+        unit_number: keepText(u.unit_number),
+        floor: sanitizeNumber(u.floor, { floor: true }),
         orientation: keepText(u.orientation),
-        rooms: keepText(u.rooms),
-        area_m2: keepText(u.area_m2),
-        balcony_m2: keepText(u.balcony_m2),
-        parking: keepText(u.parking),
+        rooms: sanitizeNumber(u.rooms),
+        area_m2: sanitizeNumber(u.area_m2),
+        balcony_m2: sanitizeNumber(u.balcony_m2),
+        parking: sanitizeParking(u.parking),
         description: keepText(u.description),
         price: keepText(u.price),
         image: u.image?.url ? u.image : undefined,
+        attachment: u.attachment?.url ? u.attachment : undefined,
         features: feats.length ? feats : undefined,
       };
     });
