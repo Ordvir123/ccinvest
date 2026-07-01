@@ -499,9 +499,16 @@ function ApartmentSection({
   return (
     <section className="bg-secondary">
       <Section>
-        <h2 className="mb-10 text-center text-3xl text-ink md:text-4xl">
-          {ABOUT_APARTMENT_HEADING[lang] ?? ABOUT_APARTMENT_HEADING.fr}
-        </h2>
+        {(() => {
+          const HeadingIcon = getIcon(headingIcon);
+          const text = hasText(heading) ? heading : (ABOUT_APARTMENT_HEADING[lang] ?? ABOUT_APARTMENT_HEADING.fr);
+          return (
+            <h2 className="mb-10 flex items-center justify-center gap-3 text-center text-3xl text-ink md:text-4xl">
+              {HeadingIcon && <HeadingIcon className="h-7 w-7 shrink-0 text-primary" aria-hidden />}
+              {text}
+            </h2>
+          );
+        })()}
         <Card className="overflow-hidden">
           <div className="flex flex-col gap-0 md:flex-row md:items-stretch">
             <div className={`flex flex-col p-6 md:w-1/2 md:p-10 ${detailsOrder}`}>
