@@ -158,6 +158,14 @@ export function PageEditor({
   );
   const [saving, setSaving] = useState(false);
 
+  // Reusable "About the apartment" heading options managed in template settings.
+  const settingsQuery = useQuery({
+    queryKey: ["template-settings"],
+    queryFn: fetchTemplateSettings,
+  });
+  const titleOptions = settingsQuery.data?.apartmentTitleOptions ?? [];
+  const CUSTOM_TITLE = "__custom__";
+
   // AI corrections (apply a natural-language change to the current content).
   const [aiInstruction, setAiInstruction] = useState("");
   const [aiRunning, setAiRunning] = useState(false);
