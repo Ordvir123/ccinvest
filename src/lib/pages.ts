@@ -329,6 +329,8 @@ export function cleanContent(content: PageContent): PageContent {
       : undefined;
   const apartment_image_side =
     content.apartment_image_side === "left" ? "left" : "right";
+  const apartment_title = !isProject ? keepText(content.apartment_title) : undefined;
+  const apartment_title_icon = !isProject ? keepText(content.apartment_title_icon) : undefined;
 
   const videos = (content.videos ?? []).filter((v) => t(v.youtube_id));
 
@@ -348,6 +350,8 @@ export function cleanContent(content: PageContent): PageContent {
     units,
     apartment,
     apartment_image_side,
+    apartment_title,
+    apartment_title_icon,
     videos,
     contact,
   };

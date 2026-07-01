@@ -1,5 +1,11 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
+import {
+  fetchTemplateSettings,
+  saveTemplateSettings,
+  type ApartmentTitleOption,
+} from "@/lib/template-settings";
 import { toast } from "sonner";
 import { Plus, Trash2, ArrowUp, ArrowDown, Save, Globe, EyeOff, Eye, Copy, ExternalLink, RefreshCw, Sparkles, Loader2 } from "lucide-react";
 import {
@@ -152,6 +158,16 @@ export function PageEditor({
   );
   const [saving, setSaving] = useState(false);
 
+  // Reusable "About the apartment" heading options managed in template settings.
+  const settingsQuery = useQuery({
+    queryKey: ["template-settings"],
+    queryFn: fetchTemplateSettings,
+  });
+  const titleOptions = settingsQuery.data?.apartmentTitleOptions ?? [];
+  const CUSTOM_TITLE = "__custom__";
+  const DEFAULT_TITLE = "__default__";
+  const [aptTitleCustom, setAptTitleCustom] = useState(false);
+
   // AI corrections (apply a natural-language change to the current content).
   const [aiInstruction, setAiInstruction] = useState("");
   const [aiRunning, setAiRunning] = useState(false);
@@ -232,6 +248,31 @@ export function PageEditor({
 
   const canUpload = slug.length > 0;
 
+  /**
+   * If the apartment section uses a custom heading not yet in template
+   * settings, persist it (with its icon) so it becomes a reusable option.
+   */
+  const persistCustomTitleOption = async () => {
+    const label = content.apartment_title?.trim();
+    if (!label) return;
+    const exists = titleOptions.some((o) => o.label.trim() === label);
+    if (exists) return;
+    try {
+      const current = settingsQuery.data ?? (await fetchTemplateSettings());
+      const nextOption: ApartmentTitleOption = {
+        label,
+        icon: content.apartment_title_icon?.trim() || "home",
+      };
+      await saveTemplateSettings({
+        ...current,
+        apartmentTitleOptions: [...(current.apartmentTitleOptions ?? []), nextOption],
+      });
+      settingsQuery.refetch();
+    } catch (err) {
+      console.warn("[editor] failed to persist apartment title option", err);
+    }
+  };
+
   const onSave = async () => {
     if (!content.hero.title.trim()) {
       toast.error("Hero title is required.");
@@ -258,6 +299,7 @@ export function PageEditor({
         seo,
       });
       toast.success("Draft saved.");
+      await persistCustomTitleOption();
       if (!pageId) {
         setPageId(saved.id);
         navigate({ to: "/admin/pages/$id", params: { id: saved.id }, replace: true });
@@ -293,6 +335,7 @@ export function PageEditor({
       });
       setStatus("published");
       toast.success("Page published — it's now live.");
+      await persistCustomTitleOption();
       if (!pageId) {
         setPageId(saved.id);
         navigate({ to: "/admin/pages/$id", params: { id: saved.id }, replace: true });
@@ -672,6 +715,69 @@ export function PageEditor({
           defaultOpen
         >
           <div className="space-y-4">
+            {(() => {
+              const label = content.apartment_title?.trim() ?? "";
+              const matched = titleOptions.find((o) => o.label.trim() === label);
+              const isCustom = aptTitleCustom || (label.length > 0 && !matched);
+              const selectValue = isCustom
+                ? CUSTOM_TITLE
+                : matched
+                  ? matched.label
+                  : DEFAULT_TITLE;
+              return (
+                <Field
+                  label="Section heading"
+                  hint="Choose a preset heading (managed in Settings) or enter a custom one — new custom headings are saved as future options on save."
+                >
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <IconPicker
+                        value={content.apartment_title_icon}
+                        onChange={(icon) => patch({ apartment_title_icon: (icon as string) ?? "" })}
+                      />
+                      <Select
+                        value={selectValue}
+                        onValueChange={(v) => {
+                          if (v === DEFAULT_TITLE) {
+                            setAptTitleCustom(false);
+                            patch({ apartment_title: "", apartment_title_icon: "" });
+                          } else if (v === CUSTOM_TITLE) {
+                            setAptTitleCustom(true);
+                          } else {
+                            setAptTitleCustom(false);
+                            const opt = titleOptions.find((o) => o.label === v);
+                            patch({
+                              apartment_title: v,
+                              apartment_title_icon: opt?.icon ?? content.apartment_title_icon ?? "",
+                            });
+                          }
+                        }}
+                      >
+                        <SelectTrigger className="flex-1">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value={DEFAULT_TITLE}>Default (À propos de l'appartement)</SelectItem>
+                          {titleOptions.map((o) => (
+                            <SelectItem key={o.label} value={o.label}>
+                              {o.label}
+                            </SelectItem>
+                          ))}
+                          <SelectItem value={CUSTOM_TITLE}>Custom text…</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    {isCustom && (
+                      <Input
+                        value={content.apartment_title ?? ""}
+                        onChange={(e) => patch({ apartment_title: e.target.value })}
+                        placeholder="Enter a custom heading…"
+                      />
+                    )}
+                  </div>
+                </Field>
+              );
+            })()}
             <Field label="Image side (desktop)" hint="Which side the main image sits on. Mirrored automatically in Hebrew (RTL).">
               <Select
                 value={content.apartment_image_side ?? "right"}
@@ -686,6 +792,7 @@ export function PageEditor({
                 </SelectContent>
               </Select>
             </Field>
+
             <UnitBlock
               index={0}
               unit={content.apartment ?? ({ name: "", unit_type: "apartment" } as Unit)}

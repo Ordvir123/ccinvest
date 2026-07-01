@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Check, ChevronRight, FileText } from "lucide-react";
+import { ChevronRight, FileText } from "lucide-react";
 
 import { getIcon, guessIcon } from "@/lib/page-icons";
 import {
@@ -36,6 +36,7 @@ const LABELS: Record<ReadingLang, Record<string, string>> = {
     gallery: "Galerie",
     units: "Appartements disponibles",
     videos: "Vidéos",
+    location: "Emplacement idéal",
     floor: "Étage",
     orientation: "Orientation",
     rooms: "Pièces",
@@ -49,6 +50,7 @@ const LABELS: Record<ReadingLang, Record<string, string>> = {
     gallery: "גלריה",
     units: "דירות זמינות",
     videos: "סרטונים",
+    location: "מיקום אידיאלי",
     floor: "קומה",
     orientation: "כיוון",
     rooms: "חדרים",
@@ -62,6 +64,7 @@ const LABELS: Record<ReadingLang, Record<string, string>> = {
     gallery: "Gallery",
     units: "Available apartments",
     videos: "Videos",
+    location: "Ideal location",
     floor: "Floor",
     orientation: "Orientation",
     rooms: "Rooms",
@@ -72,6 +75,7 @@ const LABELS: Record<ReadingLang, Record<string, string>> = {
     floorPlan: "Floor plan",
   },
 };
+
 
 const scrollToContact = () => {
   document.getElementById("contact")?.scrollIntoView({ behavior: "smooth" });
@@ -189,15 +193,33 @@ function Stats({ stats }: { stats: PageContent["stats"] }) {
   );
 }
 
+/**
+ * Remove precise house numbers from a map query so the embed points at the
+ * street/area, not the exact building — visitors can't lift the owner's exact
+ * address from the map or open it in Google Maps for the pinpoint.
+ */
+function approximateMapQuery(query: string): string {
+  return query
+    .replace(/\b\d+\b/g, " ") // drop standalone house/zip numbers
+    .replace(/\s*,\s*,+/g, ", ") // collapse empty comma segments
+    .replace(/\s{2,}/g, " ")
+    .replace(/\s*,\s*/g, ", ")
+    .replace(/^[\s,]+|[\s,]+$/g, "")
+    .trim();
+}
+
 function LocationBlock({
   location,
+  labels,
   lang,
 }: {
   location: NonNullable<PageContent["location"]>;
+  labels: Record<string, string>;
   lang: ReadingLang;
 }) {
   const hasMap = hasText(location.map_query);
   const properName = location.name_i18n?.[lang];
+  const mapArea = hasMap ? approximateMapQuery(location.map_query!) : "";
   return (
     <Section>
       <div className="grid items-center gap-10 md:grid-cols-2">
@@ -205,22 +227,23 @@ function LocationBlock({
           {hasText(properName) && (
             <p className="eyebrow mb-2 text-sm text-primary">{properName}</p>
           )}
-          {hasText(location.heading) && (
-            <h2 className="text-3xl text-ink md:text-4xl">{location.heading}</h2>
-          )}
+          <h2 className="text-3xl text-ink md:text-4xl">{labels.location}</h2>
           {hasText(location.text) && (
             <p className="mt-5 text-lg leading-relaxed text-muted-foreground">{location.text}</p>
           )}
         </div>
         {hasMap && (
-          <div className="overflow-hidden rounded-lg border border-border shadow-sm">
+          <div className="relative overflow-hidden rounded-lg border border-border shadow-sm">
             <iframe
-              title={location.heading ?? "Map"}
+              title={labels.location}
               className="h-[340px] w-full"
               loading="lazy"
               referrerPolicy="no-referrer-when-downgrade"
-              src={`https://maps.google.com/maps?q=${encodeURIComponent(location.map_query!)}&t=m&z=16&output=embed`}
+              src={`https://maps.google.com/maps?q=${encodeURIComponent(mapArea)}&t=m&z=14&output=embed`}
             />
+            {/* Transparent overlay blocks click-through to "View larger map",
+                directions, and dragging — keeping the exact address private. */}
+            <div className="absolute inset-0" aria-hidden />
           </div>
         )}
       </div>
@@ -228,38 +251,9 @@ function LocationBlock({
   );
 }
 
-function About({ about }: { about: NonNullable<PageContent["about"]> }) {
-  return (
-    <section className="bg-secondary">
-      <Section>
-        <div className="mx-auto max-w-3xl text-center">
-          {hasText(about.heading) && (
-            <h2 className="text-3xl text-ink md:text-4xl">{about.heading}</h2>
-          )}
-          {hasText(about.body) && (
-            <p className="mt-6 text-lg leading-relaxed text-muted-foreground">{about.body}</p>
-          )}
-        </div>
-        {hasItems(about.features) && (
-          <ul className="mx-auto mt-10 grid max-w-3xl gap-3 sm:grid-cols-2">
-            {about.features!.map((f, i) => {
-              const Icon =
-                getIcon(about.feature_icons?.[i]) ?? getIcon(guessIcon(f, "check")) ?? Check;
-              return (
-                <li key={i} className="flex items-center gap-3 text-foreground">
-                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
-                    <Icon className="h-4 w-4" aria-hidden />
-                  </span>
-                  {f}
-                </li>
-              );
-            })}
-          </ul>
-        )}
-      </Section>
-    </section>
-  );
-}
+
+
+
 
 function Gallery({ gallery, labels }: { gallery: PageContent["gallery"]; labels: Record<string, string> }) {
   const [open, setOpen] = useState(false);
@@ -443,11 +437,15 @@ function Units({
 function ApartmentSection({
   apartment,
   imageSide,
+  heading,
+  headingIcon,
   labels,
   lang,
 }: {
   apartment: Unit;
   imageSide: "left" | "right";
+  heading?: string;
+  headingIcon?: string;
   labels: Record<string, string>;
   lang: ReadingLang;
 }) {
@@ -471,9 +469,16 @@ function ApartmentSection({
   return (
     <section className="bg-secondary">
       <Section>
-        <h2 className="mb-10 text-center text-3xl text-ink md:text-4xl">
-          {ABOUT_APARTMENT_HEADING[lang] ?? ABOUT_APARTMENT_HEADING.fr}
-        </h2>
+        {(() => {
+          const HeadingIcon = getIcon(headingIcon);
+          const text = hasText(heading) ? heading : (ABOUT_APARTMENT_HEADING[lang] ?? ABOUT_APARTMENT_HEADING.fr);
+          return (
+            <h2 className="mb-10 flex items-center justify-center gap-3 text-center text-3xl text-ink md:text-4xl">
+              {HeadingIcon && <HeadingIcon className="h-7 w-7 shrink-0 text-primary" aria-hidden />}
+              {text}
+            </h2>
+          );
+        })()}
         <Card className="overflow-hidden">
           <div className="flex flex-col gap-0 md:flex-row md:items-stretch">
             <div className={`flex flex-col p-6 md:w-1/2 md:p-10 ${detailsOrder}`}>
@@ -571,9 +576,9 @@ function Videos({ videos, labels }: { videos: PageContent["videos"]; labels: Rec
   return (
     <Section>
       <h2 className="mb-10 text-center text-3xl text-ink md:text-4xl">{labels.videos}</h2>
-      <div className="grid gap-8 md:grid-cols-2">
+      <div className="mx-auto flex max-w-5xl flex-wrap justify-center gap-8">
         {videos!.map((v, i) => (
-          <figure key={i}>
+          <figure key={i} className="w-full max-w-2xl md:w-[calc(50%-1rem)]">
             <div className="aspect-video w-full overflow-hidden rounded-lg border border-border">
               <iframe
                 className="h-full w-full"
@@ -592,6 +597,7 @@ function Videos({ videos, labels }: { videos: PageContent["videos"]; labels: Rec
           </figure>
         ))}
       </div>
+
     </Section>
   );
 }
@@ -628,16 +634,9 @@ export function PageRenderer({
       <Hero hero={content.hero} settings={settings} lang={lang} />
       <Stats stats={content.stats} />
       {content.location &&
-        (hasText(content.location.heading) ||
-          hasText(content.location.text) ||
-          hasText(content.location.map_query)) && (
-          <LocationBlock location={content.location} lang={lang} />
+        (hasText(content.location.text) || hasText(content.location.map_query)) && (
+          <LocationBlock location={content.location} labels={labels} lang={lang} />
         )}
-      {content.about &&
-        (hasText(content.about.heading) ||
-          hasText(content.about.body) ||
-          hasItems(content.about.features)) && <About about={content.about} />}
-      <Gallery gallery={content.gallery} labels={labels} />
       {content.category === "project" ? (
         <Units units={content.units} labels={labels} lang={lang} />
       ) : (
@@ -649,11 +648,15 @@ export function PageRenderer({
           <ApartmentSection
             apartment={content.apartment}
             imageSide={content.apartment_image_side === "left" ? "left" : "right"}
+            heading={content.apartment_title}
+            headingIcon={content.apartment_title_icon}
             labels={labels}
             lang={lang}
           />
         )
       )}
+      <Gallery gallery={content.gallery} labels={labels} />
+
       <Videos videos={content.videos} labels={labels} />
       <ContactForm
         heading={
