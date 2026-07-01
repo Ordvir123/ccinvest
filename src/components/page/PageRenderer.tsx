@@ -467,11 +467,15 @@ function Units({
 function ApartmentSection({
   apartment,
   imageSide,
+  heading,
+  headingIcon,
   labels,
   lang,
 }: {
   apartment: Unit;
   imageSide: "left" | "right";
+  heading?: string;
+  headingIcon?: string;
   labels: Record<string, string>;
   lang: ReadingLang;
 }) {
