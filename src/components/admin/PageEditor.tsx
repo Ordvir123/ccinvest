@@ -713,6 +713,69 @@ export function PageEditor({
           defaultOpen
         >
           <div className="space-y-4">
+            {(() => {
+              const label = content.apartment_title?.trim() ?? "";
+              const matched = titleOptions.find((o) => o.label.trim() === label);
+              const isCustom = aptTitleCustom || (label.length > 0 && !matched);
+              const selectValue = isCustom
+                ? CUSTOM_TITLE
+                : matched
+                  ? matched.label
+                  : DEFAULT_TITLE;
+              return (
+                <Field
+                  label="Section heading"
+                  hint="Choose a preset heading (managed in Settings) or enter a custom one — new custom headings are saved as future options on save."
+                >
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <IconPicker
+                        value={content.apartment_title_icon}
+                        onChange={(icon) => patch({ apartment_title_icon: (icon as string) ?? "" })}
+                      />
+                      <Select
+                        value={selectValue}
+                        onValueChange={(v) => {
+                          if (v === DEFAULT_TITLE) {
+                            setAptTitleCustom(false);
+                            patch({ apartment_title: "", apartment_title_icon: "" });
+                          } else if (v === CUSTOM_TITLE) {
+                            setAptTitleCustom(true);
+                          } else {
+                            setAptTitleCustom(false);
+                            const opt = titleOptions.find((o) => o.label === v);
+                            patch({
+                              apartment_title: v,
+                              apartment_title_icon: opt?.icon ?? content.apartment_title_icon ?? "",
+                            });
+                          }
+                        }}
+                      >
+                        <SelectTrigger className="flex-1">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value={DEFAULT_TITLE}>Default (À propos de l'appartement)</SelectItem>
+                          {titleOptions.map((o) => (
+                            <SelectItem key={o.label} value={o.label}>
+                              {o.label}
+                            </SelectItem>
+                          ))}
+                          <SelectItem value={CUSTOM_TITLE}>Custom text…</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    {isCustom && (
+                      <Input
+                        value={content.apartment_title ?? ""}
+                        onChange={(e) => patch({ apartment_title: e.target.value })}
+                        placeholder="Enter a custom heading…"
+                      />
+                    )}
+                  </div>
+                </Field>
+              );
+            })()}
             <Field label="Image side (desktop)" hint="Which side the main image sits on. Mirrored automatically in Hebrew (RTL).">
               <Select
                 value={content.apartment_image_side ?? "right"}
@@ -727,6 +790,7 @@ export function PageEditor({
                 </SelectContent>
               </Select>
             </Field>
+
             <UnitBlock
               index={0}
               unit={content.apartment ?? ({ name: "", unit_type: "apartment" } as Unit)}
