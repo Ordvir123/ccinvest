@@ -576,9 +576,9 @@ function Videos({ videos, labels }: { videos: PageContent["videos"]; labels: Rec
   return (
     <Section>
       <h2 className="mb-10 text-center text-3xl text-ink md:text-4xl">{labels.videos}</h2>
-      <div className="grid gap-8 md:grid-cols-2">
+      <div className="mx-auto flex max-w-5xl flex-wrap justify-center gap-8">
         {videos!.map((v, i) => (
-          <figure key={i}>
+          <figure key={i} className="w-full max-w-2xl md:w-[calc(50%-1rem)]">
             <div className="aspect-video w-full overflow-hidden rounded-lg border border-border">
               <iframe
                 className="h-full w-full"
@@ -597,6 +597,7 @@ function Videos({ videos, labels }: { videos: PageContent["videos"]; labels: Rec
           </figure>
         ))}
       </div>
+
     </Section>
   );
 }
