@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Check, ChevronRight, FileText } from "lucide-react";
+import { ChevronRight, FileText } from "lucide-react";
 
 import { getIcon, guessIcon } from "@/lib/page-icons";
 import {
