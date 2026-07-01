@@ -165,6 +165,8 @@ export function PageEditor({
   });
   const titleOptions = settingsQuery.data?.apartmentTitleOptions ?? [];
   const CUSTOM_TITLE = "__custom__";
+  const DEFAULT_TITLE = "__default__";
+  const [aptTitleCustom, setAptTitleCustom] = useState(false);
 
   // AI corrections (apply a natural-language change to the current content).
   const [aiInstruction, setAiInstruction] = useState("");
