@@ -246,6 +246,31 @@ export function PageEditor({
 
   const canUpload = slug.length > 0;
 
+  /**
+   * If the apartment section uses a custom heading not yet in template
+   * settings, persist it (with its icon) so it becomes a reusable option.
+   */
+  const persistCustomTitleOption = async () => {
+    const label = content.apartment_title?.trim();
+    if (!label) return;
+    const exists = titleOptions.some((o) => o.label.trim() === label);
+    if (exists) return;
+    try {
+      const current = settingsQuery.data ?? (await fetchTemplateSettings());
+      const nextOption: ApartmentTitleOption = {
+        label,
+        icon: content.apartment_title_icon?.trim() || "home",
+      };
+      await saveTemplateSettings({
+        ...current,
+        apartmentTitleOptions: [...(current.apartmentTitleOptions ?? []), nextOption],
+      });
+      settingsQuery.refetch();
+    } catch (err) {
+      console.warn("[editor] failed to persist apartment title option", err);
+    }
+  };
+
   const onSave = async () => {
     if (!content.hero.title.trim()) {
       toast.error("Hero title is required.");
