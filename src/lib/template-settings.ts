@@ -56,7 +56,19 @@ function normalize(raw: unknown): TemplateSettings {
     defaultCtaLabel: v.defaultCtaLabel?.trim() || "",
     defaultContactHeading: v.defaultContactHeading?.trim() || "",
     contactBgUrl: v.contactBgUrl?.trim() || "",
+    apartmentTitleOptions: normalizeTitleOptions(v.apartmentTitleOptions),
   };
+}
+
+function normalizeTitleOptions(raw: unknown): ApartmentTitleOption[] {
+  if (!Array.isArray(raw)) return [...DEFAULT_APARTMENT_TITLE_OPTIONS];
+  const cleaned = raw
+    .map((o) => {
+      const opt = (o ?? {}) as Partial<ApartmentTitleOption>;
+      return { label: (opt.label ?? "").trim(), icon: (opt.icon ?? "").trim() };
+    })
+    .filter((o) => o.label.length > 0);
+  return cleaned.length ? cleaned : [...DEFAULT_APARTMENT_TITLE_OPTIONS];
 }
 
 /** Read the global template settings (anon-readable on the public site). */
