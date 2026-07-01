@@ -663,16 +663,9 @@ export function PageRenderer({
       <Hero hero={content.hero} settings={settings} lang={lang} />
       <Stats stats={content.stats} />
       {content.location &&
-        (hasText(content.location.heading) ||
-          hasText(content.location.text) ||
-          hasText(content.location.map_query)) && (
-          <LocationBlock location={content.location} lang={lang} />
+        (hasText(content.location.text) || hasText(content.location.map_query)) && (
+          <LocationBlock location={content.location} labels={labels} lang={lang} />
         )}
-      {content.about &&
-        (hasText(content.about.heading) ||
-          hasText(content.about.body) ||
-          hasItems(content.about.features)) && <About about={content.about} />}
-      <Gallery gallery={content.gallery} labels={labels} />
       {content.category === "project" ? (
         <Units units={content.units} labels={labels} lang={lang} />
       ) : (
@@ -684,11 +677,15 @@ export function PageRenderer({
           <ApartmentSection
             apartment={content.apartment}
             imageSide={content.apartment_image_side === "left" ? "left" : "right"}
+            heading={content.apartment_title}
+            headingIcon={content.apartment_title_icon}
             labels={labels}
             lang={lang}
           />
         )
       )}
+      <Gallery gallery={content.gallery} labels={labels} />
+
       <Videos videos={content.videos} labels={labels} />
       <ContactForm
         heading={
