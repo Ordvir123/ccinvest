@@ -1,4 +1,6 @@
 import { supabase, isSupabaseConfigured } from "@/integrations/supabase/client";
+import { BUILTIN_FEATURE_PRESETS, BUILTIN_SPEC_PRESETS } from "@/lib/unit-i18n";
+import { READING_LANGS, type SpecPreset, type SpecValueKind } from "@/types/page";
 
 /**
  * Global template settings shared across all landing pages.
@@ -31,6 +33,10 @@ export type TemplateSettings = {
   contactBgUrl: string;
   /** Reusable heading options for the "About the apartment" section. */
   apartmentTitleOptions: ApartmentTitleOption[];
+  /** Reusable spec presets (label + icon + value formatting) for detail rows. */
+  specPresets: SpecPreset[];
+  /** Reusable feature presets (label + icon) for feature rows. */
+  featurePresets: SpecPreset[];
 };
 
 export const DEFAULT_APARTMENT_TITLE_OPTIONS: ApartmentTitleOption[] = [
@@ -45,6 +51,8 @@ export const DEFAULT_TEMPLATE_SETTINGS: TemplateSettings = {
   defaultContactHeading: "",
   contactBgUrl: "",
   apartmentTitleOptions: DEFAULT_APARTMENT_TITLE_OPTIONS,
+  specPresets: BUILTIN_SPEC_PRESETS,
+  featurePresets: BUILTIN_FEATURE_PRESETS,
 };
 
 function normalize(raw: unknown): TemplateSettings {
@@ -57,6 +65,8 @@ function normalize(raw: unknown): TemplateSettings {
     defaultContactHeading: v.defaultContactHeading?.trim() || "",
     contactBgUrl: v.contactBgUrl?.trim() || "",
     apartmentTitleOptions: normalizeTitleOptions(v.apartmentTitleOptions),
+    specPresets: normalizePresets(v.specPresets, BUILTIN_SPEC_PRESETS),
+    featurePresets: normalizePresets(v.featurePresets, BUILTIN_FEATURE_PRESETS),
   };
 }
 
@@ -69,6 +79,44 @@ function normalizeTitleOptions(raw: unknown): ApartmentTitleOption[] {
     })
     .filter((o) => o.label.length > 0);
   return cleaned.length ? cleaned : [...DEFAULT_APARTMENT_TITLE_OPTIONS];
+}
+
+const VALUE_KINDS: SpecValueKind[] = [
+  "number",
+  "area",
+  "floor",
+  "rooms",
+  "orientation",
+  "parking",
+  "text",
+];
+
+function normalizePresets(raw: unknown, fallback: SpecPreset[]): SpecPreset[] {
+  if (!Array.isArray(raw)) return fallback.map((p) => ({ ...p, labels: { ...p.labels } }));
+  const cleaned = raw
+    .map((o) => {
+      const p = (o ?? {}) as Partial<SpecPreset>;
+      const labels = (p.labels ?? {}) as Partial<Record<(typeof READING_LANGS)[number], string>>;
+      const key = (p.key ?? "").trim();
+      const anyLabel = READING_LANGS.map((l) => (labels[l] ?? "").trim()).find(Boolean) ?? "";
+      return {
+        key:
+          key ||
+          anyLabel.toLowerCase().replace(/\s+/g, "_") ||
+          `preset_${Math.random().toString(36).slice(2, 8)}`,
+        icon: (p.icon ?? "").trim() || "check",
+        valueKind: VALUE_KINDS.includes(p.valueKind as SpecValueKind)
+          ? (p.valueKind as SpecValueKind)
+          : "text",
+        labels: {
+          fr: (labels.fr ?? "").trim(),
+          he: (labels.he ?? "").trim(),
+          en: (labels.en ?? "").trim(),
+        },
+      } as SpecPreset;
+    })
+    .filter((p) => READING_LANGS.some((l) => p.labels[l].length > 0));
+  return cleaned.length ? cleaned : fallback.map((p) => ({ ...p, labels: { ...p.labels } }));
 }
 
 /** Read the global template settings (anon-readable on the public site). */
@@ -90,9 +138,7 @@ export async function fetchTemplateSettings(): Promise<TemplateSettings> {
 }
 
 /** Persist the global template settings (admin only). */
-export async function saveTemplateSettings(
-  settings: TemplateSettings,
-): Promise<TemplateSettings> {
+export async function saveTemplateSettings(settings: TemplateSettings): Promise<TemplateSettings> {
   const normalized = normalize(settings);
   // The reserved row reuses the page schema; only `content.settings` matters.
   const content = {

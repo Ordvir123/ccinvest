@@ -42,7 +42,49 @@ export type Unit = {
   image?: Media;
   /** Optional floor-plan file (image or pdf). */
   attachment?: UnitAttachment;
+  /** Legacy free-text feature list (migrated to featureRows on load). */
   features?: string[];
+  /**
+   * Flexible detail rows (Area, Rooms, Floor, …). When present, these fully
+   * replace the fixed legacy fields above for rendering + editing.
+   */
+  specs?: DetailRow[];
+  /** Flexible feature rows (icon + text). Replaces the legacy `features`. */
+  featureRows?: DetailRow[];
+};
+
+/** How a spec value is formatted per reading language. */
+export type SpecValueKind =
+  | "number"
+  | "area"
+  | "floor"
+  | "rooms"
+  | "orientation"
+  | "parking"
+  | "text";
+
+/**
+ * A single flexible detail/feature row.
+ * - `presetKey` links the row to a preset (label + icon + value formatting).
+ * - `linked` true = follow the preset's label/icon; false = use overrides.
+ * - `label`/`icon` are the per-row overrides used when unlinked or custom.
+ * - `value` is the entered value (number, dictionary code, or free text).
+ */
+export type DetailRow = {
+  presetKey?: string;
+  linked?: boolean;
+  label?: string;
+  icon?: string;
+  value?: string;
+};
+
+/** A reusable spec/feature preset managed in template settings. */
+export type SpecPreset = {
+  key: string;
+  icon: string;
+  /** Per-locale label so nothing leaks untranslated. */
+  labels: Record<ReadingLang, string>;
+  valueKind: SpecValueKind;
 };
 
 export type Video = { title?: string; youtube_id: string };
@@ -139,8 +181,7 @@ export function isRtlReading(lang: string): boolean {
 export const hasText = (v?: string | null): v is string =>
   typeof v === "string" && v.trim().length > 0;
 
-export const hasItems = <T>(arr?: T[] | null): arr is T[] =>
-  Array.isArray(arr) && arr.length > 0;
+export const hasItems = <T>(arr?: T[] | null): arr is T[] => Array.isArray(arr) && arr.length > 0;
 
 /**
  * Idempotent migration: legacy flat seo ({ meta_title, ... }) becomes
@@ -151,9 +192,9 @@ export function normalizeSeo(
   seo: PageSeo | null | undefined,
   sourceLang: string = "fr",
 ): Partial<Record<ReadingLang, SeoFields>> {
-  const lang = (READING_LANGS.includes(sourceLang as ReadingLang)
-    ? sourceLang
-    : "fr") as ReadingLang;
+  const lang = (
+    READING_LANGS.includes(sourceLang as ReadingLang) ? sourceLang : "fr"
+  ) as ReadingLang;
   if (!seo) return {};
 
   const out: Partial<Record<ReadingLang, SeoFields>> = {};

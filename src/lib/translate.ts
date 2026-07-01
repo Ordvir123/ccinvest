@@ -67,6 +67,16 @@ export function listTranslatableFields(c: PageContent): TransField[] {
     (u.features ?? []).forEach((f, j) =>
       push(`units.${i}.features.${j}`, `Unit ${i + 1} · Feature ${j + 1}`, f),
     );
+    // Custom (unlinked) detail-row labels are the only translatable spec text.
+    (u.specs ?? []).forEach((r, j) => {
+      if (r.linked === false || !r.presetKey)
+        push(`units.${i}.specs.${j}.label`, `Unit ${i + 1} · Detail ${j + 1} label`, r.label);
+    });
+    // Custom (unlinked) feature-row texts.
+    (u.featureRows ?? []).forEach((r, j) => {
+      if (r.linked === false || !r.presetKey)
+        push(`units.${i}.featureRows.${j}.value`, `Unit ${i + 1} · Feature ${j + 1}`, r.value);
+    });
   });
 
   // Single apartment block (apartment-type pages). Same logic as a unit.
@@ -77,6 +87,14 @@ export function listTranslatableFields(c: PageContent): TransField[] {
     (apt.features ?? []).forEach((f, j) =>
       push(`apartment.features.${j}`, `Apartment · Feature ${j + 1}`, f),
     );
+    (apt.specs ?? []).forEach((r, j) => {
+      if (r.linked === false || !r.presetKey)
+        push(`apartment.specs.${j}.label`, `Apartment · Detail ${j + 1} label`, r.label);
+    });
+    (apt.featureRows ?? []).forEach((r, j) => {
+      if (r.linked === false || !r.presetKey)
+        push(`apartment.featureRows.${j}.value`, `Apartment · Feature ${j + 1}`, r.value);
+    });
   }
 
   (c.videos ?? []).forEach((v, i) => push(`videos.${i}.title`, `Video ${i + 1} · Title`, v.title));
@@ -91,9 +109,10 @@ export function listTranslatableFields(c: PageContent): TransField[] {
 export function getPath<T = unknown>(obj: unknown, path: string): T | undefined {
   return path
     .split(".")
-    .reduce<unknown>((acc, key) => (acc == null ? acc : (acc as Record<string, unknown>)[key]), obj) as
-    | T
-    | undefined;
+    .reduce<unknown>(
+      (acc, key) => (acc == null ? acc : (acc as Record<string, unknown>)[key]),
+      obj,
+    ) as T | undefined;
 }
 
 export function setPath<T extends object>(obj: T, path: string, val: unknown): T {
@@ -139,16 +158,34 @@ export async function fetchTranslationRow(
   };
 }
 
+/** Merge translated detail rows over source: keep structure/icon/values from
+ * source; take translated custom text only. Falls back to source rows. */
+function mergeRows(
+  srcRows: import("@/types/page").DetailRow[] | undefined,
+  trRows: import("@/types/page").DetailRow[] | undefined,
+  textField: "label" | "value",
+): import("@/types/page").DetailRow[] | undefined {
+  if (!Array.isArray(srcRows)) return srcRows;
+  return srcRows.map((r, i) => {
+    const custom = r.linked === false || !r.presetKey;
+    const translatedText = trRows?.[i]?.[textField];
+    return {
+      presetKey: r.presetKey,
+      linked: r.linked,
+      icon: r.icon,
+      label: textField === "label" && custom ? (translatedText ?? r.label) : r.label,
+      value: textField === "value" && custom ? (translatedText ?? r.value) : r.value,
+    };
+  });
+}
+
 /**
  * Re-attach non-translatable fields (images + chosen icons) from the source
  * onto a translated copy. The AI translation only returns text fields, so media
  * URLs (hero background, unit images) and manual icon choices must be restored
  * here to stay consistent across languages.
  */
-export function preserveStableFields(
-  source: PageContent,
-  translated: PageContent,
-): PageContent {
+export function preserveStableFields(source: PageContent, translated: PageContent): PageContent {
   const out = structuredClone(translated) as PageContent;
   // Hero kicker + CTA are authored per-locale; restore base + i18n from source so
   // the renderer picks the authored locale value (or falls back to the source).
@@ -189,6 +226,8 @@ export function preserveStableFields(
         price: src.price,
         image: src.image ?? u.image,
         attachment: src.attachment,
+        specs: mergeRows(src.specs, u.specs, "label"),
+        featureRows: mergeRows(src.featureRows, u.featureRows, "value"),
       };
     });
   }
@@ -209,10 +248,13 @@ export function preserveStableFields(
       price: src.price,
       image: src.image ?? out.apartment.image,
       attachment: src.attachment,
+      specs: mergeRows(src.specs, out.apartment.specs, "label"),
+      featureRows: mergeRows(src.featureRows, out.apartment.featureRows, "value"),
     };
   } else if (source.apartment) {
     out.apartment = source.apartment;
   }
+
   out.apartment_image_side = source.apartment_image_side;
   // Apartment section heading + icon are admin-chosen, never machine-translated.
   out.apartment_title = source.apartment_title;

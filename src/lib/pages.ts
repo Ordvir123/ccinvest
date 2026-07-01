@@ -114,7 +114,15 @@ export const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
 export function emptyPageContent(): PageContent {
   return {
     category: "apartment",
-    hero: { kicker: "", kicker_i18n: {}, title: "", subtitle: "", price: "", cta_label: "", cta_label_i18n: {} },
+    hero: {
+      kicker: "",
+      kicker_i18n: {},
+      title: "",
+      subtitle: "",
+      price: "",
+      cta_label: "",
+      cta_label_i18n: {},
+    },
     stats: [],
     location: { heading: "", text: "", map_query: "" },
     about: { heading: "", body: "", features: [] },
@@ -175,15 +183,15 @@ export async function listPages(): Promise<PageListItem[]> {
   return (data ?? [])
     .filter((row) => row.slug !== TEMPLATE_SETTINGS_SLUG)
     .map((row) => {
-    const content = (row.content ?? {}) as PageContent;
-    return {
-      id: row.id as string,
-      slug: row.slug as string,
-      title: content?.hero?.title?.trim() || (row.slug as string),
-      status: row.status as PageStatus,
-      updated_at: row.updated_at as string,
-    };
-  });
+      const content = (row.content ?? {}) as PageContent;
+      return {
+        id: row.id as string,
+        slug: row.slug as string,
+        title: content?.hero?.title?.trim() || (row.slug as string),
+        status: row.status as PageStatus,
+        updated_at: row.updated_at as string,
+      };
+    });
 }
 
 /** Load a single page (any status) by id for editing. */
@@ -258,9 +266,7 @@ export function cleanContent(content: PageContent): PageContent {
   const aboutIcons = (content.about?.feature_icons ?? []).slice(0, aboutFeatures.length);
   const about =
     content.about &&
-    (keepText(content.about.heading) ||
-      keepText(content.about.body) ||
-      aboutFeatures.length > 0)
+    (keepText(content.about.heading) || keepText(content.about.body) || aboutFeatures.length > 0)
       ? {
           heading: keepText(content.about.heading),
           body: keepText(content.about.body),
@@ -291,24 +297,58 @@ export function cleanContent(content: PageContent): PageContent {
     return s;
   };
 
+  // Clean flexible detail rows (specs). Keep rows with a value, or preset-linked.
+  const cleanSpecRows = (
+    rows?: import("@/types/page").DetailRow[],
+  ): import("@/types/page").DetailRow[] | undefined => {
+    const out = (rows ?? [])
+      .map((r) => ({
+        presetKey: keepText(r.presetKey),
+        linked: r.linked === false ? false : undefined,
+        label: r.linked === false ? keepText(r.label) : undefined,
+        icon: r.linked === false ? keepText(r.icon) : undefined,
+        value: keepText(r.value),
+      }))
+      .filter((r) => r.value || (r.presetKey && r.linked !== false));
+    return out.length ? out : undefined;
+  };
+  // Clean feature rows. Keep rows with text, or preset-linked (text from preset).
+  const cleanFeatureRows = (
+    rows?: import("@/types/page").DetailRow[],
+  ): import("@/types/page").DetailRow[] | undefined => {
+    const out = (rows ?? [])
+      .map((r) => ({
+        presetKey: keepText(r.presetKey),
+        linked: r.linked === false ? false : undefined,
+        icon: keepText(r.icon),
+        value: keepText(r.value),
+      }))
+      .filter((r) => r.value || (r.presetKey && r.linked !== false));
+    return out.length ? out : undefined;
+  };
+
   // Clean a single unit/apartment block (shared by units list and apartment).
   const cleanUnit = (u: import("@/types/page").Unit) => {
-    const feats = (u.features ?? []).map(t).filter(Boolean);
+    const specs = cleanSpecRows(u.specs);
+    const featureRows = cleanFeatureRows(u.featureRows);
     return {
       name: t(u.name),
       unit_type: u.unit_type,
       unit_number: keepText(u.unit_number),
-      floor: sanitizeNumber(u.floor, { floor: true }),
-      orientation: keepText(u.orientation),
-      rooms: sanitizeNumber(u.rooms),
-      area_m2: sanitizeNumber(u.area_m2),
-      balcony_m2: sanitizeNumber(u.balcony_m2),
-      parking: sanitizeParking(u.parking),
       description: keepText(u.description),
       price: keepText(u.price),
       image: u.image?.url ? u.image : undefined,
       attachment: u.attachment?.url ? u.attachment : undefined,
-      features: feats.length ? feats : undefined,
+      specs,
+      featureRows,
+      // Legacy fixed fields are only retained when the row model isn't in use.
+      floor: specs ? undefined : sanitizeNumber(u.floor, { floor: true }),
+      orientation: specs ? undefined : keepText(u.orientation),
+      rooms: specs ? undefined : sanitizeNumber(u.rooms),
+      area_m2: specs ? undefined : sanitizeNumber(u.area_m2),
+      balcony_m2: specs ? undefined : sanitizeNumber(u.balcony_m2),
+      parking: specs ? undefined : sanitizeParking(u.parking),
+      features: featureRows ? undefined : (u.features ?? []).map(t).filter(Boolean),
     };
   };
 
@@ -318,17 +358,14 @@ export function cleanContent(content: PageContent): PageContent {
 
   // Units only exist on project pages; the single apartment only on apartment pages.
   const units = isProject
-    ? (content.units ?? [])
-        .filter((u) => t(u.name) || u.image?.url || u.unit_type)
-        .map(cleanUnit)
+    ? (content.units ?? []).filter((u) => t(u.name) || u.image?.url || u.unit_type).map(cleanUnit)
     : [];
 
   const apartment =
     !isProject && content.apartment
       ? cleanUnit({ ...content.apartment, unit_type: content.apartment.unit_type ?? "apartment" })
       : undefined;
-  const apartment_image_side =
-    content.apartment_image_side === "left" ? "left" : "right";
+  const apartment_image_side = content.apartment_image_side === "left" ? "left" : "right";
   const apartment_title = !isProject ? keepText(content.apartment_title) : undefined;
   const apartment_title_icon = !isProject ? keepText(content.apartment_title_icon) : undefined;
 
@@ -511,9 +548,7 @@ function toCard(page: Page): PublishedCard {
 }
 
 /** Published pages for the public listing grids (anon-readable). */
-export async function listPublishedPages(
-  category?: PageCategory,
-): Promise<PublishedCard[]> {
+export async function listPublishedPages(category?: PageCategory): Promise<PublishedCard[]> {
   const byCategory = (cards: PublishedCard[]) =>
     category ? cards.filter((c) => c.category === category) : cards;
 
@@ -564,10 +599,7 @@ export async function validateForPublish(input: {
 }
 
 /** Flip a page's status (publish/unpublish/archive/restore). Returns the new status. */
-export async function setPageStatus(
-  id: string,
-  status: PageStatus,
-): Promise<PageStatus> {
+export async function setPageStatus(id: string, status: PageStatus): Promise<PageStatus> {
   const { data, error } = await supabase
     .from("pages")
     .update({ status })

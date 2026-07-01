@@ -3,9 +3,12 @@
 // reading language, so values never leak untranslated across locales.
 
 import type {
+  DetailRow,
   OrientationCode,
   ParkingCode,
   ReadingLang,
+  SpecPreset,
+  SpecValueKind,
   Unit,
   UnitType,
 } from "@/types/page";
@@ -33,9 +36,21 @@ export const ABOUT_APARTMENT_HEADING: Record<ReadingLang, string> = {
 };
 
 const UNIT_TYPE_LABELS: Record<ReadingLang, Record<UnitType, string>> = {
-  fr: { apartment: "Appartement", penthouse: "Penthouse", studio: "Studio", duplex: "Duplex", other: "" },
+  fr: {
+    apartment: "Appartement",
+    penthouse: "Penthouse",
+    studio: "Studio",
+    duplex: "Duplex",
+    other: "",
+  },
   he: { apartment: "דירה", penthouse: "פנטהאוז", studio: "סטודיו", duplex: "דופלקס", other: "" },
-  en: { apartment: "Apartment", penthouse: "Penthouse", studio: "Studio", duplex: "Duplex", other: "" },
+  en: {
+    apartment: "Apartment",
+    penthouse: "Penthouse",
+    studio: "Studio",
+    duplex: "Duplex",
+    other: "",
+  },
 };
 
 const ORIENTATION_LABELS: Record<ReadingLang, Record<OrientationCode, string>> = {
@@ -176,3 +191,160 @@ export const isOrientationCode = (v?: string): v is OrientationCode =>
 
 export const isParkingCode = (v?: string): v is ParkingCode =>
   !!v && (PARKING_CODES as string[]).includes(v);
+
+/* ============================================================
+ * Flexible detail rows (specs + features) — presets & formatting.
+ * ============================================================ */
+
+/** Built-in spec presets (the original fixed fields). Merged with settings. */
+export const BUILTIN_SPEC_PRESETS: SpecPreset[] = [
+  {
+    key: "floor",
+    icon: "building",
+    valueKind: "floor",
+    labels: { fr: "Étage", he: "קומה", en: "Floor" },
+  },
+  {
+    key: "rooms",
+    icon: "rooms",
+    valueKind: "rooms",
+    labels: { fr: "Pièces", he: "חדרים", en: "Rooms" },
+  },
+  {
+    key: "area",
+    icon: "size",
+    valueKind: "area",
+    labels: { fr: "Surface", he: "שטח", en: "Area" },
+  },
+  {
+    key: "balcony",
+    icon: "sun",
+    valueKind: "area",
+    labels: { fr: "Balcon", he: "מרפסת", en: "Balcony" },
+  },
+  {
+    key: "orientation",
+    icon: "location",
+    valueKind: "orientation",
+    labels: { fr: "Orientation", he: "כיוון", en: "Orientation" },
+  },
+  {
+    key: "parking",
+    icon: "parking",
+    valueKind: "parking",
+    labels: { fr: "Parking", he: "חניה", en: "Parking" },
+  },
+];
+
+/** Built-in feature presets — a few common ready-made features. */
+export const BUILTIN_FEATURE_PRESETS: SpecPreset[] = [
+  {
+    key: "elevator",
+    icon: "elevator",
+    valueKind: "text",
+    labels: { fr: "Ascenseur", he: "מעלית", en: "Elevator" },
+  },
+  {
+    key: "sea_view",
+    icon: "sea",
+    valueKind: "text",
+    labels: { fr: "Vue mer", he: "נוף לים", en: "Sea view" },
+  },
+  {
+    key: "renovated",
+    icon: "sparkles",
+    valueKind: "text",
+    labels: { fr: "Rénové", he: "משופצת", en: "Renovated" },
+  },
+  {
+    key: "balcony_feat",
+    icon: "sun",
+    valueKind: "text",
+    labels: { fr: "Balcon", he: "מרפסת", en: "Balcony" },
+  },
+];
+
+/** Resolve a preset by key, preferring settings-provided presets over built-ins. */
+export function resolvePreset(
+  key: string | undefined,
+  presets: SpecPreset[],
+  builtins: SpecPreset[],
+): SpecPreset | undefined {
+  if (!key) return undefined;
+  return presets.find((p) => p.key === key) ?? builtins.find((p) => p.key === key);
+}
+
+/** Format a spec value for a reading language given its value kind. */
+export function formatSpecValue(kind: SpecValueKind, value: string, lang: ReadingLang): string {
+  const v = (value ?? "").trim();
+  if (!v) return "";
+  switch (kind) {
+    case "floor":
+      return floorValue(v, lang);
+    case "rooms":
+      return roomsValue(v, lang);
+    case "area":
+      return areaValue(v);
+    case "orientation":
+      return orientationValue(v, lang);
+    case "parking":
+      return parkingValue(v, lang);
+    default:
+      return v;
+  }
+}
+
+/** Effective label of a row for a reading language. */
+export function rowLabel(row: DetailRow, lang: ReadingLang, presets: SpecPreset[]): string {
+  const preset = resolvePreset(row.presetKey, presets, BUILTIN_SPEC_PRESETS);
+  if (row.linked !== false && preset) return preset.labels[lang] ?? preset.labels.fr ?? "";
+  return (row.label ?? preset?.labels[lang] ?? preset?.labels.fr ?? "").trim();
+}
+
+/** Effective icon name of a row. */
+export function rowIcon(row: DetailRow, presets: SpecPreset[]): string | undefined {
+  const preset = resolvePreset(row.presetKey, presets, BUILTIN_SPEC_PRESETS);
+  if (row.linked !== false && preset) return preset.icon;
+  return row.icon || preset?.icon;
+}
+
+/** Effective, locale-formatted value of a spec row. */
+export function rowValue(row: DetailRow, lang: ReadingLang, presets: SpecPreset[]): string {
+  const preset = resolvePreset(row.presetKey, presets, BUILTIN_SPEC_PRESETS);
+  const kind = preset?.valueKind ?? "text";
+  return formatSpecValue(kind, row.value ?? "", lang);
+}
+
+/** Effective, locale-aware text of a feature row. */
+export function featureRowText(row: DetailRow, lang: ReadingLang, presets: SpecPreset[]): string {
+  const preset = resolvePreset(row.presetKey, presets, BUILTIN_FEATURE_PRESETS);
+  if (row.linked !== false && preset) return preset.labels[lang] ?? preset.labels.fr ?? "";
+  return (row.value ?? "").trim();
+}
+
+/**
+ * Migrate a unit's legacy fixed fields into flexible spec rows.
+ * Returns existing `specs` untouched when already present.
+ */
+export function migrateUnitSpecs(unit: Unit): DetailRow[] {
+  if (Array.isArray(unit.specs) && unit.specs.length) return unit.specs;
+  const rows: DetailRow[] = [];
+  const add = (presetKey: string, value?: string) => {
+    if (has(value)) rows.push({ presetKey, linked: true, value: value!.trim() });
+  };
+  add("floor", unit.floor);
+  add("rooms", unit.rooms);
+  add("area", unit.area_m2);
+  add("balcony", unit.balcony_m2);
+  add("orientation", unit.orientation);
+  add("parking", unit.parking);
+  return rows;
+}
+
+/** Migrate a unit's legacy features[] (+ icons) into feature rows. */
+export function migrateUnitFeatures(unit: Unit, icons?: string[]): DetailRow[] {
+  if (Array.isArray(unit.featureRows) && unit.featureRows.length) return unit.featureRows;
+  return (unit.features ?? [])
+    .map((f, i) => ({ value: (f ?? "").trim(), icon: icons?.[i] }))
+    .filter((r) => r.value.length > 0);
+}

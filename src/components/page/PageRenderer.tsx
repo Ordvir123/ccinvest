@@ -4,12 +4,13 @@ import { ChevronRight, FileText } from "lucide-react";
 import { getIcon, guessIcon } from "@/lib/page-icons";
 import {
   unitTitle,
-  floorValue,
-  orientationValue,
-  roomsValue,
-  areaValue,
-  parkingValue,
   ABOUT_APARTMENT_HEADING,
+  rowLabel,
+  rowIcon,
+  rowValue,
+  featureRowText,
+  migrateUnitSpecs,
+  migrateUnitFeatures,
 } from "@/lib/unit-i18n";
 
 import { Section } from "@/components/ui/section";
@@ -23,12 +24,16 @@ import {
   CarouselPrevious,
 } from "@/components/ui/carousel";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
-import { hasItems, hasText, type PageContent, type ReadingLang, type Unit } from "@/types/page";
-import { ContactForm } from "@/components/page/ContactForm";
 import {
-  DEFAULT_TEMPLATE_SETTINGS,
-  type TemplateSettings,
-} from "@/lib/template-settings";
+  hasItems,
+  hasText,
+  type PageContent,
+  type ReadingLang,
+  type SpecPreset,
+  type Unit,
+} from "@/types/page";
+import { ContactForm } from "@/components/page/ContactForm";
+import { DEFAULT_TEMPLATE_SETTINGS, type TemplateSettings } from "@/lib/template-settings";
 
 /** Section labels translated by the page's reading language. */
 const LABELS: Record<ReadingLang, Record<string, string>> = {
@@ -75,7 +80,6 @@ const LABELS: Record<ReadingLang, Record<string, string>> = {
     floorPlan: "Floor plan",
   },
 };
-
 
 const scrollToContact = () => {
   document.getElementById("contact")?.scrollIntoView({ behavior: "smooth" });
@@ -127,9 +131,7 @@ function Hero({
           className="mx-auto mb-8 h-20 w-auto rounded-lg bg-card px-6 py-4 shadow-sm md:mb-10 md:h-28"
         />
         {hasText(kicker) && (
-          <p className="eyebrow mb-5 text-xs text-primary-foreground/80">
-            {kicker}
-          </p>
+          <p className="eyebrow mb-5 text-xs text-primary-foreground/80">{kicker}</p>
         )}
         <h1 className="mx-auto max-w-3xl text-balance text-4xl !text-primary-foreground [text-shadow:0_2px_12px_oklch(0.15_0.03_265/0.5)] sm:text-5xl md:text-7xl">
           {hero.title}
@@ -175,16 +177,17 @@ function Stats({ stats }: { stats: PageContent["stats"] }) {
             getIcon(s.icon) ??
             getIcon(guessIcon(s.label, "sparkles"));
           return (
-            <div key={i} className="flex flex-col items-center px-3 py-8 text-center md:px-4 md:py-10">
+            <div
+              key={i}
+              className="flex flex-col items-center px-3 py-8 text-center md:px-4 md:py-10"
+            >
               {Icon && (
                 <span className="mb-3 flex h-11 w-11 items-center justify-center rounded-full bg-primary/10 text-primary">
                   <Icon className="h-5 w-5" aria-hidden />
                 </span>
               )}
               <div className="font-serif text-3xl text-ink md:text-5xl">{s.value}</div>
-              <div className="eyebrow mt-2 text-[0.65rem] text-steel">
-                {s.label}
-              </div>
+              <div className="eyebrow mt-2 text-[0.65rem] text-steel">{s.label}</div>
             </div>
           );
         })}
@@ -224,9 +227,7 @@ function LocationBlock({
     <Section>
       <div className="grid items-center gap-10 md:grid-cols-2">
         <div>
-          {hasText(properName) && (
-            <p className="eyebrow mb-2 text-sm text-primary">{properName}</p>
-          )}
+          {hasText(properName) && <p className="eyebrow mb-2 text-sm text-primary">{properName}</p>}
           <h2 className="text-3xl text-ink md:text-4xl">{labels.location}</h2>
           {hasText(location.text) && (
             <p className="mt-5 text-lg leading-relaxed text-muted-foreground">{location.text}</p>
@@ -251,11 +252,13 @@ function LocationBlock({
   );
 }
 
-
-
-
-
-function Gallery({ gallery, labels }: { gallery: PageContent["gallery"]; labels: Record<string, string> }) {
+function Gallery({
+  gallery,
+  labels,
+}: {
+  gallery: PageContent["gallery"];
+  labels: Record<string, string>;
+}) {
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(0);
   if (!hasItems(gallery)) return null;
@@ -307,22 +310,30 @@ function UnitCard({
   unit,
   labels,
   lang,
+  specPresets,
+  featurePresets,
 }: {
   unit: Unit;
   labels: Record<string, string>;
   lang: ReadingLang;
+  specPresets: SpecPreset[];
+  featurePresets: SpecPreset[];
 }) {
   const [planOpen, setPlanOpen] = useState(false);
   const title = unitTitle(unit, lang);
-  const rows: [string, string | undefined][] = [
-    [labels.floor, hasText(unit.floor) ? floorValue(unit.floor!, lang) : undefined],
-    [labels.orientation, hasText(unit.orientation) ? orientationValue(unit.orientation!, lang) : undefined],
-    [labels.rooms, hasText(unit.rooms) ? roomsValue(unit.rooms!, lang) : undefined],
-    [labels.surface, hasText(unit.area_m2) ? areaValue(unit.area_m2!) : undefined],
-    [labels.balcony, hasText(unit.balcony_m2) ? areaValue(unit.balcony_m2!) : undefined],
-    [labels.parking, hasText(unit.parking) ? parkingValue(unit.parking!, lang) : undefined],
-  ];
-  const visibleRows = rows.filter(([, v]) => hasText(v));
+  const visibleRows = (unit.specs ?? migrateUnitSpecs(unit))
+    .map((r) => ({
+      label: rowLabel(r, lang, specPresets),
+      value: rowValue(r, lang, specPresets),
+      icon: rowIcon(r, specPresets),
+    }))
+    .filter((r) => hasText(r.value));
+  const featureItems = (unit.featureRows ?? migrateUnitFeatures(unit))
+    .map((r) => ({
+      text: featureRowText(r, lang, featurePresets),
+      icon: rowIcon(r, featurePresets),
+    }))
+    .filter((r) => hasText(r.text));
   const plan = unit.attachment;
 
   return (
@@ -342,27 +353,41 @@ function UnitCard({
         )}
         {visibleRows.length > 0 && (
           <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
-            {visibleRows.map(([label, value]) => (
-              <div key={label} className="flex justify-between gap-2 border-b border-border/60 pb-1">
-                <dt className="text-muted-foreground">{label}</dt>
-                <dd className="font-medium text-foreground">{value}</dd>
-              </div>
-            ))}
+            {visibleRows.map((r, ri) => {
+              const RowIcon = getIcon(r.icon);
+              return (
+                <div key={ri} className="flex justify-between gap-2 border-b border-border/60 pb-1">
+                  <dt className="flex items-center gap-1.5 text-muted-foreground">
+                    {RowIcon && <RowIcon className="h-4 w-4 shrink-0 text-primary" aria-hidden />}
+                    {r.label}
+                  </dt>
+                  <dd className="font-medium text-foreground">{r.value}</dd>
+                </div>
+              );
+            })}
           </dl>
         )}
         {hasText(unit.description) && (
           <p className="mt-4 text-sm leading-relaxed text-muted-foreground">{unit.description}</p>
         )}
-        {hasItems(unit.features) && (
+        {featureItems.length > 0 && (
           <ul className="mt-4 space-y-1.5">
-            {unit.features!.map((f, i) => (
-              <li key={i} className="flex items-center gap-2 text-sm text-foreground">
-                <ChevronRight className="h-4 w-4 text-primary rtl:rotate-180" aria-hidden />
-                {f}
-              </li>
-            ))}
+            {featureItems.map((f, i) => {
+              const FIcon = getIcon(f.icon);
+              return (
+                <li key={i} className="flex items-center gap-2 text-sm text-foreground">
+                  {FIcon ? (
+                    <FIcon className="h-4 w-4 shrink-0 text-primary" aria-hidden />
+                  ) : (
+                    <ChevronRight className="h-4 w-4 text-primary rtl:rotate-180" aria-hidden />
+                  )}
+                  {f.text}
+                </li>
+              );
+            })}
           </ul>
         )}
+
         {plan?.url && plan.type === "image" && (
           <button
             type="button"
@@ -413,10 +438,14 @@ function Units({
   units,
   labels,
   lang,
+  specPresets,
+  featurePresets,
 }: {
   units: PageContent["units"];
   labels: Record<string, string>;
   lang: ReadingLang;
+  specPresets: SpecPreset[];
+  featurePresets: SpecPreset[];
 }) {
   if (!hasItems(units)) return null;
   return (
@@ -425,7 +454,14 @@ function Units({
         <h2 className="mb-10 text-center text-3xl text-ink md:text-4xl">{labels.units}</h2>
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {units!.map((u, i) => (
-            <UnitCard key={i} unit={u} labels={labels} lang={lang} />
+            <UnitCard
+              key={i}
+              unit={u}
+              labels={labels}
+              lang={lang}
+              specPresets={specPresets}
+              featurePresets={featurePresets}
+            />
           ))}
         </div>
       </Section>
@@ -441,6 +477,8 @@ function ApartmentSection({
   headingIcon,
   labels,
   lang,
+  specPresets,
+  featurePresets,
 }: {
   apartment: Unit;
   imageSide: "left" | "right";
@@ -448,19 +486,26 @@ function ApartmentSection({
   headingIcon?: string;
   labels: Record<string, string>;
   lang: ReadingLang;
+  specPresets: SpecPreset[];
+  featurePresets: SpecPreset[];
 }) {
   const [planOpen, setPlanOpen] = useState(false);
   const title = unitTitle(apartment, lang);
-  const rows: [string, string | undefined][] = [
-    [labels.floor, hasText(apartment.floor) ? floorValue(apartment.floor!, lang) : undefined],
-    [labels.orientation, hasText(apartment.orientation) ? orientationValue(apartment.orientation!, lang) : undefined],
-    [labels.rooms, hasText(apartment.rooms) ? roomsValue(apartment.rooms!, lang) : undefined],
-    [labels.surface, hasText(apartment.area_m2) ? areaValue(apartment.area_m2!) : undefined],
-    [labels.balcony, hasText(apartment.balcony_m2) ? areaValue(apartment.balcony_m2!) : undefined],
-    [labels.parking, hasText(apartment.parking) ? parkingValue(apartment.parking!, lang) : undefined],
-  ];
-  const visibleRows = rows.filter(([, v]) => hasText(v));
+  const visibleRows = (apartment.specs ?? migrateUnitSpecs(apartment))
+    .map((r) => ({
+      label: rowLabel(r, lang, specPresets),
+      value: rowValue(r, lang, specPresets),
+      icon: rowIcon(r, specPresets),
+    }))
+    .filter((r) => hasText(r.value));
+  const featureItems = (apartment.featureRows ?? migrateUnitFeatures(apartment))
+    .map((r) => ({
+      text: featureRowText(r, lang, featurePresets),
+      icon: rowIcon(r, featurePresets),
+    }))
+    .filter((r) => hasText(r.text));
   const plan = apartment.attachment;
+
   // DOM order is details → image (mobile stacks details first, image below).
   // On desktop, "left" puts the image first; RTL mirrors via flex-row + dir.
   const imageOrder = imageSide === "left" ? "md:order-1" : "md:order-2";
@@ -471,7 +516,9 @@ function ApartmentSection({
       <Section>
         {(() => {
           const HeadingIcon = getIcon(headingIcon);
-          const text = hasText(heading) ? heading : (ABOUT_APARTMENT_HEADING[lang] ?? ABOUT_APARTMENT_HEADING.fr);
+          const text = hasText(heading)
+            ? heading
+            : (ABOUT_APARTMENT_HEADING[lang] ?? ABOUT_APARTMENT_HEADING.fr);
           return (
             <h2 className="mb-10 flex items-center justify-center gap-3 text-center text-3xl text-ink md:text-4xl">
               {HeadingIcon && <HeadingIcon className="h-7 w-7 shrink-0 text-primary" aria-hidden />}
@@ -488,27 +535,51 @@ function ApartmentSection({
               )}
               {visibleRows.length > 0 && (
                 <dl className="mt-6 grid grid-cols-2 gap-x-6 gap-y-4">
-                  {visibleRows.map(([label, value]) => (
-                    <div key={label} className="flex flex-col gap-0.5 border-b border-border/60 pb-2">
-                      <dt className="text-xs uppercase tracking-wide text-muted-foreground">{label}</dt>
-                      <dd className="text-base font-medium text-foreground">{value}</dd>
-                    </div>
-                  ))}
+                  {visibleRows.map((r, ri) => {
+                    const RowIcon = getIcon(r.icon);
+                    return (
+                      <div
+                        key={ri}
+                        className="flex flex-col gap-0.5 border-b border-border/60 pb-2"
+                      >
+                        <dt className="flex items-center gap-1.5 text-xs uppercase tracking-wide text-muted-foreground">
+                          {RowIcon && (
+                            <RowIcon className="h-4 w-4 shrink-0 text-primary" aria-hidden />
+                          )}
+                          {r.label}
+                        </dt>
+                        <dd className="text-base font-medium text-foreground">{r.value}</dd>
+                      </div>
+                    );
+                  })}
                 </dl>
               )}
               {hasText(apartment.description) && (
-                <p className="mt-6 text-base leading-relaxed text-muted-foreground">{apartment.description}</p>
+                <p className="mt-6 text-base leading-relaxed text-muted-foreground">
+                  {apartment.description}
+                </p>
               )}
-              {hasItems(apartment.features) && (
+              {featureItems.length > 0 && (
                 <ul className="mt-6 space-y-2">
-                  {apartment.features!.map((f, i) => (
-                    <li key={i} className="flex items-center gap-2 text-foreground">
-                      <ChevronRight className="h-4 w-4 text-primary rtl:rotate-180" aria-hidden />
-                      {f}
-                    </li>
-                  ))}
+                  {featureItems.map((f, i) => {
+                    const FIcon = getIcon(f.icon);
+                    return (
+                      <li key={i} className="flex items-center gap-2 text-foreground">
+                        {FIcon ? (
+                          <FIcon className="h-4 w-4 shrink-0 text-primary" aria-hidden />
+                        ) : (
+                          <ChevronRight
+                            className="h-4 w-4 text-primary rtl:rotate-180"
+                            aria-hidden
+                          />
+                        )}
+                        {f.text}
+                      </li>
+                    );
+                  })}
                 </ul>
               )}
+
               {plan?.url && plan.type === "image" && (
                 <button
                   type="button"
@@ -568,10 +639,13 @@ function ApartmentSection({
   );
 }
 
-
-
-
-function Videos({ videos, labels }: { videos: PageContent["videos"]; labels: Record<string, string> }) {
+function Videos({
+  videos,
+  labels,
+}: {
+  videos: PageContent["videos"];
+  labels: Record<string, string>;
+}) {
   if (!hasItems(videos)) return null;
   return (
     <Section>
@@ -597,7 +671,6 @@ function Videos({ videos, labels }: { videos: PageContent["videos"]; labels: Rec
           </figure>
         ))}
       </div>
-
     </Section>
   );
 }
@@ -638,12 +711,21 @@ export function PageRenderer({
           <LocationBlock location={content.location} labels={labels} lang={lang} />
         )}
       {content.category === "project" ? (
-        <Units units={content.units} labels={labels} lang={lang} />
+        <Units
+          units={content.units}
+          labels={labels}
+          lang={lang}
+          specPresets={settings.specPresets}
+          featurePresets={settings.featurePresets}
+        />
       ) : (
         content.apartment &&
         (hasText(content.apartment.unit_type) ||
           hasText(content.apartment.name) ||
           hasText(content.apartment.description) ||
+          hasText(content.apartment.price) ||
+          hasItems(content.apartment.specs) ||
+          hasItems(content.apartment.featureRows) ||
           hasText(content.apartment.image?.url)) && (
           <ApartmentSection
             apartment={content.apartment}
@@ -652,9 +734,12 @@ export function PageRenderer({
             headingIcon={content.apartment_title_icon}
             labels={labels}
             lang={lang}
+            specPresets={settings.specPresets}
+            featurePresets={settings.featurePresets}
           />
         )
       )}
+
       <Gallery gallery={content.gallery} labels={labels} />
 
       <Videos videos={content.videos} labels={labels} />
@@ -673,4 +758,3 @@ export function PageRenderer({
     </main>
   );
 }
-

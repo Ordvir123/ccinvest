@@ -1,13 +1,25 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import {
-  fetchTemplateSettings,
-  saveTemplateSettings,
-  type ApartmentTitleOption,
-} from "@/lib/template-settings";
+import { fetchTemplateSettings, saveTemplateSettings } from "@/lib/template-settings";
 import { toast } from "sonner";
-import { Plus, Trash2, ArrowUp, ArrowDown, Save, Globe, EyeOff, Eye, Copy, ExternalLink, RefreshCw, Sparkles, Loader2 } from "lucide-react";
+import {
+  Plus,
+  Trash2,
+  ArrowUp,
+  ArrowDown,
+  Save,
+  Globe,
+  EyeOff,
+  Eye,
+  Copy,
+  ExternalLink,
+  RefreshCw,
+  Sparkles,
+  Loader2,
+  Link2,
+  Link2Off,
+} from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -30,7 +42,6 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
 import { cn } from "@/lib/utils";
 
-
 import { SectionCard, Field } from "@/components/admin/editor-parts";
 import { SingleImageUpload, GalleryUpload, UnitFileUpload } from "@/components/admin/MediaUpload";
 import { IconPicker } from "@/components/admin/IconPicker";
@@ -41,6 +52,11 @@ import {
   UNIT_TYPE_OPTION_LABELS,
   ORIENTATION_OPTION_LABELS,
   PARKING_OPTION_LABELS,
+  BUILTIN_SPEC_PRESETS,
+  BUILTIN_FEATURE_PRESETS,
+  resolvePreset,
+  migrateUnitSpecs,
+  migrateUnitFeatures,
 } from "@/lib/unit-i18n";
 import { TranslationsTab } from "@/components/admin/TranslationsTab";
 import { SeoEditor } from "@/components/admin/SeoEditor";
@@ -59,11 +75,13 @@ import {
   READING_LANGS,
   isRtlReading,
   normalizeSeo,
+  type DetailRow,
   type Page,
   type PageContent,
   type PageSeo,
   type PageStatus,
   type ReadingLang,
+  type SpecPreset,
   type Stat,
   type Unit,
   type Video,
@@ -122,6 +140,291 @@ function moveItem<T>(arr: T[], i: number, dir: -1 | 1): T[] {
   return next;
 }
 
+const sanitizeNum = (val: string, allowDecimal = true) => {
+  let s = val.replace(/[^\d.,]/g, "").replace(",", ".");
+  if (!allowDecimal) return s.replace(/\./g, "");
+  const parts = s.split(".");
+  if (parts.length > 2) s = parts[0] + "." + parts.slice(1).join("");
+  return s;
+};
+
+/** Chain link/unlink toggle (like the aspect-ratio lock in design tools). */
+function LinkToggle({
+  linked,
+  disabled,
+  onToggle,
+}: {
+  linked: boolean;
+  disabled?: boolean;
+  onToggle: () => void;
+}) {
+  return (
+    <Button
+      type="button"
+      variant="ghost"
+      size="icon"
+      disabled={disabled}
+      onClick={onToggle}
+      className={cn("h-9 w-9 shrink-0", linked ? "text-primary" : "text-muted-foreground")}
+      aria-label={linked ? "Unlink label & icon from preset" : "Link label & icon to preset"}
+      title={
+        linked
+          ? "Linked to preset — click to edit label & icon"
+          : "Custom — click to relink to preset"
+      }
+    >
+      {linked ? <Link2 className="h-4 w-4" /> : <Link2Off className="h-4 w-4" />}
+    </Button>
+  );
+}
+
+const CUSTOM_PRESET = "__custom__";
+
+/** Editor for flexible spec rows (Area, Rooms, Floor, …). */
+function SpecRowsEditor({
+  rows,
+  presets,
+  onChange,
+}: {
+  rows: DetailRow[];
+  presets: SpecPreset[];
+  onChange: (rows: DetailRow[]) => void;
+}) {
+  const update = (i: number, p: Partial<DetailRow>) => {
+    const next = rows.slice();
+    next[i] = { ...next[i], ...p };
+    onChange(next);
+  };
+  return (
+    <div className="space-y-2">
+      {rows.map((row, i) => {
+        const preset = resolvePreset(row.presetKey, presets, BUILTIN_SPEC_PRESETS);
+        const isCustom = !row.presetKey;
+        const linked = !isCustom && row.linked !== false;
+        const kind = preset?.valueKind ?? "text";
+        const effIcon = linked ? preset?.icon : row.icon || preset?.icon;
+        return (
+          <div key={i} className="space-y-2 rounded-md border border-border p-2">
+            <div className="flex items-center gap-2">
+              <IconPicker
+                value={effIcon}
+                onChange={(icon) => update(i, { icon: (icon as string) ?? "" })}
+              />
+              <LinkToggle
+                linked={linked}
+                disabled={isCustom}
+                onToggle={() =>
+                  update(i, {
+                    linked: !linked,
+                    label: !linked ? undefined : (preset?.labels.fr ?? ""),
+                    icon: !linked ? undefined : preset?.icon,
+                  })
+                }
+              />
+              <Select
+                value={row.presetKey ?? CUSTOM_PRESET}
+                onValueChange={(v) => {
+                  if (v === CUSTOM_PRESET) {
+                    update(i, {
+                      presetKey: undefined,
+                      linked: false,
+                      label: row.label ?? "",
+                      icon: effIcon,
+                    });
+                  } else {
+                    const p = presets.find((x) => x.key === v);
+                    update(i, {
+                      presetKey: v,
+                      linked: true,
+                      label: undefined,
+                      icon: undefined,
+                      ...(p?.valueKind === "orientation" || p?.valueKind === "parking" ? {} : {}),
+                    });
+                  }
+                }}
+              >
+                <SelectTrigger className="flex-1">
+                  <SelectValue placeholder="Choose a preset" />
+                </SelectTrigger>
+                <SelectContent>
+                  {presets.map((p) => (
+                    <SelectItem key={p.key} value={p.key}>
+                      {p.labels.fr || p.labels.en || p.labels.he || p.key}
+                    </SelectItem>
+                  ))}
+                  <SelectItem value={CUSTOM_PRESET}>Custom text…</SelectItem>
+                </SelectContent>
+              </Select>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 shrink-0"
+                onClick={() => onChange(rows.filter((_, idx) => idx !== i))}
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </div>
+            {(isCustom || !linked) && (
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+                {READING_LANGS.map((l) => (
+                  <Input
+                    key={l}
+                    dir={isRtlReading(l) ? "rtl" : "ltr"}
+                    aria-label={`Label (${l})`}
+                    placeholder={`Label (${l.toUpperCase()})`}
+                    value={l === "fr" ? (row.label ?? "") : ""}
+                    disabled={l !== "fr"}
+                    onChange={(e) => update(i, { label: e.target.value })}
+                  />
+                ))}
+              </div>
+            )}
+            {kind === "orientation" ? (
+              <Select value={row.value ?? ""} onValueChange={(v) => update(i, { value: v })}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select orientation" />
+                </SelectTrigger>
+                <SelectContent>
+                  {ORIENTATION_CODES.map((c) => (
+                    <SelectItem key={c} value={c}>
+                      {ORIENTATION_OPTION_LABELS[c]}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            ) : kind === "parking" ? (
+              <Select value={row.value ?? ""} onValueChange={(v) => update(i, { value: v })}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select parking" />
+                </SelectTrigger>
+                <SelectContent>
+                  {PARKING_CODES.map((c) => (
+                    <SelectItem key={c} value={c}>
+                      {PARKING_OPTION_LABELS[c]}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            ) : (
+              <Input
+                inputMode={kind === "text" ? "text" : "decimal"}
+                placeholder="Value"
+                value={row.value ?? ""}
+                onChange={(e) =>
+                  update(i, {
+                    value: kind === "text" ? e.target.value : sanitizeNum(e.target.value),
+                  })
+                }
+              />
+            )}
+          </div>
+        );
+      })}
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        onClick={() => onChange([...rows, { presetKey: presets[0]?.key, linked: true, value: "" }])}
+      >
+        <Plus className="h-4 w-4" /> Add detail
+      </Button>
+    </div>
+  );
+}
+
+/** Editor for flexible feature rows (icon + text, preset or custom). */
+function FeatureRowsEditor({
+  rows,
+  presets,
+  onChange,
+}: {
+  rows: DetailRow[];
+  presets: SpecPreset[];
+  onChange: (rows: DetailRow[]) => void;
+}) {
+  const update = (i: number, p: Partial<DetailRow>) => {
+    const next = rows.slice();
+    next[i] = { ...next[i], ...p };
+    onChange(next);
+  };
+  return (
+    <div className="space-y-2">
+      {rows.map((row, i) => {
+        const preset = resolvePreset(row.presetKey, presets, BUILTIN_FEATURE_PRESETS);
+        const isCustom = !row.presetKey;
+        const linked = !isCustom && row.linked !== false;
+        const effIcon = linked ? preset?.icon : row.icon || preset?.icon;
+        return (
+          <div key={i} className="space-y-2 rounded-md border border-border p-2">
+            <div className="flex items-center gap-2">
+              <IconPicker
+                value={effIcon}
+                onChange={(icon) => update(i, { icon: (icon as string) ?? "" })}
+              />
+              <LinkToggle
+                linked={linked}
+                disabled={isCustom}
+                onToggle={() =>
+                  update(i, {
+                    linked: !linked,
+                    value: !linked ? (preset?.labels.fr ?? "") : "",
+                    icon: !linked ? undefined : preset?.icon,
+                  })
+                }
+              />
+              <Select
+                value={row.presetKey ?? CUSTOM_PRESET}
+                onValueChange={(v) => {
+                  if (v === CUSTOM_PRESET)
+                    update(i, { presetKey: undefined, linked: false, icon: effIcon });
+                  else update(i, { presetKey: v, linked: true, value: "", icon: undefined });
+                }}
+              >
+                <SelectTrigger className="flex-1">
+                  <SelectValue placeholder="Choose a feature" />
+                </SelectTrigger>
+                <SelectContent>
+                  {presets.map((p) => (
+                    <SelectItem key={p.key} value={p.key}>
+                      {p.labels.fr || p.labels.en || p.labels.he || p.key}
+                    </SelectItem>
+                  ))}
+                  <SelectItem value={CUSTOM_PRESET}>Custom text…</SelectItem>
+                </SelectContent>
+              </Select>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 shrink-0"
+                onClick={() => onChange(rows.filter((_, idx) => idx !== i))}
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </div>
+            {(isCustom || !linked) && (
+              <Input
+                placeholder="Feature text"
+                value={row.value ?? ""}
+                onChange={(e) => update(i, { value: e.target.value })}
+              />
+            )}
+          </div>
+        );
+      })}
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        onClick={() => onChange([...rows, { presetKey: undefined, linked: false, value: "" }])}
+      >
+        <Plus className="h-4 w-4" /> Add feature
+      </Button>
+    </div>
+  );
+}
+
 export function PageEditor({
   initialPage,
   initialContent,
@@ -164,6 +467,8 @@ export function PageEditor({
     queryFn: fetchTemplateSettings,
   });
   const titleOptions = settingsQuery.data?.apartmentTitleOptions ?? [];
+  const specPresets = settingsQuery.data?.specPresets ?? BUILTIN_SPEC_PRESETS;
+  const featurePresets = settingsQuery.data?.featurePresets ?? BUILTIN_FEATURE_PRESETS;
   const CUSTOM_TITLE = "__custom__";
   const DEFAULT_TITLE = "__default__";
   const [aptTitleCustom, setAptTitleCustom] = useState(false);
@@ -199,8 +504,6 @@ export function PageEditor({
     setAiUndo(null);
     toast.success("Reverted the AI change.");
   };
-
-
 
   // Convenient typed updaters.
   const patch = (p: Partial<PageContent>) => setContent((c) => ({ ...c, ...p }));
@@ -249,27 +552,73 @@ export function PageEditor({
   const canUpload = slug.length > 0;
 
   /**
-   * If the apartment section uses a custom heading not yet in template
-   * settings, persist it (with its icon) so it becomes a reusable option.
+   * Persist custom (unlinked) headings, detail rows and feature rows entered in
+   * the editor as reusable options/presets in template settings — so the more
+   * pages you build, the more ready-made choices you have.
    */
   const persistCustomTitleOption = async () => {
-    const label = content.apartment_title?.trim();
-    if (!label) return;
-    const exists = titleOptions.some((o) => o.label.trim() === label);
-    if (exists) return;
     try {
       const current = settingsQuery.data ?? (await fetchTemplateSettings());
-      const nextOption: ApartmentTitleOption = {
-        label,
-        icon: content.apartment_title_icon?.trim() || "home",
-      };
+      let changed = false;
+      const nextTitles = [...(current.apartmentTitleOptions ?? [])];
+      const nextSpecs = [...(current.specPresets ?? [])];
+      const nextFeatures = [...(current.featurePresets ?? [])];
+
+      // Heading option.
+      const titleLabel = content.apartment_title?.trim();
+      if (titleLabel && !nextTitles.some((o) => o.label.trim() === titleLabel)) {
+        nextTitles.push({
+          label: titleLabel,
+          icon: content.apartment_title_icon?.trim() || "home",
+        });
+        changed = true;
+      }
+
+      // Collect custom rows from apartment + all units.
+      const units: Unit[] = [
+        ...(content.apartment ? [content.apartment] : []),
+        ...(content.units ?? []),
+      ];
+      const makeLabels = (t: string) => ({ fr: t, he: t, en: t });
+      for (const u of units) {
+        for (const r of u.specs ?? []) {
+          const isCustom = r.linked === false || !r.presetKey;
+          const label = r.label?.trim();
+          if (isCustom && label && !nextSpecs.some((p) => p.labels.fr.trim() === label)) {
+            nextSpecs.push({
+              key: `spec_${Math.random().toString(36).slice(2, 8)}`,
+              icon: r.icon?.trim() || "check",
+              valueKind: "text",
+              labels: makeLabels(label),
+            });
+            changed = true;
+          }
+        }
+        for (const r of u.featureRows ?? []) {
+          const isCustom = r.linked === false || !r.presetKey;
+          const text = r.value?.trim();
+          if (isCustom && text && !nextFeatures.some((p) => p.labels.fr.trim() === text)) {
+            nextFeatures.push({
+              key: `feat_${Math.random().toString(36).slice(2, 8)}`,
+              icon: r.icon?.trim() || "check",
+              valueKind: "text",
+              labels: makeLabels(text),
+            });
+            changed = true;
+          }
+        }
+      }
+
+      if (!changed) return;
       await saveTemplateSettings({
         ...current,
-        apartmentTitleOptions: [...(current.apartmentTitleOptions ?? []), nextOption],
+        apartmentTitleOptions: nextTitles,
+        specPresets: nextSpecs,
+        featurePresets: nextFeatures,
       });
       settingsQuery.refetch();
     } catch (err) {
-      console.warn("[editor] failed to persist apartment title option", err);
+      console.warn("[editor] failed to persist custom options", err);
     }
   };
 
@@ -347,7 +696,6 @@ export function PageEditor({
     }
   };
 
-
   const onUnpublish = async () => {
     if (!pageId) return;
     setPublishing(true);
@@ -415,7 +763,6 @@ export function PageEditor({
         </div>
       </SectionCard>
 
-
       <SectionCard title="Page meta">
         <Field label="Slug" required hint={`Public URL: ${publicUrl}`}>
           <Input
@@ -443,10 +790,7 @@ export function PageEditor({
             </SelectContent>
           </Select>
         </Field>
-        <Field
-          label="Listing page"
-          hint="Choose where this page appears on the public site."
-        >
+        <Field label="Listing page" hint="Choose where this page appears on the public site.">
           <Select
             value={content.category ?? "apartment"}
             onValueChange={(v) => patch({ category: v as PageContent["category"] })}
@@ -484,10 +828,16 @@ export function PageEditor({
           <Input value={content.hero.title} onChange={(e) => onTitleChange(e.target.value)} />
         </Field>
         <Field label="Subtitle">
-          <Input value={content.hero.subtitle ?? ""} onChange={(e) => patchHero({ subtitle: e.target.value })} />
+          <Input
+            value={content.hero.subtitle ?? ""}
+            onChange={(e) => patchHero({ subtitle: e.target.value })}
+          />
         </Field>
         <Field label="Price">
-          <Input value={content.hero.price ?? ""} onChange={(e) => patchHero({ price: e.target.value })} />
+          <Input
+            value={content.hero.price ?? ""}
+            onChange={(e) => patchHero({ price: e.target.value })}
+          />
         </Field>
         <Field
           label="CTA label (per language)"
@@ -506,7 +856,10 @@ export function PageEditor({
             ))}
           </div>
         </Field>
-        <Field label="Background image" hint="Optional. Shown behind the hero with a dark overlay for readability.">
+        <Field
+          label="Background image"
+          hint="Optional. Shown behind the hero with a dark overlay for readability."
+        >
           <SingleImageUpload
             slug={slug}
             value={content.hero.background}
@@ -516,8 +869,10 @@ export function PageEditor({
         </Field>
       </SectionCard>
 
-
-      <SectionCard title="Stats" description="Repeatable value + label rows. Icons auto-match the label; override per row.">
+      <SectionCard
+        title="Stats"
+        description="Repeatable value + label rows. Icons auto-match the label; override per row."
+      >
         {(content.stats ?? []).map((s, i) => (
           <div key={i} className="flex items-end gap-2">
             <div className="space-y-1.5">
@@ -574,13 +929,23 @@ export function PageEditor({
 
       <SectionCard title="Location" defaultOpen={false}>
         <Field label="Heading">
-          <Input value={content.location?.heading ?? ""} onChange={(e) => patchLocation({ heading: e.target.value })} />
+          <Input
+            value={content.location?.heading ?? ""}
+            onChange={(e) => patchLocation({ heading: e.target.value })}
+          />
         </Field>
         <Field label="Text">
-          <Textarea rows={3} value={content.location?.text ?? ""} onChange={(e) => patchLocation({ text: e.target.value })} />
+          <Textarea
+            rows={3}
+            value={content.location?.text ?? ""}
+            onChange={(e) => patchLocation({ text: e.target.value })}
+          />
         </Field>
         <Field label="Map query" hint="Used to build a Google Maps embed.">
-          <Input value={content.location?.map_query ?? ""} onChange={(e) => patchLocation({ map_query: e.target.value })} />
+          <Input
+            value={content.location?.map_query ?? ""}
+            onChange={(e) => patchLocation({ map_query: e.target.value })}
+          />
         </Field>
         <Field
           label="Street / location name (per language)"
@@ -613,10 +978,17 @@ export function PageEditor({
 
       <SectionCard title="About" defaultOpen={false}>
         <Field label="Heading">
-          <Input value={content.about?.heading ?? ""} onChange={(e) => patchAbout({ heading: e.target.value })} />
+          <Input
+            value={content.about?.heading ?? ""}
+            onChange={(e) => patchAbout({ heading: e.target.value })}
+          />
         </Field>
         <Field label="Body">
-          <Textarea rows={4} value={content.about?.body ?? ""} onChange={(e) => patchAbout({ body: e.target.value })} />
+          <Textarea
+            rows={4}
+            value={content.about?.body ?? ""}
+            onChange={(e) => patchAbout({ body: e.target.value })}
+          />
         </Field>
         <Field label="Features" hint="Icons auto-match the text; override per row.">
           <div className="space-y-2">
@@ -645,7 +1017,9 @@ export function PageEditor({
                   size="icon"
                   className="h-8 w-8 shrink-0"
                   onClick={() => {
-                    const icons = (content.about?.feature_icons ?? []).filter((_, idx) => idx !== i);
+                    const icons = (content.about?.feature_icons ?? []).filter(
+                      (_, idx) => idx !== i,
+                    );
                     patchAbout({
                       features: (content.about?.features ?? []).filter((_, idx) => idx !== i),
                       feature_icons: icons,
@@ -667,7 +1041,6 @@ export function PageEditor({
           </div>
         </Field>
       </SectionCard>
-
 
       <SectionCard title="Gallery" defaultOpen={false}>
         <GalleryUpload
@@ -695,14 +1068,22 @@ export function PageEditor({
                 }}
                 onUp={() => patch({ units: moveItem(content.units ?? [], i, -1) })}
                 onDown={() => patch({ units: moveItem(content.units ?? [], i, 1) })}
-                onRemove={() => patch({ units: (content.units ?? []).filter((_, idx) => idx !== i) })}
+                onRemove={() =>
+                  patch({ units: (content.units ?? []).filter((_, idx) => idx !== i) })
+                }
+                specPresets={specPresets}
+                featurePresets={featurePresets}
               />
             ))}
             <Button
               type="button"
               variant="outline"
               size="sm"
-              onClick={() => patch({ units: [...(content.units ?? []), { name: "", unit_type: "apartment" } as Unit] })}
+              onClick={() =>
+                patch({
+                  units: [...(content.units ?? []), { name: "", unit_type: "apartment" } as Unit],
+                })
+              }
             >
               <Plus className="h-4 w-4" /> Add unit
             </Button>
@@ -715,70 +1096,10 @@ export function PageEditor({
           defaultOpen
         >
           <div className="space-y-4">
-            {(() => {
-              const label = content.apartment_title?.trim() ?? "";
-              const matched = titleOptions.find((o) => o.label.trim() === label);
-              const isCustom = aptTitleCustom || (label.length > 0 && !matched);
-              const selectValue = isCustom
-                ? CUSTOM_TITLE
-                : matched
-                  ? matched.label
-                  : DEFAULT_TITLE;
-              return (
-                <Field
-                  label="Section heading"
-                  hint="Choose a preset heading (managed in Settings) or enter a custom one — new custom headings are saved as future options on save."
-                >
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2">
-                      <IconPicker
-                        value={content.apartment_title_icon}
-                        onChange={(icon) => patch({ apartment_title_icon: (icon as string) ?? "" })}
-                      />
-                      <Select
-                        value={selectValue}
-                        onValueChange={(v) => {
-                          if (v === DEFAULT_TITLE) {
-                            setAptTitleCustom(false);
-                            patch({ apartment_title: "", apartment_title_icon: "" });
-                          } else if (v === CUSTOM_TITLE) {
-                            setAptTitleCustom(true);
-                          } else {
-                            setAptTitleCustom(false);
-                            const opt = titleOptions.find((o) => o.label === v);
-                            patch({
-                              apartment_title: v,
-                              apartment_title_icon: opt?.icon ?? content.apartment_title_icon ?? "",
-                            });
-                          }
-                        }}
-                      >
-                        <SelectTrigger className="flex-1">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value={DEFAULT_TITLE}>Default (À propos de l'appartement)</SelectItem>
-                          {titleOptions.map((o) => (
-                            <SelectItem key={o.label} value={o.label}>
-                              {o.label}
-                            </SelectItem>
-                          ))}
-                          <SelectItem value={CUSTOM_TITLE}>Custom text…</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    {isCustom && (
-                      <Input
-                        value={content.apartment_title ?? ""}
-                        onChange={(e) => patch({ apartment_title: e.target.value })}
-                        placeholder="Enter a custom heading…"
-                      />
-                    )}
-                  </div>
-                </Field>
-              );
-            })()}
-            <Field label="Image side (desktop)" hint="Which side the main image sits on. Mirrored automatically in Hebrew (RTL).">
+            <Field
+              label="Image side (desktop)"
+              hint="Which side the main image sits on. Mirrored automatically in Hebrew (RTL)."
+            >
               <Select
                 value={content.apartment_image_side ?? "right"}
                 onValueChange={(v) => patch({ apartment_image_side: v as "left" | "right" })}
@@ -800,12 +1121,83 @@ export function PageEditor({
               canUpload={canUpload}
               titleOverride="Apartment details"
               forceOpen
+              specPresets={specPresets}
+              featurePresets={featurePresets}
+              titleNode={(() => {
+                const label = content.apartment_title?.trim() ?? "";
+                const matched = titleOptions.find((o) => o.label.trim() === label);
+                const isCustom = aptTitleCustom || (label.length > 0 && !matched);
+                const linked = !isCustom;
+                const selectValue = isCustom
+                  ? CUSTOM_TITLE
+                  : matched
+                    ? matched.label
+                    : DEFAULT_TITLE;
+                return (
+                  <Field
+                    label="Section heading"
+                    hint="Choose a preset heading (label + icon) or unlink to edit freely — new custom headings are saved as future options on save."
+                  >
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        <IconPicker
+                          value={content.apartment_title_icon}
+                          onChange={(icon) =>
+                            patch({ apartment_title_icon: (icon as string) ?? "" })
+                          }
+                        />
+                        <LinkToggle linked={linked} onToggle={() => setAptTitleCustom((v) => !v)} />
+                        <Select
+                          value={selectValue}
+                          onValueChange={(v) => {
+                            if (v === DEFAULT_TITLE) {
+                              setAptTitleCustom(false);
+                              patch({ apartment_title: "", apartment_title_icon: "" });
+                            } else if (v === CUSTOM_TITLE) {
+                              setAptTitleCustom(true);
+                            } else {
+                              setAptTitleCustom(false);
+                              const opt = titleOptions.find((o) => o.label === v);
+                              patch({
+                                apartment_title: v,
+                                apartment_title_icon:
+                                  opt?.icon ?? content.apartment_title_icon ?? "",
+                              });
+                            }
+                          }}
+                        >
+                          <SelectTrigger className="flex-1">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value={DEFAULT_TITLE}>
+                              Default (À propos de l'appartement)
+                            </SelectItem>
+                            {titleOptions.map((o) => (
+                              <SelectItem key={o.label} value={o.label}>
+                                {o.label}
+                              </SelectItem>
+                            ))}
+                            <SelectItem value={CUSTOM_TITLE}>Custom text…</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      {isCustom && (
+                        <Input
+                          value={content.apartment_title ?? ""}
+                          onChange={(e) => patch({ apartment_title: e.target.value })}
+                          placeholder="Enter a custom heading…"
+                        />
+                      )}
+                    </div>
+                  </Field>
+                );
+              })()}
               onChange={(apartment) => patch({ apartment })}
             />
           </div>
         </SectionCard>
       )}
-
 
       <SectionCard title="Videos" description="YouTube links (any format)." defaultOpen={false}>
         <div className="space-y-3">
@@ -820,14 +1212,18 @@ export function PageEditor({
               }}
               onUp={() => patch({ videos: moveItem(content.videos ?? [], i, -1) })}
               onDown={() => patch({ videos: moveItem(content.videos ?? [], i, 1) })}
-              onRemove={() => patch({ videos: (content.videos ?? []).filter((_, idx) => idx !== i) })}
+              onRemove={() =>
+                patch({ videos: (content.videos ?? []).filter((_, idx) => idx !== i) })
+              }
             />
           ))}
           <Button
             type="button"
             variant="outline"
             size="sm"
-            onClick={() => patch({ videos: [...(content.videos ?? []), { youtube_id: "" } as Video] })}
+            onClick={() =>
+              patch({ videos: [...(content.videos ?? []), { youtube_id: "" } as Video] })
+            }
           >
             <Plus className="h-4 w-4" /> Add video
           </Button>
@@ -865,11 +1261,8 @@ export function PageEditor({
       >
         <SeoEditor seo={seo} onChange={setSeo} slug={slug} content={content} />
       </SectionCard>
-
     </div>
   );
-
-
 
   return (
     <div className="flex h-full min-h-screen flex-col">
@@ -879,7 +1272,11 @@ export function PageEditor({
           <h1 className="text-lg font-semibold text-foreground">
             {isEdit ? "Edit page" : "New page"}
           </h1>
-          <Badge variant={status === "published" ? "default" : status === "archived" ? "outline" : "secondary"}>
+          <Badge
+            variant={
+              status === "published" ? "default" : status === "archived" ? "outline" : "secondary"
+            }
+          >
             {status === "published" ? "Published" : status === "archived" ? "Archived" : "Draft"}
           </Badge>
           {status === "published" && liveUrl && (
@@ -911,7 +1308,6 @@ export function PageEditor({
             <Eye className="h-4 w-4" /> Preview draft
           </Button>
           <DropdownMenu>
-
             <DropdownMenuTrigger asChild>
               <Button type="button" variant="outline" size="sm" disabled={!slug}>
                 <Copy className="h-4 w-4" /> Copy share link
@@ -974,8 +1370,6 @@ export function PageEditor({
         </div>
       )}
 
-
-
       {/* Editor vs Translations */}
       <Tabs defaultValue="editor" className="flex-1">
         <div className="border-b border-border px-4 pt-3 md:px-6">
@@ -989,16 +1383,10 @@ export function PageEditor({
           <div className="mx-auto max-w-3xl flex-1 p-4 md:p-6">{formPanel}</div>
         </TabsContent>
 
-
         <TabsContent value="translations" className="mt-0 p-4 md:p-6">
-          <TranslationsTab
-            pageId={pageId}
-            source={cleanContent(content)}
-            sourceLang={sourceLang}
-          />
+          <TranslationsTab pageId={pageId} source={cleanContent(content)} sourceLang={sourceLang} />
         </TabsContent>
       </Tabs>
-
     </div>
   );
 }
@@ -1015,6 +1403,9 @@ function UnitBlock({
   onRemove,
   titleOverride,
   forceOpen = false,
+  specPresets,
+  featurePresets,
+  titleNode,
 }: {
   index: number;
   unit: Unit;
@@ -1028,24 +1419,17 @@ function UnitBlock({
   titleOverride?: string;
   /** When true, the block renders expanded and without a collapse toggle. */
   forceOpen?: boolean;
+  /** Spec presets from template settings (merged with built-ins). */
+  specPresets: SpecPreset[];
+  /** Feature presets from template settings (merged with built-ins). */
+  featurePresets: SpecPreset[];
+  /** Optional heading picker rendered at the top of the block. */
+  titleNode?: React.ReactNode;
 }) {
   const [open, setOpen] = useState(true);
   const set = (p: Partial<Unit>) => onChange({ ...unit, ...p });
-  const numericFields: [keyof Unit, string, boolean, string][] = [
-    // [key, label, allowDecimal, placeholder] — placeholders are neutral hints, not data.
-    ["floor", "Floor (number only, 0 = ground)", false, "1"],
-    ["rooms", "Rooms (number only)", false, "2"],
-    ["area_m2", "Area (m², number only)", true, "0"],
-    ["balcony_m2", "Balcony (m², number only)", true, "0"],
-  ];
-  const sanitizeNumeric = (val: string, allowDecimal: boolean) => {
-    let s = val.replace(/[^\d.,]/g, "").replace(",", ".");
-    if (!allowDecimal) return s.replace(/\./g, "");
-    const parts = s.split(".");
-    if (parts.length > 2) s = parts[0] + "." + parts.slice(1).join("");
-    return s;
-  };
-  const NONE = "__none__";
+  const specs = unit.specs ?? migrateUnitSpecs(unit);
+  const featureRows = unit.featureRows ?? migrateUnitFeatures(unit);
   // Custom name only applies to "Other" (or legacy units saved without a type).
   const isOther = !unit.unit_type || unit.unit_type === "other";
   const title =
@@ -1063,7 +1447,11 @@ function UnitBlock({
         {forceOpen ? (
           <span className="text-sm font-medium text-foreground">{title}</span>
         ) : (
-          <button type="button" className="text-sm font-medium text-foreground" onClick={() => setOpen((v) => !v)}>
+          <button
+            type="button"
+            className="text-sm font-medium text-foreground"
+            onClick={() => setOpen((v) => !v)}
+          >
             {title}
           </button>
         )}
@@ -1071,6 +1459,7 @@ function UnitBlock({
       </div>
       {isOpen && (
         <div className="mt-3 space-y-3">
+          {titleNode}
           <div className="grid grid-cols-2 gap-2">
             <Field label="Unit type" required>
               <Select
@@ -1099,98 +1488,50 @@ function UnitBlock({
             </Field>
           </div>
           {isOther && (
-            <Field label="Custom name" hint="Shown verbatim across all languages — only used for “Other”.">
+            <Field
+              label="Custom name"
+              hint="Shown verbatim across all languages — only used for “Other”."
+            >
               <Input value={unit.name ?? ""} onChange={(e) => set({ name: e.target.value })} />
             </Field>
           )}
-          <div className="grid grid-cols-2 gap-2">
-            {numericFields.map(([key, label, allowDecimal, placeholder]) => (
-              <Field key={key} label={label}>
-                <Input
-                  inputMode={allowDecimal ? "decimal" : "numeric"}
-                  placeholder={placeholder}
-                  value={(unit[key] as string) ?? ""}
-                  onChange={(e) =>
-                    set({ [key]: sanitizeNumeric(e.target.value, allowDecimal) } as Partial<Unit>)
-                  }
-                />
-              </Field>
-            ))}
-          </div>
-          <div className="grid grid-cols-2 gap-2">
-            <Field label="Orientation">
-              <Select
-                value={unit.orientation ?? NONE}
-                onValueChange={(v) => set({ orientation: v === NONE ? undefined : v })}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value={NONE}>—</SelectItem>
-                  {ORIENTATION_CODES.map((c) => (
-                    <SelectItem key={c} value={c}>
-                      {ORIENTATION_OPTION_LABELS[c]}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </Field>
-            <Field label="Parking">
-              <Select
-                value={unit.parking ?? NONE}
-                onValueChange={(v) => set({ parking: v === NONE ? undefined : v })}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value={NONE}>—</SelectItem>
-                  {PARKING_CODES.map((c) => (
-                    <SelectItem key={c} value={c}>
-                      {PARKING_OPTION_LABELS[c]}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </Field>
-          </div>
+          <Field
+            label="Details"
+            hint="Add any detail rows you want. Pick a preset (label + icon), or use custom text. Click the chain to unlink and edit the label & icon."
+          >
+            <SpecRowsEditor
+              rows={specs}
+              presets={specPresets}
+              onChange={(rows) => set({ specs: rows })}
+            />
+          </Field>
           <Field label="Price">
             <Input value={unit.price ?? ""} onChange={(e) => set({ price: e.target.value })} />
           </Field>
           <Field label="Description">
-            <Textarea rows={2} value={unit.description ?? ""} onChange={(e) => set({ description: e.target.value })} />
+            <Textarea
+              rows={2}
+              value={unit.description ?? ""}
+              onChange={(e) => set({ description: e.target.value })}
+            />
           </Field>
-          <Field label="Features">
-            <div className="space-y-2">
-              {(unit.features ?? []).map((f, i) => (
-                <div key={i} className="flex items-center gap-2">
-                  <Input
-                    value={f}
-                    onChange={(e) => {
-                      const next = (unit.features ?? []).slice();
-                      next[i] = e.target.value;
-                      set({ features: next });
-                    }}
-                  />
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8"
-                    onClick={() => set({ features: (unit.features ?? []).filter((_, idx) => idx !== i) })}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-              ))}
-              <Button type="button" variant="outline" size="sm" onClick={() => set({ features: [...(unit.features ?? []), ""] })}>
-                <Plus className="h-4 w-4" /> Add feature
-              </Button>
-            </div>
+          <Field
+            label="Features"
+            hint="Pick a preset feature (label + icon) or add custom text. Unlink to edit label & icon per row."
+          >
+            <FeatureRowsEditor
+              rows={featureRows}
+              presets={featurePresets}
+              onChange={(rows) => set({ featureRows: rows })}
+            />
           </Field>
           <Field label="Image">
-            <SingleImageUpload slug={slug} value={unit.image} onChange={(image) => set({ image })} disabled={!canUpload} />
+            <SingleImageUpload
+              slug={slug}
+              value={unit.image}
+              onChange={(image) => set({ image })}
+              disabled={!canUpload}
+            />
           </Field>
           <Field label="Floor plan" hint="Optional image or PDF shown on the unit card.">
             <UnitFileUpload
@@ -1229,7 +1570,10 @@ function VideoRow({
       <div className="flex items-start gap-2">
         <div className="flex-1 space-y-2">
           <Field label="Title (optional)">
-            <Input value={video.title ?? ""} onChange={(e) => onChange({ ...video, title: e.target.value })} />
+            <Input
+              value={video.title ?? ""}
+              onChange={(e) => onChange({ ...video, title: e.target.value })}
+            />
           </Field>
           <Field label="YouTube URL">
             <Input
@@ -1241,7 +1585,9 @@ function VideoRow({
               }}
             />
           </Field>
-          {raw && !id && <p className="text-xs text-destructive">Could not detect a valid YouTube id.</p>}
+          {raw && !id && (
+            <p className="text-xs text-destructive">Could not detect a valid YouTube id.</p>
+          )}
         </div>
         <MoveRemove onUp={onUp} onDown={onDown} onRemove={onRemove} />
       </div>
