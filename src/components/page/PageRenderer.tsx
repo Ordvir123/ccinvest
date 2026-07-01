@@ -252,38 +252,8 @@ function LocationBlock({
 }
 
 
-function About({ about }: { about: NonNullable<PageContent["about"]> }) {
-  return (
-    <section className="bg-secondary">
-      <Section>
-        <div className="mx-auto max-w-3xl text-center">
-          {hasText(about.heading) && (
-            <h2 className="text-3xl text-ink md:text-4xl">{about.heading}</h2>
-          )}
-          {hasText(about.body) && (
-            <p className="mt-6 text-lg leading-relaxed text-muted-foreground">{about.body}</p>
-          )}
-        </div>
-        {hasItems(about.features) && (
-          <ul className="mx-auto mt-10 grid max-w-3xl gap-3 sm:grid-cols-2">
-            {about.features!.map((f, i) => {
-              const Icon =
-                getIcon(about.feature_icons?.[i]) ?? getIcon(guessIcon(f, "check")) ?? Check;
-              return (
-                <li key={i} className="flex items-center gap-3 text-foreground">
-                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
-                    <Icon className="h-4 w-4" aria-hidden />
-                  </span>
-                  {f}
-                </li>
-              );
-            })}
-          </ul>
-        )}
-      </Section>
-    </section>
-  );
-}
+
+
 
 function Gallery({ gallery, labels }: { gallery: PageContent["gallery"]; labels: Record<string, string> }) {
   const [open, setOpen] = useState(false);
