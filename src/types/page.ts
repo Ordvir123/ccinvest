@@ -83,6 +83,10 @@ export type PageContent = {
   apartment?: Unit;
   /** Desktop image placement for the apartment section ("left"/"right" in LTR; mirrored in RTL). */
   apartment_image_side?: "left" | "right";
+  /** Chosen heading for the apartment section (from settings options or free text). Empty = default per-locale heading. */
+  apartment_title?: string;
+  /** Icon shown beside the apartment section heading. */
+  apartment_title_icon?: string;
   videos?: Video[];
   contact?: {
     heading?: string;
