@@ -333,6 +333,7 @@ export function PageEditor({
       });
       setStatus("published");
       toast.success("Page published — it's now live.");
+      await persistCustomTitleOption();
       if (!pageId) {
         setPageId(saved.id);
         navigate({ to: "/admin/pages/$id", params: { id: saved.id }, replace: true });
