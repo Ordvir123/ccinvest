@@ -36,6 +36,7 @@ const LABELS: Record<ReadingLang, Record<string, string>> = {
     gallery: "Galerie",
     units: "Appartements disponibles",
     videos: "Vidéos",
+    location: "Emplacement idéal",
     floor: "Étage",
     orientation: "Orientation",
     rooms: "Pièces",
@@ -49,6 +50,7 @@ const LABELS: Record<ReadingLang, Record<string, string>> = {
     gallery: "גלריה",
     units: "דירות זמינות",
     videos: "סרטונים",
+    location: "מיקום אידיאלי",
     floor: "קומה",
     orientation: "כיוון",
     rooms: "חדרים",
@@ -62,6 +64,7 @@ const LABELS: Record<ReadingLang, Record<string, string>> = {
     gallery: "Gallery",
     units: "Available apartments",
     videos: "Videos",
+    location: "Ideal location",
     floor: "Floor",
     orientation: "Orientation",
     rooms: "Rooms",
@@ -72,6 +75,7 @@ const LABELS: Record<ReadingLang, Record<string, string>> = {
     floorPlan: "Floor plan",
   },
 };
+
 
 const scrollToContact = () => {
   document.getElementById("contact")?.scrollIntoView({ behavior: "smooth" });
