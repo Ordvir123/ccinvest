@@ -1,5 +1,11 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
+import {
+  fetchTemplateSettings,
+  saveTemplateSettings,
+  type ApartmentTitleOption,
+} from "@/lib/template-settings";
 import { toast } from "sonner";
 import { Plus, Trash2, ArrowUp, ArrowDown, Save, Globe, EyeOff, Eye, Copy, ExternalLink, RefreshCw, Sparkles, Loader2 } from "lucide-react";
 import {
