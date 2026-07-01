@@ -10,10 +10,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { SingleImageUpload } from "@/components/admin/MediaUpload";
+import { IconPicker } from "@/components/admin/IconPicker";
+import { Plus, Trash2 } from "lucide-react";
 import {
   DEFAULT_TEMPLATE_SETTINGS,
   fetchTemplateSettings,
   saveTemplateSettings,
+  type ApartmentTitleOption,
   type TemplateSettings,
 } from "@/lib/template-settings";
 
