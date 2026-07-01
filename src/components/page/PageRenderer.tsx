@@ -193,15 +193,33 @@ function Stats({ stats }: { stats: PageContent["stats"] }) {
   );
 }
 
+/**
+ * Remove precise house numbers from a map query so the embed points at the
+ * street/area, not the exact building — visitors can't lift the owner's exact
+ * address from the map or open it in Google Maps for the pinpoint.
+ */
+function approximateMapQuery(query: string): string {
+  return query
+    .replace(/\b\d+\b/g, " ") // drop standalone house/zip numbers
+    .replace(/\s*,\s*,+/g, ", ") // collapse empty comma segments
+    .replace(/\s{2,}/g, " ")
+    .replace(/\s*,\s*/g, ", ")
+    .replace(/^[\s,]+|[\s,]+$/g, "")
+    .trim();
+}
+
 function LocationBlock({
   location,
+  labels,
   lang,
 }: {
   location: NonNullable<PageContent["location"]>;
+  labels: Record<string, string>;
   lang: ReadingLang;
 }) {
   const hasMap = hasText(location.map_query);
   const properName = location.name_i18n?.[lang];
+  const mapArea = hasMap ? approximateMapQuery(location.map_query!) : "";
   return (
     <Section>
       <div className="grid items-center gap-10 md:grid-cols-2">
@@ -209,28 +227,30 @@ function LocationBlock({
           {hasText(properName) && (
             <p className="eyebrow mb-2 text-sm text-primary">{properName}</p>
           )}
-          {hasText(location.heading) && (
-            <h2 className="text-3xl text-ink md:text-4xl">{location.heading}</h2>
-          )}
+          <h2 className="text-3xl text-ink md:text-4xl">{labels.location}</h2>
           {hasText(location.text) && (
             <p className="mt-5 text-lg leading-relaxed text-muted-foreground">{location.text}</p>
           )}
         </div>
         {hasMap && (
-          <div className="overflow-hidden rounded-lg border border-border shadow-sm">
+          <div className="relative overflow-hidden rounded-lg border border-border shadow-sm">
             <iframe
-              title={location.heading ?? "Map"}
+              title={labels.location}
               className="h-[340px] w-full"
               loading="lazy"
               referrerPolicy="no-referrer-when-downgrade"
-              src={`https://maps.google.com/maps?q=${encodeURIComponent(location.map_query!)}&t=m&z=16&output=embed`}
+              src={`https://maps.google.com/maps?q=${encodeURIComponent(mapArea)}&t=m&z=14&output=embed`}
             />
+            {/* Transparent overlay blocks click-through to "View larger map",
+                directions, and dragging — keeping the exact address private. */}
+            <div className="absolute inset-0" aria-hidden />
           </div>
         )}
       </div>
     </Section>
   );
 }
+
 
 function About({ about }: { about: NonNullable<PageContent["about"]> }) {
   return (
