@@ -524,29 +524,73 @@ export function PageEditor({
   const canUpload = slug.length > 0;
 
   /**
-   * If the apartment section uses a custom heading not yet in template
-   * settings, persist it (with its icon) so it becomes a reusable option.
+   * Persist custom (unlinked) headings, detail rows and feature rows entered in
+   * the editor as reusable options/presets in template settings — so the more
+   * pages you build, the more ready-made choices you have.
    */
   const persistCustomTitleOption = async () => {
-    const label = content.apartment_title?.trim();
-    if (!label) return;
-    const exists = titleOptions.some((o) => o.label.trim() === label);
-    if (exists) return;
     try {
       const current = settingsQuery.data ?? (await fetchTemplateSettings());
-      const nextOption: ApartmentTitleOption = {
-        label,
-        icon: content.apartment_title_icon?.trim() || "home",
-      };
+      let changed = false;
+      const nextTitles = [...(current.apartmentTitleOptions ?? [])];
+      const nextSpecs = [...(current.specPresets ?? [])];
+      const nextFeatures = [...(current.featurePresets ?? [])];
+
+      // Heading option.
+      const titleLabel = content.apartment_title?.trim();
+      if (titleLabel && !nextTitles.some((o) => o.label.trim() === titleLabel)) {
+        nextTitles.push({ label: titleLabel, icon: content.apartment_title_icon?.trim() || "home" });
+        changed = true;
+      }
+
+      // Collect custom rows from apartment + all units.
+      const units: Unit[] = [
+        ...(content.apartment ? [content.apartment] : []),
+        ...(content.units ?? []),
+      ];
+      const makeLabels = (t: string) => ({ fr: t, he: t, en: t });
+      for (const u of units) {
+        for (const r of u.specs ?? []) {
+          const isCustom = r.linked === false || !r.presetKey;
+          const label = r.label?.trim();
+          if (isCustom && label && !nextSpecs.some((p) => p.labels.fr.trim() === label)) {
+            nextSpecs.push({
+              key: `spec_${Math.random().toString(36).slice(2, 8)}`,
+              icon: r.icon?.trim() || "check",
+              valueKind: "text",
+              labels: makeLabels(label),
+            });
+            changed = true;
+          }
+        }
+        for (const r of u.featureRows ?? []) {
+          const isCustom = r.linked === false || !r.presetKey;
+          const text = r.value?.trim();
+          if (isCustom && text && !nextFeatures.some((p) => p.labels.fr.trim() === text)) {
+            nextFeatures.push({
+              key: `feat_${Math.random().toString(36).slice(2, 8)}`,
+              icon: r.icon?.trim() || "check",
+              valueKind: "text",
+              labels: makeLabels(text),
+            });
+            changed = true;
+          }
+        }
+      }
+
+      if (!changed) return;
       await saveTemplateSettings({
         ...current,
-        apartmentTitleOptions: [...(current.apartmentTitleOptions ?? []), nextOption],
+        apartmentTitleOptions: nextTitles,
+        specPresets: nextSpecs,
+        featurePresets: nextFeatures,
       });
       settingsQuery.refetch();
     } catch (err) {
-      console.warn("[editor] failed to persist apartment title option", err);
+      console.warn("[editor] failed to persist custom options", err);
     }
   };
+
 
   const onSave = async () => {
     if (!content.hero.title.trim()) {
