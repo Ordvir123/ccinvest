@@ -11,6 +11,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { SingleImageUpload } from "@/components/admin/MediaUpload";
 import { IconPicker } from "@/components/admin/IconPicker";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Plus, Trash2 } from "lucide-react";
 import {
   DEFAULT_TEMPLATE_SETTINGS,
@@ -19,6 +26,7 @@ import {
   type ApartmentTitleOption,
   type TemplateSettings,
 } from "@/lib/template-settings";
+import { READING_LANGS, type SpecPreset, type SpecValueKind } from "@/types/page";
 
 export const Route = createFileRoute("/_admin/admin/settings")({
   component: SettingsPage,
@@ -254,9 +262,130 @@ function SettingsPage() {
               </Button>
             </CardContent>
           </Card>
+
+          <PresetsCard
+            title='כותרות ואייקונים ל"פרטי הדירה"'
+            hint="רשימת פרטים מוכנים (כותרת + אייקון) לבחירה בשורות הפרטים בעורך. ניתן לערוך כותרת בכל שפה, לבחור אייקון וסוג ערך. פרטים חדשים מהעורך יישמרו כאן."
+            presets={form.specPresets ?? []}
+            withValueKind
+            onChange={(specPresets) => update({ specPresets })}
+          />
+
+          <PresetsCard
+            title="מאפיינים ואייקונים (Features)"
+            hint="רשימת מאפיינים מוכנים (טקסט + אייקון) לבחירה בשורות המאפיינים בעורך. ניתן לערוך טקסט בכל שפה ולבחור אייקון."
+            presets={form.featurePresets ?? []}
+            onChange={(featurePresets) => update({ featurePresets })}
+          />
         </div>
 
       )}
     </Section>
   );
 }
+
+const VALUE_KIND_LABELS: Record<SpecValueKind, string> = {
+  number: "מספר",
+  area: 'שטח (מ"ר)',
+  floor: "קומה",
+  rooms: "חדרים",
+  orientation: "כיוון",
+  parking: "חניה",
+  text: "טקסט חופשי",
+};
+
+function PresetsCard({
+  title,
+  hint,
+  presets,
+  withValueKind = false,
+  onChange,
+}: {
+  title: string;
+  hint: string;
+  presets: SpecPreset[];
+  withValueKind?: boolean;
+  onChange: (presets: SpecPreset[]) => void;
+}) {
+  const update = (i: number, patch: Partial<SpecPreset>) => {
+    const next = presets.slice();
+    next[i] = { ...next[i], ...patch };
+    onChange(next);
+  };
+  const setLabel = (i: number, lang: (typeof READING_LANGS)[number], value: string) => {
+    const next = presets.slice();
+    next[i] = { ...next[i], labels: { ...next[i].labels, [lang]: value } };
+    onChange(next);
+  };
+  return (
+    <Card className="lg:col-span-2">
+      <CardHeader>
+        <CardTitle>{title}</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        <p className="text-xs text-muted-foreground">{hint}</p>
+        {presets.map((p, i) => (
+          <div key={i} className="space-y-2 rounded-md border border-border p-3" dir="ltr">
+            <div className="flex items-center gap-2">
+              <IconPicker value={p.icon} onChange={(icon) => update(i, { icon: (icon as string) || "check" })} />
+              {withValueKind && (
+                <Select value={p.valueKind} onValueChange={(v) => update(i, { valueKind: v as SpecValueKind })}>
+                  <SelectTrigger className="w-[150px] shrink-0">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {(Object.keys(VALUE_KIND_LABELS) as SpecValueKind[]).map((k) => (
+                      <SelectItem key={k} value={k}>
+                        {VALUE_KIND_LABELS[k]}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="ml-auto h-8 w-8 shrink-0"
+                onClick={() => onChange(presets.filter((_, idx) => idx !== i))}
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </div>
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+              {READING_LANGS.map((l) => (
+                <Input
+                  key={l}
+                  dir={l === "he" ? "rtl" : "ltr"}
+                  aria-label={`Label (${l})`}
+                  placeholder={`Label (${l.toUpperCase()})`}
+                  value={p.labels[l] ?? ""}
+                  onChange={(e) => setLabel(i, l, e.target.value)}
+                />
+              ))}
+            </div>
+          </div>
+        ))}
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={() =>
+            onChange([
+              ...presets,
+              {
+                key: `preset_${Math.random().toString(36).slice(2, 8)}`,
+                icon: "check",
+                valueKind: withValueKind ? "number" : "text",
+                labels: { fr: "", he: "", en: "" },
+              } as SpecPreset,
+            ])
+          }
+        >
+          <Plus className="h-4 w-4" /> הוספה
+        </Button>
+      </CardContent>
+    </Card>
+  );
+}
+

@@ -12,6 +12,13 @@ import { z } from "zod";
 
 const mediaSchema = z.object({ url: z.string(), alt: z.string().optional() });
 const statSchema = z.object({ value: z.string(), label: z.string() });
+const detailRowSchema = z.object({
+  presetKey: z.string().optional(),
+  linked: z.boolean().optional(),
+  label: z.string().optional(),
+  icon: z.string().optional(),
+  value: z.string().optional(),
+});
 const unitSchema = z.object({
   name: z.string(),
   floor: z.string().optional(),
@@ -24,6 +31,8 @@ const unitSchema = z.object({
   price: z.string().optional(),
   image: mediaSchema.optional(),
   features: z.array(z.string()).optional(),
+  specs: z.array(detailRowSchema).optional(),
+  featureRows: z.array(detailRowSchema).optional(),
 });
 const videoSchema = z.object({
   title: z.string().optional(),
@@ -56,6 +65,7 @@ const pageContentSchema = z.object({
     .optional(),
   gallery: z.array(mediaSchema).optional(),
   units: z.array(unitSchema).optional(),
+  apartment: unitSchema.optional(),
   videos: z.array(videoSchema).optional(),
   contact: z.object({ heading: z.string().optional() }).optional(),
 });

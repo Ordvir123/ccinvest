@@ -4,12 +4,13 @@ import { ChevronRight, FileText } from "lucide-react";
 import { getIcon, guessIcon } from "@/lib/page-icons";
 import {
   unitTitle,
-  floorValue,
-  orientationValue,
-  roomsValue,
-  areaValue,
-  parkingValue,
   ABOUT_APARTMENT_HEADING,
+  rowLabel,
+  rowIcon,
+  rowValue,
+  featureRowText,
+  migrateUnitSpecs,
+  migrateUnitFeatures,
 } from "@/lib/unit-i18n";
 
 import { Section } from "@/components/ui/section";
@@ -23,7 +24,7 @@ import {
   CarouselPrevious,
 } from "@/components/ui/carousel";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
-import { hasItems, hasText, type PageContent, type ReadingLang, type Unit } from "@/types/page";
+import { hasItems, hasText, type PageContent, type ReadingLang, type SpecPreset, type Unit } from "@/types/page";
 import { ContactForm } from "@/components/page/ContactForm";
 import {
   DEFAULT_TEMPLATE_SETTINGS,
@@ -307,23 +308,29 @@ function UnitCard({
   unit,
   labels,
   lang,
+  specPresets,
+  featurePresets,
 }: {
   unit: Unit;
   labels: Record<string, string>;
   lang: ReadingLang;
+  specPresets: SpecPreset[];
+  featurePresets: SpecPreset[];
 }) {
   const [planOpen, setPlanOpen] = useState(false);
   const title = unitTitle(unit, lang);
-  const rows: [string, string | undefined][] = [
-    [labels.floor, hasText(unit.floor) ? floorValue(unit.floor!, lang) : undefined],
-    [labels.orientation, hasText(unit.orientation) ? orientationValue(unit.orientation!, lang) : undefined],
-    [labels.rooms, hasText(unit.rooms) ? roomsValue(unit.rooms!, lang) : undefined],
-    [labels.surface, hasText(unit.area_m2) ? areaValue(unit.area_m2!) : undefined],
-    [labels.balcony, hasText(unit.balcony_m2) ? areaValue(unit.balcony_m2!) : undefined],
-    [labels.parking, hasText(unit.parking) ? parkingValue(unit.parking!, lang) : undefined],
-  ];
-  const visibleRows = rows.filter(([, v]) => hasText(v));
+  const visibleRows = (unit.specs ?? migrateUnitSpecs(unit))
+    .map((r) => ({
+      label: rowLabel(r, lang, specPresets),
+      value: rowValue(r, lang, specPresets),
+      icon: rowIcon(r, specPresets),
+    }))
+    .filter((r) => hasText(r.value));
+  const featureItems = (unit.featureRows ?? migrateUnitFeatures(unit))
+    .map((r) => ({ text: featureRowText(r, lang, featurePresets), icon: rowIcon(r, featurePresets) }))
+    .filter((r) => hasText(r.text));
   const plan = unit.attachment;
+
 
   return (
     <Card className="flex flex-col overflow-hidden">
@@ -342,27 +349,41 @@ function UnitCard({
         )}
         {visibleRows.length > 0 && (
           <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
-            {visibleRows.map(([label, value]) => (
-              <div key={label} className="flex justify-between gap-2 border-b border-border/60 pb-1">
-                <dt className="text-muted-foreground">{label}</dt>
-                <dd className="font-medium text-foreground">{value}</dd>
-              </div>
-            ))}
+            {visibleRows.map((r, ri) => {
+              const RowIcon = getIcon(r.icon);
+              return (
+                <div key={ri} className="flex justify-between gap-2 border-b border-border/60 pb-1">
+                  <dt className="flex items-center gap-1.5 text-muted-foreground">
+                    {RowIcon && <RowIcon className="h-4 w-4 shrink-0 text-primary" aria-hidden />}
+                    {r.label}
+                  </dt>
+                  <dd className="font-medium text-foreground">{r.value}</dd>
+                </div>
+              );
+            })}
           </dl>
         )}
         {hasText(unit.description) && (
           <p className="mt-4 text-sm leading-relaxed text-muted-foreground">{unit.description}</p>
         )}
-        {hasItems(unit.features) && (
+        {featureItems.length > 0 && (
           <ul className="mt-4 space-y-1.5">
-            {unit.features!.map((f, i) => (
-              <li key={i} className="flex items-center gap-2 text-sm text-foreground">
-                <ChevronRight className="h-4 w-4 text-primary rtl:rotate-180" aria-hidden />
-                {f}
-              </li>
-            ))}
+            {featureItems.map((f, i) => {
+              const FIcon = getIcon(f.icon);
+              return (
+                <li key={i} className="flex items-center gap-2 text-sm text-foreground">
+                  {FIcon ? (
+                    <FIcon className="h-4 w-4 shrink-0 text-primary" aria-hidden />
+                  ) : (
+                    <ChevronRight className="h-4 w-4 text-primary rtl:rotate-180" aria-hidden />
+                  )}
+                  {f.text}
+                </li>
+              );
+            })}
           </ul>
         )}
+
         {plan?.url && plan.type === "image" && (
           <button
             type="button"
@@ -413,10 +434,14 @@ function Units({
   units,
   labels,
   lang,
+  specPresets,
+  featurePresets,
 }: {
   units: PageContent["units"];
   labels: Record<string, string>;
   lang: ReadingLang;
+  specPresets: SpecPreset[];
+  featurePresets: SpecPreset[];
 }) {
   if (!hasItems(units)) return null;
   return (
@@ -425,7 +450,14 @@ function Units({
         <h2 className="mb-10 text-center text-3xl text-ink md:text-4xl">{labels.units}</h2>
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {units!.map((u, i) => (
-            <UnitCard key={i} unit={u} labels={labels} lang={lang} />
+            <UnitCard
+              key={i}
+              unit={u}
+              labels={labels}
+              lang={lang}
+              specPresets={specPresets}
+              featurePresets={featurePresets}
+            />
           ))}
         </div>
       </Section>
@@ -441,6 +473,8 @@ function ApartmentSection({
   headingIcon,
   labels,
   lang,
+  specPresets,
+  featurePresets,
 }: {
   apartment: Unit;
   imageSide: "left" | "right";
@@ -448,19 +482,23 @@ function ApartmentSection({
   headingIcon?: string;
   labels: Record<string, string>;
   lang: ReadingLang;
+  specPresets: SpecPreset[];
+  featurePresets: SpecPreset[];
 }) {
   const [planOpen, setPlanOpen] = useState(false);
   const title = unitTitle(apartment, lang);
-  const rows: [string, string | undefined][] = [
-    [labels.floor, hasText(apartment.floor) ? floorValue(apartment.floor!, lang) : undefined],
-    [labels.orientation, hasText(apartment.orientation) ? orientationValue(apartment.orientation!, lang) : undefined],
-    [labels.rooms, hasText(apartment.rooms) ? roomsValue(apartment.rooms!, lang) : undefined],
-    [labels.surface, hasText(apartment.area_m2) ? areaValue(apartment.area_m2!) : undefined],
-    [labels.balcony, hasText(apartment.balcony_m2) ? areaValue(apartment.balcony_m2!) : undefined],
-    [labels.parking, hasText(apartment.parking) ? parkingValue(apartment.parking!, lang) : undefined],
-  ];
-  const visibleRows = rows.filter(([, v]) => hasText(v));
+  const visibleRows = (apartment.specs ?? migrateUnitSpecs(apartment))
+    .map((r) => ({
+      label: rowLabel(r, lang, specPresets),
+      value: rowValue(r, lang, specPresets),
+      icon: rowIcon(r, specPresets),
+    }))
+    .filter((r) => hasText(r.value));
+  const featureItems = (apartment.featureRows ?? migrateUnitFeatures(apartment))
+    .map((r) => ({ text: featureRowText(r, lang, featurePresets), icon: rowIcon(r, featurePresets) }))
+    .filter((r) => hasText(r.text));
   const plan = apartment.attachment;
+
   // DOM order is details → image (mobile stacks details first, image below).
   // On desktop, "left" puts the image first; RTL mirrors via flex-row + dir.
   const imageOrder = imageSide === "left" ? "md:order-1" : "md:order-2";
@@ -488,27 +526,41 @@ function ApartmentSection({
               )}
               {visibleRows.length > 0 && (
                 <dl className="mt-6 grid grid-cols-2 gap-x-6 gap-y-4">
-                  {visibleRows.map(([label, value]) => (
-                    <div key={label} className="flex flex-col gap-0.5 border-b border-border/60 pb-2">
-                      <dt className="text-xs uppercase tracking-wide text-muted-foreground">{label}</dt>
-                      <dd className="text-base font-medium text-foreground">{value}</dd>
-                    </div>
-                  ))}
+                  {visibleRows.map((r, ri) => {
+                    const RowIcon = getIcon(r.icon);
+                    return (
+                      <div key={ri} className="flex flex-col gap-0.5 border-b border-border/60 pb-2">
+                        <dt className="flex items-center gap-1.5 text-xs uppercase tracking-wide text-muted-foreground">
+                          {RowIcon && <RowIcon className="h-4 w-4 shrink-0 text-primary" aria-hidden />}
+                          {r.label}
+                        </dt>
+                        <dd className="text-base font-medium text-foreground">{r.value}</dd>
+                      </div>
+                    );
+                  })}
                 </dl>
               )}
               {hasText(apartment.description) && (
                 <p className="mt-6 text-base leading-relaxed text-muted-foreground">{apartment.description}</p>
               )}
-              {hasItems(apartment.features) && (
+              {featureItems.length > 0 && (
                 <ul className="mt-6 space-y-2">
-                  {apartment.features!.map((f, i) => (
-                    <li key={i} className="flex items-center gap-2 text-foreground">
-                      <ChevronRight className="h-4 w-4 text-primary rtl:rotate-180" aria-hidden />
-                      {f}
-                    </li>
-                  ))}
+                  {featureItems.map((f, i) => {
+                    const FIcon = getIcon(f.icon);
+                    return (
+                      <li key={i} className="flex items-center gap-2 text-foreground">
+                        {FIcon ? (
+                          <FIcon className="h-4 w-4 shrink-0 text-primary" aria-hidden />
+                        ) : (
+                          <ChevronRight className="h-4 w-4 text-primary rtl:rotate-180" aria-hidden />
+                        )}
+                        {f.text}
+                      </li>
+                    );
+                  })}
                 </ul>
               )}
+
               {plan?.url && plan.type === "image" && (
                 <button
                   type="button"
@@ -638,12 +690,21 @@ export function PageRenderer({
           <LocationBlock location={content.location} labels={labels} lang={lang} />
         )}
       {content.category === "project" ? (
-        <Units units={content.units} labels={labels} lang={lang} />
+        <Units
+          units={content.units}
+          labels={labels}
+          lang={lang}
+          specPresets={settings.specPresets}
+          featurePresets={settings.featurePresets}
+        />
       ) : (
         content.apartment &&
         (hasText(content.apartment.unit_type) ||
           hasText(content.apartment.name) ||
           hasText(content.apartment.description) ||
+          hasText(content.apartment.price) ||
+          hasItems(content.apartment.specs) ||
+          hasItems(content.apartment.featureRows) ||
           hasText(content.apartment.image?.url)) && (
           <ApartmentSection
             apartment={content.apartment}
@@ -652,9 +713,12 @@ export function PageRenderer({
             headingIcon={content.apartment_title_icon}
             labels={labels}
             lang={lang}
+            specPresets={settings.specPresets}
+            featurePresets={settings.featurePresets}
           />
         )
       )}
+
       <Gallery gallery={content.gallery} labels={labels} />
 
       <Videos videos={content.videos} labels={labels} />

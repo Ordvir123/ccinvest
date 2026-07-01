@@ -291,24 +291,58 @@ export function cleanContent(content: PageContent): PageContent {
     return s;
   };
 
+  // Clean flexible detail rows (specs). Keep rows with a value, or preset-linked.
+  const cleanSpecRows = (
+    rows?: import("@/types/page").DetailRow[],
+  ): import("@/types/page").DetailRow[] | undefined => {
+    const out = (rows ?? [])
+      .map((r) => ({
+        presetKey: keepText(r.presetKey),
+        linked: r.linked === false ? false : undefined,
+        label: r.linked === false ? keepText(r.label) : undefined,
+        icon: r.linked === false ? keepText(r.icon) : undefined,
+        value: keepText(r.value),
+      }))
+      .filter((r) => r.value || (r.presetKey && r.linked !== false));
+    return out.length ? out : undefined;
+  };
+  // Clean feature rows. Keep rows with text, or preset-linked (text from preset).
+  const cleanFeatureRows = (
+    rows?: import("@/types/page").DetailRow[],
+  ): import("@/types/page").DetailRow[] | undefined => {
+    const out = (rows ?? [])
+      .map((r) => ({
+        presetKey: keepText(r.presetKey),
+        linked: r.linked === false ? false : undefined,
+        icon: keepText(r.icon),
+        value: keepText(r.value),
+      }))
+      .filter((r) => r.value || (r.presetKey && r.linked !== false));
+    return out.length ? out : undefined;
+  };
+
   // Clean a single unit/apartment block (shared by units list and apartment).
   const cleanUnit = (u: import("@/types/page").Unit) => {
-    const feats = (u.features ?? []).map(t).filter(Boolean);
+    const specs = cleanSpecRows(u.specs);
+    const featureRows = cleanFeatureRows(u.featureRows);
     return {
       name: t(u.name),
       unit_type: u.unit_type,
       unit_number: keepText(u.unit_number),
-      floor: sanitizeNumber(u.floor, { floor: true }),
-      orientation: keepText(u.orientation),
-      rooms: sanitizeNumber(u.rooms),
-      area_m2: sanitizeNumber(u.area_m2),
-      balcony_m2: sanitizeNumber(u.balcony_m2),
-      parking: sanitizeParking(u.parking),
       description: keepText(u.description),
       price: keepText(u.price),
       image: u.image?.url ? u.image : undefined,
       attachment: u.attachment?.url ? u.attachment : undefined,
-      features: feats.length ? feats : undefined,
+      specs,
+      featureRows,
+      // Legacy fixed fields are only retained when the row model isn't in use.
+      floor: specs ? undefined : sanitizeNumber(u.floor, { floor: true }),
+      orientation: specs ? undefined : keepText(u.orientation),
+      rooms: specs ? undefined : sanitizeNumber(u.rooms),
+      area_m2: specs ? undefined : sanitizeNumber(u.area_m2),
+      balcony_m2: specs ? undefined : sanitizeNumber(u.balcony_m2),
+      parking: specs ? undefined : sanitizeParking(u.parking),
+      features: featureRows ? undefined : (u.features ?? []).map(t).filter(Boolean),
     };
   };
 
