@@ -191,7 +191,71 @@ function SettingsPage() {
               />
             </CardContent>
           </Card>
+
+          <Card className="lg:col-span-2">
+            <CardHeader>
+              <CardTitle>כותרות לסקשן "על הדירה"</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <p className="text-xs text-muted-foreground">
+                כותרות לבחירה בסקשן "על הדירה" בעורך הדף. לכל כותרת ניתן לבחור אייקון.
+                כותרות חדשות שמוזנות בעורך הדף נשמרות כאן אוטומטית.
+              </p>
+              {(form.apartmentTitleOptions ?? []).map((opt, i) => (
+                <div key={i} className="flex items-center gap-2">
+                  <IconPicker
+                    value={opt.icon}
+                    onChange={(icon) => {
+                      const next = (form.apartmentTitleOptions ?? []).slice();
+                      next[i] = { ...next[i], icon: (icon as string) ?? "" };
+                      update({ apartmentTitleOptions: next });
+                    }}
+                  />
+                  <Input
+                    value={opt.label}
+                    onChange={(e) => {
+                      const next = (form.apartmentTitleOptions ?? []).slice();
+                      next[i] = { ...next[i], label: e.target.value };
+                      update({ apartmentTitleOptions: next });
+                    }}
+                    placeholder="לדוגמה: À propos de l'appartement"
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 shrink-0"
+                    onClick={() =>
+                      update({
+                        apartmentTitleOptions: (form.apartmentTitleOptions ?? []).filter(
+                          (_, idx) => idx !== i,
+                        ),
+                      })
+                    }
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              ))}
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() =>
+                  update({
+                    apartmentTitleOptions: [
+                      ...(form.apartmentTitleOptions ?? []),
+                      { label: "", icon: "home" } as ApartmentTitleOption,
+                    ],
+                  })
+                }
+              >
+                <Plus className="h-4 w-4" /> הוספת כותרת
+              </Button>
+            </CardContent>
+          </Card>
         </div>
+
       )}
     </Section>
   );
