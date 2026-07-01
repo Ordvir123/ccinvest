@@ -109,9 +109,10 @@ export function listTranslatableFields(c: PageContent): TransField[] {
 export function getPath<T = unknown>(obj: unknown, path: string): T | undefined {
   return path
     .split(".")
-    .reduce<unknown>((acc, key) => (acc == null ? acc : (acc as Record<string, unknown>)[key]), obj) as
-    | T
-    | undefined;
+    .reduce<unknown>(
+      (acc, key) => (acc == null ? acc : (acc as Record<string, unknown>)[key]),
+      obj,
+    ) as T | undefined;
 }
 
 export function setPath<T extends object>(obj: T, path: string, val: unknown): T {
@@ -172,11 +173,8 @@ function mergeRows(
       presetKey: r.presetKey,
       linked: r.linked,
       icon: r.icon,
-      label: textField === "label" && custom ? translatedText ?? r.label : r.label,
-      value:
-        textField === "value" && custom
-          ? translatedText ?? r.value
-          : r.value,
+      label: textField === "label" && custom ? (translatedText ?? r.label) : r.label,
+      value: textField === "value" && custom ? (translatedText ?? r.value) : r.value,
     };
   });
 }
@@ -187,10 +185,7 @@ function mergeRows(
  * URLs (hero background, unit images) and manual icon choices must be restored
  * here to stay consistent across languages.
  */
-export function preserveStableFields(
-  source: PageContent,
-  translated: PageContent,
-): PageContent {
+export function preserveStableFields(source: PageContent, translated: PageContent): PageContent {
   const out = structuredClone(translated) as PageContent;
   // Hero kicker + CTA are authored per-locale; restore base + i18n from source so
   // the renderer picks the authored locale value (or falls back to the source).

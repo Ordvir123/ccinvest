@@ -47,8 +47,7 @@ function SettingsPage() {
     if (settingsQuery.data) setForm(settingsQuery.data);
   }, [settingsQuery.data]);
 
-  const update = (patch: Partial<TemplateSettings>) =>
-    setForm((prev) => ({ ...prev, ...patch }));
+  const update = (patch: Partial<TemplateSettings>) => setForm((prev) => ({ ...prev, ...patch }));
 
   const onSave = async () => {
     setSaving(true);
@@ -104,7 +103,9 @@ function SettingsPage() {
                 <Label>לוגו</Label>
                 <SingleImageUpload
                   slug={SETTINGS_SLUG}
-                  value={form.brandLogoUrl ? { url: form.brandLogoUrl, alt: form.brandName } : undefined}
+                  value={
+                    form.brandLogoUrl ? { url: form.brandLogoUrl, alt: form.brandName } : undefined
+                  }
                   onChange={(m) => update({ brandLogoUrl: m?.url ?? "" })}
                 />
                 <Input
@@ -206,8 +207,8 @@ function SettingsPage() {
             </CardHeader>
             <CardContent className="space-y-3">
               <p className="text-xs text-muted-foreground">
-                כותרות לבחירה בסקשן "על הדירה" בעורך הדף. לכל כותרת ניתן לבחור אייקון.
-                כותרות חדשות שמוזנות בעורך הדף נשמרות כאן אוטומטית.
+                כותרות לבחירה בסקשן "על הדירה" בעורך הדף. לכל כותרת ניתן לבחור אייקון. כותרות חדשות
+                שמוזנות בעורך הדף נשמרות כאן אוטומטית.
               </p>
               {(form.apartmentTitleOptions ?? []).map((opt, i) => (
                 <div key={i} className="flex items-center gap-2">
@@ -278,7 +279,6 @@ function SettingsPage() {
             onChange={(featurePresets) => update({ featurePresets })}
           />
         </div>
-
       )}
     </Section>
   );
@@ -327,9 +327,15 @@ function PresetsCard({
         {presets.map((p, i) => (
           <div key={i} className="space-y-2 rounded-md border border-border p-3" dir="ltr">
             <div className="flex items-center gap-2">
-              <IconPicker value={p.icon} onChange={(icon) => update(i, { icon: (icon as string) || "check" })} />
+              <IconPicker
+                value={p.icon}
+                onChange={(icon) => update(i, { icon: (icon as string) || "check" })}
+              />
               {withValueKind && (
-                <Select value={p.valueKind} onValueChange={(v) => update(i, { valueKind: v as SpecValueKind })}>
+                <Select
+                  value={p.valueKind}
+                  onValueChange={(v) => update(i, { valueKind: v as SpecValueKind })}
+                >
                   <SelectTrigger className="w-[150px] shrink-0">
                     <SelectValue />
                   </SelectTrigger>
@@ -388,4 +394,3 @@ function PresetsCard({
     </Card>
   );
 }
-

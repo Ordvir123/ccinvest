@@ -1,12 +1,25 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import {
-  fetchTemplateSettings,
-  saveTemplateSettings,
-} from "@/lib/template-settings";
+import { fetchTemplateSettings, saveTemplateSettings } from "@/lib/template-settings";
 import { toast } from "sonner";
-import { Plus, Trash2, ArrowUp, ArrowDown, Save, Globe, EyeOff, Eye, Copy, ExternalLink, RefreshCw, Sparkles, Loader2, Link2, Link2Off } from "lucide-react";
+import {
+  Plus,
+  Trash2,
+  ArrowUp,
+  ArrowDown,
+  Save,
+  Globe,
+  EyeOff,
+  Eye,
+  Copy,
+  ExternalLink,
+  RefreshCw,
+  Sparkles,
+  Loader2,
+  Link2,
+  Link2Off,
+} from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -28,7 +41,6 @@ import {
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
 import { cn } from "@/lib/utils";
-
 
 import { SectionCard, Field } from "@/components/admin/editor-parts";
 import { SingleImageUpload, GalleryUpload, UnitFileUpload } from "@/components/admin/MediaUpload";
@@ -155,7 +167,11 @@ function LinkToggle({
       onClick={onToggle}
       className={cn("h-9 w-9 shrink-0", linked ? "text-primary" : "text-muted-foreground")}
       aria-label={linked ? "Unlink label & icon from preset" : "Link label & icon to preset"}
-      title={linked ? "Linked to preset — click to edit label & icon" : "Custom — click to relink to preset"}
+      title={
+        linked
+          ? "Linked to preset — click to edit label & icon"
+          : "Custom — click to relink to preset"
+      }
     >
       {linked ? <Link2 className="h-4 w-4" /> : <Link2Off className="h-4 w-4" />}
     </Button>
@@ -200,7 +216,7 @@ function SpecRowsEditor({
                 onToggle={() =>
                   update(i, {
                     linked: !linked,
-                    label: !linked ? undefined : preset?.labels.fr ?? "",
+                    label: !linked ? undefined : (preset?.labels.fr ?? ""),
                     icon: !linked ? undefined : preset?.icon,
                   })
                 }
@@ -209,10 +225,21 @@ function SpecRowsEditor({
                 value={row.presetKey ?? CUSTOM_PRESET}
                 onValueChange={(v) => {
                   if (v === CUSTOM_PRESET) {
-                    update(i, { presetKey: undefined, linked: false, label: row.label ?? "", icon: effIcon });
+                    update(i, {
+                      presetKey: undefined,
+                      linked: false,
+                      label: row.label ?? "",
+                      icon: effIcon,
+                    });
                   } else {
                     const p = presets.find((x) => x.key === v);
-                    update(i, { presetKey: v, linked: true, label: undefined, icon: undefined, ...(p?.valueKind === "orientation" || p?.valueKind === "parking" ? {} : {}) });
+                    update(i, {
+                      presetKey: v,
+                      linked: true,
+                      label: undefined,
+                      icon: undefined,
+                      ...(p?.valueKind === "orientation" || p?.valueKind === "parking" ? {} : {}),
+                    });
                   }
                 }}
               >
@@ -246,7 +273,7 @@ function SpecRowsEditor({
                     dir={isRtlReading(l) ? "rtl" : "ltr"}
                     aria-label={`Label (${l})`}
                     placeholder={`Label (${l.toUpperCase()})`}
-                    value={l === "fr" ? row.label ?? "" : ""}
+                    value={l === "fr" ? (row.label ?? "") : ""}
                     disabled={l !== "fr"}
                     onChange={(e) => update(i, { label: e.target.value })}
                   />
@@ -331,14 +358,17 @@ function FeatureRowsEditor({
         return (
           <div key={i} className="space-y-2 rounded-md border border-border p-2">
             <div className="flex items-center gap-2">
-              <IconPicker value={effIcon} onChange={(icon) => update(i, { icon: (icon as string) ?? "" })} />
+              <IconPicker
+                value={effIcon}
+                onChange={(icon) => update(i, { icon: (icon as string) ?? "" })}
+              />
               <LinkToggle
                 linked={linked}
                 disabled={isCustom}
                 onToggle={() =>
                   update(i, {
                     linked: !linked,
-                    value: !linked ? preset?.labels.fr ?? "" : "",
+                    value: !linked ? (preset?.labels.fr ?? "") : "",
                     icon: !linked ? undefined : preset?.icon,
                   })
                 }
@@ -346,7 +376,8 @@ function FeatureRowsEditor({
               <Select
                 value={row.presetKey ?? CUSTOM_PRESET}
                 onValueChange={(v) => {
-                  if (v === CUSTOM_PRESET) update(i, { presetKey: undefined, linked: false, icon: effIcon });
+                  if (v === CUSTOM_PRESET)
+                    update(i, { presetKey: undefined, linked: false, icon: effIcon });
                   else update(i, { presetKey: v, linked: true, value: "", icon: undefined });
                 }}
               >
@@ -474,8 +505,6 @@ export function PageEditor({
     toast.success("Reverted the AI change.");
   };
 
-
-
   // Convenient typed updaters.
   const patch = (p: Partial<PageContent>) => setContent((c) => ({ ...c, ...p }));
   const patchHero = (p: Partial<PageContent["hero"]>) =>
@@ -538,7 +567,10 @@ export function PageEditor({
       // Heading option.
       const titleLabel = content.apartment_title?.trim();
       if (titleLabel && !nextTitles.some((o) => o.label.trim() === titleLabel)) {
-        nextTitles.push({ label: titleLabel, icon: content.apartment_title_icon?.trim() || "home" });
+        nextTitles.push({
+          label: titleLabel,
+          icon: content.apartment_title_icon?.trim() || "home",
+        });
         changed = true;
       }
 
@@ -589,7 +621,6 @@ export function PageEditor({
       console.warn("[editor] failed to persist custom options", err);
     }
   };
-
 
   const onSave = async () => {
     if (!content.hero.title.trim()) {
@@ -665,7 +696,6 @@ export function PageEditor({
     }
   };
 
-
   const onUnpublish = async () => {
     if (!pageId) return;
     setPublishing(true);
@@ -733,7 +763,6 @@ export function PageEditor({
         </div>
       </SectionCard>
 
-
       <SectionCard title="Page meta">
         <Field label="Slug" required hint={`Public URL: ${publicUrl}`}>
           <Input
@@ -761,10 +790,7 @@ export function PageEditor({
             </SelectContent>
           </Select>
         </Field>
-        <Field
-          label="Listing page"
-          hint="Choose where this page appears on the public site."
-        >
+        <Field label="Listing page" hint="Choose where this page appears on the public site.">
           <Select
             value={content.category ?? "apartment"}
             onValueChange={(v) => patch({ category: v as PageContent["category"] })}
@@ -802,10 +828,16 @@ export function PageEditor({
           <Input value={content.hero.title} onChange={(e) => onTitleChange(e.target.value)} />
         </Field>
         <Field label="Subtitle">
-          <Input value={content.hero.subtitle ?? ""} onChange={(e) => patchHero({ subtitle: e.target.value })} />
+          <Input
+            value={content.hero.subtitle ?? ""}
+            onChange={(e) => patchHero({ subtitle: e.target.value })}
+          />
         </Field>
         <Field label="Price">
-          <Input value={content.hero.price ?? ""} onChange={(e) => patchHero({ price: e.target.value })} />
+          <Input
+            value={content.hero.price ?? ""}
+            onChange={(e) => patchHero({ price: e.target.value })}
+          />
         </Field>
         <Field
           label="CTA label (per language)"
@@ -824,7 +856,10 @@ export function PageEditor({
             ))}
           </div>
         </Field>
-        <Field label="Background image" hint="Optional. Shown behind the hero with a dark overlay for readability.">
+        <Field
+          label="Background image"
+          hint="Optional. Shown behind the hero with a dark overlay for readability."
+        >
           <SingleImageUpload
             slug={slug}
             value={content.hero.background}
@@ -834,8 +869,10 @@ export function PageEditor({
         </Field>
       </SectionCard>
 
-
-      <SectionCard title="Stats" description="Repeatable value + label rows. Icons auto-match the label; override per row.">
+      <SectionCard
+        title="Stats"
+        description="Repeatable value + label rows. Icons auto-match the label; override per row."
+      >
         {(content.stats ?? []).map((s, i) => (
           <div key={i} className="flex items-end gap-2">
             <div className="space-y-1.5">
@@ -892,13 +929,23 @@ export function PageEditor({
 
       <SectionCard title="Location" defaultOpen={false}>
         <Field label="Heading">
-          <Input value={content.location?.heading ?? ""} onChange={(e) => patchLocation({ heading: e.target.value })} />
+          <Input
+            value={content.location?.heading ?? ""}
+            onChange={(e) => patchLocation({ heading: e.target.value })}
+          />
         </Field>
         <Field label="Text">
-          <Textarea rows={3} value={content.location?.text ?? ""} onChange={(e) => patchLocation({ text: e.target.value })} />
+          <Textarea
+            rows={3}
+            value={content.location?.text ?? ""}
+            onChange={(e) => patchLocation({ text: e.target.value })}
+          />
         </Field>
         <Field label="Map query" hint="Used to build a Google Maps embed.">
-          <Input value={content.location?.map_query ?? ""} onChange={(e) => patchLocation({ map_query: e.target.value })} />
+          <Input
+            value={content.location?.map_query ?? ""}
+            onChange={(e) => patchLocation({ map_query: e.target.value })}
+          />
         </Field>
         <Field
           label="Street / location name (per language)"
@@ -931,10 +978,17 @@ export function PageEditor({
 
       <SectionCard title="About" defaultOpen={false}>
         <Field label="Heading">
-          <Input value={content.about?.heading ?? ""} onChange={(e) => patchAbout({ heading: e.target.value })} />
+          <Input
+            value={content.about?.heading ?? ""}
+            onChange={(e) => patchAbout({ heading: e.target.value })}
+          />
         </Field>
         <Field label="Body">
-          <Textarea rows={4} value={content.about?.body ?? ""} onChange={(e) => patchAbout({ body: e.target.value })} />
+          <Textarea
+            rows={4}
+            value={content.about?.body ?? ""}
+            onChange={(e) => patchAbout({ body: e.target.value })}
+          />
         </Field>
         <Field label="Features" hint="Icons auto-match the text; override per row.">
           <div className="space-y-2">
@@ -963,7 +1017,9 @@ export function PageEditor({
                   size="icon"
                   className="h-8 w-8 shrink-0"
                   onClick={() => {
-                    const icons = (content.about?.feature_icons ?? []).filter((_, idx) => idx !== i);
+                    const icons = (content.about?.feature_icons ?? []).filter(
+                      (_, idx) => idx !== i,
+                    );
                     patchAbout({
                       features: (content.about?.features ?? []).filter((_, idx) => idx !== i),
                       feature_icons: icons,
@@ -985,7 +1041,6 @@ export function PageEditor({
           </div>
         </Field>
       </SectionCard>
-
 
       <SectionCard title="Gallery" defaultOpen={false}>
         <GalleryUpload
@@ -1013,17 +1068,22 @@ export function PageEditor({
                 }}
                 onUp={() => patch({ units: moveItem(content.units ?? [], i, -1) })}
                 onDown={() => patch({ units: moveItem(content.units ?? [], i, 1) })}
-                onRemove={() => patch({ units: (content.units ?? []).filter((_, idx) => idx !== i) })}
+                onRemove={() =>
+                  patch({ units: (content.units ?? []).filter((_, idx) => idx !== i) })
+                }
                 specPresets={specPresets}
                 featurePresets={featurePresets}
               />
-
             ))}
             <Button
               type="button"
               variant="outline"
               size="sm"
-              onClick={() => patch({ units: [...(content.units ?? []), { name: "", unit_type: "apartment" } as Unit] })}
+              onClick={() =>
+                patch({
+                  units: [...(content.units ?? []), { name: "", unit_type: "apartment" } as Unit],
+                })
+              }
             >
               <Plus className="h-4 w-4" /> Add unit
             </Button>
@@ -1036,7 +1096,10 @@ export function PageEditor({
           defaultOpen
         >
           <div className="space-y-4">
-            <Field label="Image side (desktop)" hint="Which side the main image sits on. Mirrored automatically in Hebrew (RTL).">
+            <Field
+              label="Image side (desktop)"
+              hint="Which side the main image sits on. Mirrored automatically in Hebrew (RTL)."
+            >
               <Select
                 value={content.apartment_image_side ?? "right"}
                 onValueChange={(v) => patch({ apartment_image_side: v as "left" | "right" })}
@@ -1079,12 +1142,11 @@ export function PageEditor({
                       <div className="flex items-center gap-2">
                         <IconPicker
                           value={content.apartment_title_icon}
-                          onChange={(icon) => patch({ apartment_title_icon: (icon as string) ?? "" })}
+                          onChange={(icon) =>
+                            patch({ apartment_title_icon: (icon as string) ?? "" })
+                          }
                         />
-                        <LinkToggle
-                          linked={linked}
-                          onToggle={() => setAptTitleCustom((v) => !v)}
-                        />
+                        <LinkToggle linked={linked} onToggle={() => setAptTitleCustom((v) => !v)} />
                         <Select
                           value={selectValue}
                           onValueChange={(v) => {
@@ -1098,7 +1160,8 @@ export function PageEditor({
                               const opt = titleOptions.find((o) => o.label === v);
                               patch({
                                 apartment_title: v,
-                                apartment_title_icon: opt?.icon ?? content.apartment_title_icon ?? "",
+                                apartment_title_icon:
+                                  opt?.icon ?? content.apartment_title_icon ?? "",
                               });
                             }
                           }}
@@ -1107,7 +1170,9 @@ export function PageEditor({
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value={DEFAULT_TITLE}>Default (À propos de l'appartement)</SelectItem>
+                            <SelectItem value={DEFAULT_TITLE}>
+                              Default (À propos de l'appartement)
+                            </SelectItem>
                             {titleOptions.map((o) => (
                               <SelectItem key={o.label} value={o.label}>
                                 {o.label}
@@ -1130,11 +1195,9 @@ export function PageEditor({
               })()}
               onChange={(apartment) => patch({ apartment })}
             />
-
           </div>
         </SectionCard>
       )}
-
 
       <SectionCard title="Videos" description="YouTube links (any format)." defaultOpen={false}>
         <div className="space-y-3">
@@ -1149,14 +1212,18 @@ export function PageEditor({
               }}
               onUp={() => patch({ videos: moveItem(content.videos ?? [], i, -1) })}
               onDown={() => patch({ videos: moveItem(content.videos ?? [], i, 1) })}
-              onRemove={() => patch({ videos: (content.videos ?? []).filter((_, idx) => idx !== i) })}
+              onRemove={() =>
+                patch({ videos: (content.videos ?? []).filter((_, idx) => idx !== i) })
+              }
             />
           ))}
           <Button
             type="button"
             variant="outline"
             size="sm"
-            onClick={() => patch({ videos: [...(content.videos ?? []), { youtube_id: "" } as Video] })}
+            onClick={() =>
+              patch({ videos: [...(content.videos ?? []), { youtube_id: "" } as Video] })
+            }
           >
             <Plus className="h-4 w-4" /> Add video
           </Button>
@@ -1194,11 +1261,8 @@ export function PageEditor({
       >
         <SeoEditor seo={seo} onChange={setSeo} slug={slug} content={content} />
       </SectionCard>
-
     </div>
   );
-
-
 
   return (
     <div className="flex h-full min-h-screen flex-col">
@@ -1208,7 +1272,11 @@ export function PageEditor({
           <h1 className="text-lg font-semibold text-foreground">
             {isEdit ? "Edit page" : "New page"}
           </h1>
-          <Badge variant={status === "published" ? "default" : status === "archived" ? "outline" : "secondary"}>
+          <Badge
+            variant={
+              status === "published" ? "default" : status === "archived" ? "outline" : "secondary"
+            }
+          >
             {status === "published" ? "Published" : status === "archived" ? "Archived" : "Draft"}
           </Badge>
           {status === "published" && liveUrl && (
@@ -1240,7 +1308,6 @@ export function PageEditor({
             <Eye className="h-4 w-4" /> Preview draft
           </Button>
           <DropdownMenu>
-
             <DropdownMenuTrigger asChild>
               <Button type="button" variant="outline" size="sm" disabled={!slug}>
                 <Copy className="h-4 w-4" /> Copy share link
@@ -1303,8 +1370,6 @@ export function PageEditor({
         </div>
       )}
 
-
-
       {/* Editor vs Translations */}
       <Tabs defaultValue="editor" className="flex-1">
         <div className="border-b border-border px-4 pt-3 md:px-6">
@@ -1318,16 +1383,10 @@ export function PageEditor({
           <div className="mx-auto max-w-3xl flex-1 p-4 md:p-6">{formPanel}</div>
         </TabsContent>
 
-
         <TabsContent value="translations" className="mt-0 p-4 md:p-6">
-          <TranslationsTab
-            pageId={pageId}
-            source={cleanContent(content)}
-            sourceLang={sourceLang}
-          />
+          <TranslationsTab pageId={pageId} source={cleanContent(content)} sourceLang={sourceLang} />
         </TabsContent>
       </Tabs>
-
     </div>
   );
 }
@@ -1388,7 +1447,11 @@ function UnitBlock({
         {forceOpen ? (
           <span className="text-sm font-medium text-foreground">{title}</span>
         ) : (
-          <button type="button" className="text-sm font-medium text-foreground" onClick={() => setOpen((v) => !v)}>
+          <button
+            type="button"
+            className="text-sm font-medium text-foreground"
+            onClick={() => setOpen((v) => !v)}
+          >
             {title}
           </button>
         )}
@@ -1425,7 +1488,10 @@ function UnitBlock({
             </Field>
           </div>
           {isOther && (
-            <Field label="Custom name" hint="Shown verbatim across all languages — only used for “Other”.">
+            <Field
+              label="Custom name"
+              hint="Shown verbatim across all languages — only used for “Other”."
+            >
               <Input value={unit.name ?? ""} onChange={(e) => set({ name: e.target.value })} />
             </Field>
           )}
@@ -1433,13 +1499,21 @@ function UnitBlock({
             label="Details"
             hint="Add any detail rows you want. Pick a preset (label + icon), or use custom text. Click the chain to unlink and edit the label & icon."
           >
-            <SpecRowsEditor rows={specs} presets={specPresets} onChange={(rows) => set({ specs: rows })} />
+            <SpecRowsEditor
+              rows={specs}
+              presets={specPresets}
+              onChange={(rows) => set({ specs: rows })}
+            />
           </Field>
           <Field label="Price">
             <Input value={unit.price ?? ""} onChange={(e) => set({ price: e.target.value })} />
           </Field>
           <Field label="Description">
-            <Textarea rows={2} value={unit.description ?? ""} onChange={(e) => set({ description: e.target.value })} />
+            <Textarea
+              rows={2}
+              value={unit.description ?? ""}
+              onChange={(e) => set({ description: e.target.value })}
+            />
           </Field>
           <Field
             label="Features"
@@ -1452,8 +1526,12 @@ function UnitBlock({
             />
           </Field>
           <Field label="Image">
-            <SingleImageUpload slug={slug} value={unit.image} onChange={(image) => set({ image })} disabled={!canUpload} />
-
+            <SingleImageUpload
+              slug={slug}
+              value={unit.image}
+              onChange={(image) => set({ image })}
+              disabled={!canUpload}
+            />
           </Field>
           <Field label="Floor plan" hint="Optional image or PDF shown on the unit card.">
             <UnitFileUpload
@@ -1492,7 +1570,10 @@ function VideoRow({
       <div className="flex items-start gap-2">
         <div className="flex-1 space-y-2">
           <Field label="Title (optional)">
-            <Input value={video.title ?? ""} onChange={(e) => onChange({ ...video, title: e.target.value })} />
+            <Input
+              value={video.title ?? ""}
+              onChange={(e) => onChange({ ...video, title: e.target.value })}
+            />
           </Field>
           <Field label="YouTube URL">
             <Input
@@ -1504,7 +1585,9 @@ function VideoRow({
               }}
             />
           </Field>
-          {raw && !id && <p className="text-xs text-destructive">Could not detect a valid YouTube id.</p>}
+          {raw && !id && (
+            <p className="text-xs text-destructive">Could not detect a valid YouTube id.</p>
+          )}
         </div>
         <MoveRemove onUp={onUp} onDown={onDown} onRemove={onRemove} />
       </div>

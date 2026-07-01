@@ -24,12 +24,16 @@ import {
   CarouselPrevious,
 } from "@/components/ui/carousel";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
-import { hasItems, hasText, type PageContent, type ReadingLang, type SpecPreset, type Unit } from "@/types/page";
-import { ContactForm } from "@/components/page/ContactForm";
 import {
-  DEFAULT_TEMPLATE_SETTINGS,
-  type TemplateSettings,
-} from "@/lib/template-settings";
+  hasItems,
+  hasText,
+  type PageContent,
+  type ReadingLang,
+  type SpecPreset,
+  type Unit,
+} from "@/types/page";
+import { ContactForm } from "@/components/page/ContactForm";
+import { DEFAULT_TEMPLATE_SETTINGS, type TemplateSettings } from "@/lib/template-settings";
 
 /** Section labels translated by the page's reading language. */
 const LABELS: Record<ReadingLang, Record<string, string>> = {
@@ -76,7 +80,6 @@ const LABELS: Record<ReadingLang, Record<string, string>> = {
     floorPlan: "Floor plan",
   },
 };
-
 
 const scrollToContact = () => {
   document.getElementById("contact")?.scrollIntoView({ behavior: "smooth" });
@@ -128,9 +131,7 @@ function Hero({
           className="mx-auto mb-8 h-20 w-auto rounded-lg bg-card px-6 py-4 shadow-sm md:mb-10 md:h-28"
         />
         {hasText(kicker) && (
-          <p className="eyebrow mb-5 text-xs text-primary-foreground/80">
-            {kicker}
-          </p>
+          <p className="eyebrow mb-5 text-xs text-primary-foreground/80">{kicker}</p>
         )}
         <h1 className="mx-auto max-w-3xl text-balance text-4xl !text-primary-foreground [text-shadow:0_2px_12px_oklch(0.15_0.03_265/0.5)] sm:text-5xl md:text-7xl">
           {hero.title}
@@ -176,16 +177,17 @@ function Stats({ stats }: { stats: PageContent["stats"] }) {
             getIcon(s.icon) ??
             getIcon(guessIcon(s.label, "sparkles"));
           return (
-            <div key={i} className="flex flex-col items-center px-3 py-8 text-center md:px-4 md:py-10">
+            <div
+              key={i}
+              className="flex flex-col items-center px-3 py-8 text-center md:px-4 md:py-10"
+            >
               {Icon && (
                 <span className="mb-3 flex h-11 w-11 items-center justify-center rounded-full bg-primary/10 text-primary">
                   <Icon className="h-5 w-5" aria-hidden />
                 </span>
               )}
               <div className="font-serif text-3xl text-ink md:text-5xl">{s.value}</div>
-              <div className="eyebrow mt-2 text-[0.65rem] text-steel">
-                {s.label}
-              </div>
+              <div className="eyebrow mt-2 text-[0.65rem] text-steel">{s.label}</div>
             </div>
           );
         })}
@@ -225,9 +227,7 @@ function LocationBlock({
     <Section>
       <div className="grid items-center gap-10 md:grid-cols-2">
         <div>
-          {hasText(properName) && (
-            <p className="eyebrow mb-2 text-sm text-primary">{properName}</p>
-          )}
+          {hasText(properName) && <p className="eyebrow mb-2 text-sm text-primary">{properName}</p>}
           <h2 className="text-3xl text-ink md:text-4xl">{labels.location}</h2>
           {hasText(location.text) && (
             <p className="mt-5 text-lg leading-relaxed text-muted-foreground">{location.text}</p>
@@ -252,11 +252,13 @@ function LocationBlock({
   );
 }
 
-
-
-
-
-function Gallery({ gallery, labels }: { gallery: PageContent["gallery"]; labels: Record<string, string> }) {
+function Gallery({
+  gallery,
+  labels,
+}: {
+  gallery: PageContent["gallery"];
+  labels: Record<string, string>;
+}) {
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(0);
   if (!hasItems(gallery)) return null;
@@ -327,10 +329,12 @@ function UnitCard({
     }))
     .filter((r) => hasText(r.value));
   const featureItems = (unit.featureRows ?? migrateUnitFeatures(unit))
-    .map((r) => ({ text: featureRowText(r, lang, featurePresets), icon: rowIcon(r, featurePresets) }))
+    .map((r) => ({
+      text: featureRowText(r, lang, featurePresets),
+      icon: rowIcon(r, featurePresets),
+    }))
     .filter((r) => hasText(r.text));
   const plan = unit.attachment;
-
 
   return (
     <Card className="flex flex-col overflow-hidden">
@@ -495,7 +499,10 @@ function ApartmentSection({
     }))
     .filter((r) => hasText(r.value));
   const featureItems = (apartment.featureRows ?? migrateUnitFeatures(apartment))
-    .map((r) => ({ text: featureRowText(r, lang, featurePresets), icon: rowIcon(r, featurePresets) }))
+    .map((r) => ({
+      text: featureRowText(r, lang, featurePresets),
+      icon: rowIcon(r, featurePresets),
+    }))
     .filter((r) => hasText(r.text));
   const plan = apartment.attachment;
 
@@ -509,7 +516,9 @@ function ApartmentSection({
       <Section>
         {(() => {
           const HeadingIcon = getIcon(headingIcon);
-          const text = hasText(heading) ? heading : (ABOUT_APARTMENT_HEADING[lang] ?? ABOUT_APARTMENT_HEADING.fr);
+          const text = hasText(heading)
+            ? heading
+            : (ABOUT_APARTMENT_HEADING[lang] ?? ABOUT_APARTMENT_HEADING.fr);
           return (
             <h2 className="mb-10 flex items-center justify-center gap-3 text-center text-3xl text-ink md:text-4xl">
               {HeadingIcon && <HeadingIcon className="h-7 w-7 shrink-0 text-primary" aria-hidden />}
@@ -529,9 +538,14 @@ function ApartmentSection({
                   {visibleRows.map((r, ri) => {
                     const RowIcon = getIcon(r.icon);
                     return (
-                      <div key={ri} className="flex flex-col gap-0.5 border-b border-border/60 pb-2">
+                      <div
+                        key={ri}
+                        className="flex flex-col gap-0.5 border-b border-border/60 pb-2"
+                      >
                         <dt className="flex items-center gap-1.5 text-xs uppercase tracking-wide text-muted-foreground">
-                          {RowIcon && <RowIcon className="h-4 w-4 shrink-0 text-primary" aria-hidden />}
+                          {RowIcon && (
+                            <RowIcon className="h-4 w-4 shrink-0 text-primary" aria-hidden />
+                          )}
                           {r.label}
                         </dt>
                         <dd className="text-base font-medium text-foreground">{r.value}</dd>
@@ -541,7 +555,9 @@ function ApartmentSection({
                 </dl>
               )}
               {hasText(apartment.description) && (
-                <p className="mt-6 text-base leading-relaxed text-muted-foreground">{apartment.description}</p>
+                <p className="mt-6 text-base leading-relaxed text-muted-foreground">
+                  {apartment.description}
+                </p>
               )}
               {featureItems.length > 0 && (
                 <ul className="mt-6 space-y-2">
@@ -552,7 +568,10 @@ function ApartmentSection({
                         {FIcon ? (
                           <FIcon className="h-4 w-4 shrink-0 text-primary" aria-hidden />
                         ) : (
-                          <ChevronRight className="h-4 w-4 text-primary rtl:rotate-180" aria-hidden />
+                          <ChevronRight
+                            className="h-4 w-4 text-primary rtl:rotate-180"
+                            aria-hidden
+                          />
                         )}
                         {f.text}
                       </li>
@@ -620,10 +639,13 @@ function ApartmentSection({
   );
 }
 
-
-
-
-function Videos({ videos, labels }: { videos: PageContent["videos"]; labels: Record<string, string> }) {
+function Videos({
+  videos,
+  labels,
+}: {
+  videos: PageContent["videos"];
+  labels: Record<string, string>;
+}) {
   if (!hasItems(videos)) return null;
   return (
     <Section>
@@ -649,7 +671,6 @@ function Videos({ videos, labels }: { videos: PageContent["videos"]; labels: Rec
           </figure>
         ))}
       </div>
-
     </Section>
   );
 }
@@ -737,4 +758,3 @@ export function PageRenderer({
     </main>
   );
 }
-

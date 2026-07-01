@@ -181,8 +181,7 @@ export function isRtlReading(lang: string): boolean {
 export const hasText = (v?: string | null): v is string =>
   typeof v === "string" && v.trim().length > 0;
 
-export const hasItems = <T>(arr?: T[] | null): arr is T[] =>
-  Array.isArray(arr) && arr.length > 0;
+export const hasItems = <T>(arr?: T[] | null): arr is T[] => Array.isArray(arr) && arr.length > 0;
 
 /**
  * Idempotent migration: legacy flat seo ({ meta_title, ... }) becomes
@@ -193,9 +192,9 @@ export function normalizeSeo(
   seo: PageSeo | null | undefined,
   sourceLang: string = "fr",
 ): Partial<Record<ReadingLang, SeoFields>> {
-  const lang = (READING_LANGS.includes(sourceLang as ReadingLang)
-    ? sourceLang
-    : "fr") as ReadingLang;
+  const lang = (
+    READING_LANGS.includes(sourceLang as ReadingLang) ? sourceLang : "fr"
+  ) as ReadingLang;
   if (!seo) return {};
 
   const out: Partial<Record<ReadingLang, SeoFields>> = {};

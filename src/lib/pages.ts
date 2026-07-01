@@ -114,7 +114,15 @@ export const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
 export function emptyPageContent(): PageContent {
   return {
     category: "apartment",
-    hero: { kicker: "", kicker_i18n: {}, title: "", subtitle: "", price: "", cta_label: "", cta_label_i18n: {} },
+    hero: {
+      kicker: "",
+      kicker_i18n: {},
+      title: "",
+      subtitle: "",
+      price: "",
+      cta_label: "",
+      cta_label_i18n: {},
+    },
     stats: [],
     location: { heading: "", text: "", map_query: "" },
     about: { heading: "", body: "", features: [] },
@@ -175,15 +183,15 @@ export async function listPages(): Promise<PageListItem[]> {
   return (data ?? [])
     .filter((row) => row.slug !== TEMPLATE_SETTINGS_SLUG)
     .map((row) => {
-    const content = (row.content ?? {}) as PageContent;
-    return {
-      id: row.id as string,
-      slug: row.slug as string,
-      title: content?.hero?.title?.trim() || (row.slug as string),
-      status: row.status as PageStatus,
-      updated_at: row.updated_at as string,
-    };
-  });
+      const content = (row.content ?? {}) as PageContent;
+      return {
+        id: row.id as string,
+        slug: row.slug as string,
+        title: content?.hero?.title?.trim() || (row.slug as string),
+        status: row.status as PageStatus,
+        updated_at: row.updated_at as string,
+      };
+    });
 }
 
 /** Load a single page (any status) by id for editing. */
@@ -258,9 +266,7 @@ export function cleanContent(content: PageContent): PageContent {
   const aboutIcons = (content.about?.feature_icons ?? []).slice(0, aboutFeatures.length);
   const about =
     content.about &&
-    (keepText(content.about.heading) ||
-      keepText(content.about.body) ||
-      aboutFeatures.length > 0)
+    (keepText(content.about.heading) || keepText(content.about.body) || aboutFeatures.length > 0)
       ? {
           heading: keepText(content.about.heading),
           body: keepText(content.about.body),
@@ -352,17 +358,14 @@ export function cleanContent(content: PageContent): PageContent {
 
   // Units only exist on project pages; the single apartment only on apartment pages.
   const units = isProject
-    ? (content.units ?? [])
-        .filter((u) => t(u.name) || u.image?.url || u.unit_type)
-        .map(cleanUnit)
+    ? (content.units ?? []).filter((u) => t(u.name) || u.image?.url || u.unit_type).map(cleanUnit)
     : [];
 
   const apartment =
     !isProject && content.apartment
       ? cleanUnit({ ...content.apartment, unit_type: content.apartment.unit_type ?? "apartment" })
       : undefined;
-  const apartment_image_side =
-    content.apartment_image_side === "left" ? "left" : "right";
+  const apartment_image_side = content.apartment_image_side === "left" ? "left" : "right";
   const apartment_title = !isProject ? keepText(content.apartment_title) : undefined;
   const apartment_title_icon = !isProject ? keepText(content.apartment_title_icon) : undefined;
 
@@ -545,9 +548,7 @@ function toCard(page: Page): PublishedCard {
 }
 
 /** Published pages for the public listing grids (anon-readable). */
-export async function listPublishedPages(
-  category?: PageCategory,
-): Promise<PublishedCard[]> {
+export async function listPublishedPages(category?: PageCategory): Promise<PublishedCard[]> {
   const byCategory = (cards: PublishedCard[]) =>
     category ? cards.filter((c) => c.category === category) : cards;
 
@@ -598,10 +599,7 @@ export async function validateForPublish(input: {
 }
 
 /** Flip a page's status (publish/unpublish/archive/restore). Returns the new status. */
-export async function setPageStatus(
-  id: string,
-  status: PageStatus,
-): Promise<PageStatus> {
+export async function setPageStatus(id: string, status: PageStatus): Promise<PageStatus> {
   const { data, error } = await supabase
     .from("pages")
     .update({ status })

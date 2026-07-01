@@ -196,7 +196,11 @@ async function fetchStyleExamples(
       .map((r) => r.content)
       .filter(Boolean)
       // Prefer same-category examples first.
-      .sort((a, b) => Number((b as Record<string, unknown>)?.category === category) - Number((a as Record<string, unknown>)?.category === category))
+      .sort(
+        (a, b) =>
+          Number((b as Record<string, unknown>)?.category === category) -
+          Number((a as Record<string, unknown>)?.category === category),
+      )
       .slice(0, 2)
       .map((c) => JSON.stringify(clean(c as Record<string, unknown>)));
     if (!examples.length) return "";

@@ -36,9 +36,21 @@ export const ABOUT_APARTMENT_HEADING: Record<ReadingLang, string> = {
 };
 
 const UNIT_TYPE_LABELS: Record<ReadingLang, Record<UnitType, string>> = {
-  fr: { apartment: "Appartement", penthouse: "Penthouse", studio: "Studio", duplex: "Duplex", other: "" },
+  fr: {
+    apartment: "Appartement",
+    penthouse: "Penthouse",
+    studio: "Studio",
+    duplex: "Duplex",
+    other: "",
+  },
   he: { apartment: "דירה", penthouse: "פנטהאוז", studio: "סטודיו", duplex: "דופלקס", other: "" },
-  en: { apartment: "Apartment", penthouse: "Penthouse", studio: "Studio", duplex: "Duplex", other: "" },
+  en: {
+    apartment: "Apartment",
+    penthouse: "Penthouse",
+    studio: "Studio",
+    duplex: "Duplex",
+    other: "",
+  },
 };
 
 const ORIENTATION_LABELS: Record<ReadingLang, Record<OrientationCode, string>> = {
@@ -186,20 +198,70 @@ export const isParkingCode = (v?: string): v is ParkingCode =>
 
 /** Built-in spec presets (the original fixed fields). Merged with settings. */
 export const BUILTIN_SPEC_PRESETS: SpecPreset[] = [
-  { key: "floor", icon: "building", valueKind: "floor", labels: { fr: "Étage", he: "קומה", en: "Floor" } },
-  { key: "rooms", icon: "rooms", valueKind: "rooms", labels: { fr: "Pièces", he: "חדרים", en: "Rooms" } },
-  { key: "area", icon: "size", valueKind: "area", labels: { fr: "Surface", he: "שטח", en: "Area" } },
-  { key: "balcony", icon: "sun", valueKind: "area", labels: { fr: "Balcon", he: "מרפסת", en: "Balcony" } },
-  { key: "orientation", icon: "location", valueKind: "orientation", labels: { fr: "Orientation", he: "כיוון", en: "Orientation" } },
-  { key: "parking", icon: "parking", valueKind: "parking", labels: { fr: "Parking", he: "חניה", en: "Parking" } },
+  {
+    key: "floor",
+    icon: "building",
+    valueKind: "floor",
+    labels: { fr: "Étage", he: "קומה", en: "Floor" },
+  },
+  {
+    key: "rooms",
+    icon: "rooms",
+    valueKind: "rooms",
+    labels: { fr: "Pièces", he: "חדרים", en: "Rooms" },
+  },
+  {
+    key: "area",
+    icon: "size",
+    valueKind: "area",
+    labels: { fr: "Surface", he: "שטח", en: "Area" },
+  },
+  {
+    key: "balcony",
+    icon: "sun",
+    valueKind: "area",
+    labels: { fr: "Balcon", he: "מרפסת", en: "Balcony" },
+  },
+  {
+    key: "orientation",
+    icon: "location",
+    valueKind: "orientation",
+    labels: { fr: "Orientation", he: "כיוון", en: "Orientation" },
+  },
+  {
+    key: "parking",
+    icon: "parking",
+    valueKind: "parking",
+    labels: { fr: "Parking", he: "חניה", en: "Parking" },
+  },
 ];
 
 /** Built-in feature presets — a few common ready-made features. */
 export const BUILTIN_FEATURE_PRESETS: SpecPreset[] = [
-  { key: "elevator", icon: "elevator", valueKind: "text", labels: { fr: "Ascenseur", he: "מעלית", en: "Elevator" } },
-  { key: "sea_view", icon: "sea", valueKind: "text", labels: { fr: "Vue mer", he: "נוף לים", en: "Sea view" } },
-  { key: "renovated", icon: "sparkles", valueKind: "text", labels: { fr: "Rénové", he: "משופצת", en: "Renovated" } },
-  { key: "balcony_feat", icon: "sun", valueKind: "text", labels: { fr: "Balcon", he: "מרפסת", en: "Balcony" } },
+  {
+    key: "elevator",
+    icon: "elevator",
+    valueKind: "text",
+    labels: { fr: "Ascenseur", he: "מעלית", en: "Elevator" },
+  },
+  {
+    key: "sea_view",
+    icon: "sea",
+    valueKind: "text",
+    labels: { fr: "Vue mer", he: "נוף לים", en: "Sea view" },
+  },
+  {
+    key: "renovated",
+    icon: "sparkles",
+    valueKind: "text",
+    labels: { fr: "Rénové", he: "משופצת", en: "Renovated" },
+  },
+  {
+    key: "balcony_feat",
+    icon: "sun",
+    valueKind: "text",
+    labels: { fr: "Balcon", he: "מרפסת", en: "Balcony" },
+  },
 ];
 
 /** Resolve a preset by key, preferring settings-provided presets over built-ins. */
@@ -254,11 +316,7 @@ export function rowValue(row: DetailRow, lang: ReadingLang, presets: SpecPreset[
 }
 
 /** Effective, locale-aware text of a feature row. */
-export function featureRowText(
-  row: DetailRow,
-  lang: ReadingLang,
-  presets: SpecPreset[],
-): string {
+export function featureRowText(row: DetailRow, lang: ReadingLang, presets: SpecPreset[]): string {
   const preset = resolvePreset(row.presetKey, presets, BUILTIN_FEATURE_PRESETS);
   if (row.linked !== false && preset) return preset.labels[lang] ?? preset.labels.fr ?? "";
   return (row.value ?? "").trim();

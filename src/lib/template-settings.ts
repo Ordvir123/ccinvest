@@ -1,8 +1,5 @@
 import { supabase, isSupabaseConfigured } from "@/integrations/supabase/client";
-import {
-  BUILTIN_FEATURE_PRESETS,
-  BUILTIN_SPEC_PRESETS,
-} from "@/lib/unit-i18n";
+import { BUILTIN_FEATURE_PRESETS, BUILTIN_SPEC_PRESETS } from "@/lib/unit-i18n";
 import { READING_LANGS, type SpecPreset, type SpecValueKind } from "@/types/page";
 
 /**
@@ -103,9 +100,14 @@ function normalizePresets(raw: unknown, fallback: SpecPreset[]): SpecPreset[] {
       const key = (p.key ?? "").trim();
       const anyLabel = READING_LANGS.map((l) => (labels[l] ?? "").trim()).find(Boolean) ?? "";
       return {
-        key: key || anyLabel.toLowerCase().replace(/\s+/g, "_") || `preset_${Math.random().toString(36).slice(2, 8)}`,
+        key:
+          key ||
+          anyLabel.toLowerCase().replace(/\s+/g, "_") ||
+          `preset_${Math.random().toString(36).slice(2, 8)}`,
         icon: (p.icon ?? "").trim() || "check",
-        valueKind: VALUE_KINDS.includes(p.valueKind as SpecValueKind) ? (p.valueKind as SpecValueKind) : "text",
+        valueKind: VALUE_KINDS.includes(p.valueKind as SpecValueKind)
+          ? (p.valueKind as SpecValueKind)
+          : "text",
         labels: {
           fr: (labels.fr ?? "").trim(),
           he: (labels.he ?? "").trim(),
@@ -136,9 +138,7 @@ export async function fetchTemplateSettings(): Promise<TemplateSettings> {
 }
 
 /** Persist the global template settings (admin only). */
-export async function saveTemplateSettings(
-  settings: TemplateSettings,
-): Promise<TemplateSettings> {
+export async function saveTemplateSettings(settings: TemplateSettings): Promise<TemplateSettings> {
   const normalized = normalize(settings);
   // The reserved row reuses the page schema; only `content.settings` matters.
   const content = {

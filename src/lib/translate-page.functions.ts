@@ -140,7 +140,10 @@ function prune(value: unknown): unknown {
 function getPath(obj: unknown, path: string): unknown {
   return path
     .split(".")
-    .reduce<unknown>((acc, key) => (acc == null ? acc : (acc as Record<string, unknown>)[key]), obj);
+    .reduce<unknown>(
+      (acc, key) => (acc == null ? acc : (acc as Record<string, unknown>)[key]),
+      obj,
+    );
 }
 function setPath(obj: Record<string, unknown>, path: string, val: unknown): void {
   const keys = path.split(".");
@@ -212,8 +215,11 @@ export const translatePageContent = createServerFn({ method: "POST" })
           })
         : null;
 
-    let existing: { content: Record<string, unknown>; source_hash: string | null; locked_fields: string[] } | null =
-      null;
+    let existing: {
+      content: Record<string, unknown>;
+      source_hash: string | null;
+      locked_fields: string[];
+    } | null = null;
     if (admin && pageId) {
       const { data: row } = await admin
         .from("page_translations")
@@ -255,7 +261,8 @@ export const translatePageContent = createServerFn({ method: "POST" })
         }),
       });
       if (!res.ok) {
-        if (res.status === 429) throw new Error("Rate limited by the AI provider. Try again shortly.");
+        if (res.status === 429)
+          throw new Error("Rate limited by the AI provider. Try again shortly.");
         if (res.status === 402) throw new Error("AI credits exhausted. Please add credits.");
         throw new Error(`AI provider error (${res.status}).`);
       }
