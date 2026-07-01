@@ -9,6 +9,13 @@ import { supabase, isSupabaseConfigured } from "@/integrations/supabase/client";
  */
 export const TEMPLATE_SETTINGS_SLUG = "__template_settings__";
 
+export type ApartmentTitleOption = {
+  /** Display text of the heading option (authored in any language). */
+  label: string;
+  /** Icon name (from the shared icon set) shown beside the heading. */
+  icon: string;
+};
+
 export type TemplateSettings = {
   /** Logo shown in the landing-page hero. */
   brandLogoUrl: string;
@@ -22,7 +29,13 @@ export type TemplateSettings = {
   defaultContactHeading: string;
   /** Background image for the contact section. Empty = bundled default. */
   contactBgUrl: string;
+  /** Reusable heading options for the "About the apartment" section. */
+  apartmentTitleOptions: ApartmentTitleOption[];
 };
+
+export const DEFAULT_APARTMENT_TITLE_OPTIONS: ApartmentTitleOption[] = [
+  { label: "À propos de l'appartement", icon: "home" },
+];
 
 export const DEFAULT_TEMPLATE_SETTINGS: TemplateSettings = {
   brandLogoUrl: "/brand/cc-invest-logo.png",
@@ -31,6 +44,7 @@ export const DEFAULT_TEMPLATE_SETTINGS: TemplateSettings = {
   defaultCtaLabel: "",
   defaultContactHeading: "",
   contactBgUrl: "",
+  apartmentTitleOptions: DEFAULT_APARTMENT_TITLE_OPTIONS,
 };
 
 function normalize(raw: unknown): TemplateSettings {
