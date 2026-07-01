@@ -297,6 +297,7 @@ export function PageEditor({
         seo,
       });
       toast.success("Draft saved.");
+      await persistCustomTitleOption();
       if (!pageId) {
         setPageId(saved.id);
         navigate({ to: "/admin/pages/$id", params: { id: saved.id }, replace: true });
