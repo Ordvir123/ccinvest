@@ -214,6 +214,9 @@ export function preserveStableFields(
     out.apartment = source.apartment;
   }
   out.apartment_image_side = source.apartment_image_side;
+  // Apartment section heading + icon are admin-chosen, never machine-translated.
+  out.apartment_title = source.apartment_title;
+  out.apartment_title_icon = source.apartment_title_icon;
   // Per-locale proper names are authored manually, not machine-translated.
   if (source.location?.name_i18n) {
     out.location = { ...out.location, name_i18n: source.location.name_i18n };
