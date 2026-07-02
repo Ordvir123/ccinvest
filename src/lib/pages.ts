@@ -370,6 +370,7 @@ export function cleanContent(content: PageContent): PageContent {
   const apartment_title_icon = !isProject ? keepText(content.apartment_title_icon) : undefined;
 
   const videos = (content.videos ?? []).filter((v) => t(v.youtube_id));
+  const wide_images = (content.wide_images ?? []).filter((m) => t(m.url));
 
   const contactHeadingI18n = cleanI18n(content.contact?.heading_i18n);
   const contact =
@@ -384,6 +385,7 @@ export function cleanContent(content: PageContent): PageContent {
     location,
     about,
     gallery,
+    wide_images,
     units,
     apartment,
     apartment_image_side,
@@ -391,6 +393,8 @@ export function cleanContent(content: PageContent): PageContent {
     apartment_title_icon,
     videos,
     contact,
+    section_order: content.section_order?.length ? content.section_order : undefined,
+    hidden_sections: content.hidden_sections?.length ? content.hidden_sections : undefined,
   };
 }
 
