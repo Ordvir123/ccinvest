@@ -127,6 +127,7 @@ export function emptyPageContent(): PageContent {
     location: { heading: "", text: "", map_query: "" },
     about: { heading: "", body: "", features: [] },
     gallery: [],
+    wide_images: [],
     units: [],
     apartment: { name: "", unit_type: "apartment" },
     apartment_image_side: "right",
