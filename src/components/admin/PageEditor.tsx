@@ -912,113 +912,6 @@ export function PageEditor({
         </Field>
       </SectionCard>
 
-      <SectionCard
-        title="Stats"
-        description="Repeatable value + label rows. Icons auto-match the label; override per row."
-      >
-        {(content.stats ?? []).map((s, i) => (
-          <div key={i} className="flex items-end gap-2">
-            <div className="space-y-1.5">
-              <span className="text-sm font-medium text-foreground">Icon</span>
-              <IconPicker
-                value={s.icon}
-                onChange={(icon) => {
-                  const next = content.stats.slice();
-                  next[i] = { ...next[i], icon };
-                  patch({ stats: next });
-                }}
-              />
-            </div>
-            <div className="flex-1">
-              <Field label="Value">
-                <Input
-                  value={s.value}
-                  onChange={(e) => {
-                    const next = content.stats.slice();
-                    next[i] = { ...next[i], value: e.target.value };
-                    patch({ stats: next });
-                  }}
-                />
-              </Field>
-            </div>
-            <div className="flex-1">
-              <Field label="Label">
-                <Input
-                  value={s.label}
-                  onChange={(e) => {
-                    const next = content.stats.slice();
-                    next[i] = { ...next[i], label: e.target.value };
-                    patch({ stats: next });
-                  }}
-                />
-              </Field>
-            </div>
-            <MoveRemove
-              onUp={() => patch({ stats: moveItem(content.stats, i, -1) })}
-              onDown={() => patch({ stats: moveItem(content.stats, i, 1) })}
-              onRemove={() => patch({ stats: content.stats.filter((_, idx) => idx !== i) })}
-            />
-          </div>
-        ))}
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={() => patch({ stats: [...content.stats, { value: "", label: "" } as Stat] })}
-        >
-          <Plus className="h-4 w-4" /> Add stat
-        </Button>
-      </SectionCard>
-
-      <SectionCard title="Location" defaultOpen={false}>
-        <Field label="Heading">
-          <Input
-            value={content.location?.heading ?? ""}
-            onChange={(e) => patchLocation({ heading: e.target.value })}
-          />
-        </Field>
-        <Field label="Text">
-          <Textarea
-            rows={3}
-            value={content.location?.text ?? ""}
-            onChange={(e) => patchLocation({ text: e.target.value })}
-          />
-        </Field>
-        <Field label="Map query" hint="Used to build a Google Maps embed.">
-          <Input
-            value={content.location?.map_query ?? ""}
-            onChange={(e) => patchLocation({ map_query: e.target.value })}
-          />
-        </Field>
-        <Field
-          label="Street / location name (per language)"
-          hint="Proper nouns (Montefiore, Allenby…). Entered manually per locale — never machine-translated."
-        >
-          <div className="grid grid-cols-3 gap-2">
-            {READING_LANGS.map((l) => (
-              <Input
-                key={l}
-                placeholder={l.toUpperCase()}
-                value={content.location?.name_i18n?.[l] ?? ""}
-                onChange={(e) =>
-                  patchLocation({
-                    name_i18n: { ...(content.location?.name_i18n ?? {}), [l]: e.target.value },
-                  })
-                }
-              />
-            ))}
-          </div>
-        </Field>
-        {content.location?.map_query && (
-          <iframe
-            title="Map preview"
-            className="h-48 w-full rounded-md border border-border"
-            loading="lazy"
-            src={`https://maps.google.com/maps?q=${encodeURIComponent(content.location.map_query)}&t=m&z=15&output=embed`}
-          />
-        )}
-      </SectionCard>
-
       <SectionCard title="About" defaultOpen={false}>
         <Field label="Heading">
           <Input
@@ -1035,267 +928,142 @@ export function PageEditor({
         </Field>
         <Field label="Features" hint="Icons auto-match the text; override per row.">
           <div className="space-y-2">
-            {(content.about?.features ?? []).map((f, i) => (
-              <div key={i} className="flex items-center gap-2">
-                <IconPicker
-                  value={content.about?.feature_icons?.[i]}
-                  onChange={(icon) => {
-                    const icons = (content.about?.feature_icons ?? []).slice();
-                    while (icons.length <= i) icons.push(undefined as unknown as string);
-                    icons[i] = icon as string;
-                    patchAbout({ feature_icons: icons });
-                  }}
-                />
-                <Input
-                  value={f}
-                  onChange={(e) => {
-                    const next = (content.about?.features ?? []).slice();
-                    next[i] = e.target.value;
-                    patchAbout({ features: next });
-                  }}
-                />
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8 shrink-0"
-                  onClick={() => {
-                    const icons = (content.about?.feature_icons ?? []).filter(
-                      (_, idx) => idx !== i,
-                    );
-                    patchAbout({
-                      features: (content.about?.features ?? []).filter((_, idx) => idx !== i),
-                      feature_icons: icons,
-                    });
-                  }}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </div>
-            ))}
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => patchAbout({ features: [...(content.about?.features ?? []), ""] })}
-            >
-              <Plus className="h-4 w-4" /> Add feature
-            </Button>
-          </div>
-        </Field>
-      </SectionCard>
-
-      <SectionCard title="Gallery" defaultOpen={false}>
-        <GalleryUpload
-          slug={slug}
-          value={content.gallery ?? []}
-          onChange={(gallery) => patch({ gallery })}
-          disabled={!canUpload}
-        />
-      </SectionCard>
-
-      {content.category === "project" ? (
-        <SectionCard title="Units" description="Repeatable apartment blocks." defaultOpen={false}>
-          <div className="space-y-4">
-            {(content.units ?? []).map((u, i) => (
-              <UnitBlock
-                key={i}
-                index={i}
-                unit={u}
-                slug={slug}
-                canUpload={canUpload}
-                onChange={(unit) => {
-                  const next = (content.units ?? []).slice();
-                  next[i] = unit;
-                  patch({ units: next });
-                }}
-                onUp={() => patch({ units: moveItem(content.units ?? [], i, -1) })}
-                onDown={() => patch({ units: moveItem(content.units ?? [], i, 1) })}
-                onRemove={() =>
-                  patch({ units: (content.units ?? []).filter((_, idx) => idx !== i) })
-                }
-                specPresets={specPresets}
-                featurePresets={featurePresets}
-              />
-            ))}
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() =>
-                patch({
-                  units: [...(content.units ?? []), { name: "", unit_type: "apartment" } as Unit],
-                })
-              }
-            >
-              <Plus className="h-4 w-4" /> Add unit
-            </Button>
-          </div>
-        </SectionCard>
-      ) : (
-        <SectionCard
-          title="About the apartment"
-          description="The single apartment shown on this page."
-          defaultOpen
-        >
-          <div className="space-y-4">
-            <Field
-              label="Image side (desktop)"
-              hint="Which side the main image sits on. Mirrored automatically in Hebrew (RTL)."
-            >
-              <Select
-                value={content.apartment_image_side ?? "right"}
-                onValueChange={(v) => patch({ apartment_image_side: v as "left" | "right" })}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="right">Image on the right</SelectItem>
-                  <SelectItem value="left">Image on the left</SelectItem>
-                </SelectContent>
-              </Select>
-            </Field>
-
-            <UnitBlock
-              index={0}
-              unit={content.apartment ?? ({ name: "", unit_type: "apartment" } as Unit)}
-              slug={slug}
-              canUpload={canUpload}
-              titleOverride="Apartment details"
-              forceOpen
-              specPresets={specPresets}
-              featurePresets={featurePresets}
-              titleNode={(() => {
-                const label = content.apartment_title?.trim() ?? "";
-                const matched = titleOptions.find((o) => o.label.trim() === label);
-                const isCustom = aptTitleCustom || (label.length > 0 && !matched);
-                const linked = !isCustom;
-                const selectValue = isCustom
-                  ? CUSTOM_TITLE
-                  : matched
-                    ? matched.label
-                    : DEFAULT_TITLE;
-                return (
-                  <Field
-                    label="Section heading"
-                    hint="Choose a preset heading (label + icon) or unlink to edit freely — new custom headings are saved as future options on save."
-                  >
-                    <div className="space-y-2">
-                      <div className="flex items-center gap-2">
-                        <IconPicker
-                          value={content.apartment_title_icon}
-                          onChange={(icon) =>
-                            patch({ apartment_title_icon: (icon as string) ?? "" })
-                          }
-                        />
-                        <LinkToggle linked={linked} onToggle={() => setAptTitleCustom((v) => !v)} />
-                        <Select
-                          value={selectValue}
-                          onValueChange={(v) => {
-                            if (v === DEFAULT_TITLE) {
-                              setAptTitleCustom(false);
-                              patch({ apartment_title: "", apartment_title_icon: "" });
-                            } else if (v === CUSTOM_TITLE) {
-                              setAptTitleCustom(true);
-                            } else {
-                              setAptTitleCustom(false);
-                              const opt = titleOptions.find((o) => o.label === v);
-                              patch({
-                                apartment_title: v,
-                                apartment_title_icon:
-                                  opt?.icon ?? content.apartment_title_icon ?? "",
-                              });
-                            }
-                          }}
-                        >
-                          <SelectTrigger className="flex-1">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value={DEFAULT_TITLE}>
-                              Default (À propos de l'appartement)
-                            </SelectItem>
-                            {titleOptions.map((o) => (
-                              <SelectItem key={o.label} value={o.label}>
-                                {o.label}
-                              </SelectItem>
-                            ))}
-                            <SelectItem value={CUSTOM_TITLE}>Custom text…</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      {isCustom && (
-                        <Input
-                          value={content.apartment_title ?? ""}
-                          onChange={(e) => patch({ apartment_title: e.target.value })}
-                          placeholder="Enter a custom heading…"
-                        />
-                      )}
-                    </div>
-                  </Field>
-                );
-              })()}
-              onChange={(apartment) => patch({ apartment })}
-            />
-          </div>
-        </SectionCard>
-      )}
-
-      <SectionCard title="Videos" description="YouTube links (any format)." defaultOpen={false}>
-        <div className="space-y-3">
-          {(content.videos ?? []).map((v, i) => (
-            <VideoRow
-              key={i}
-              video={v}
-              onChange={(video) => {
-                const next = (content.videos ?? []).slice();
-                next[i] = video;
-                patch({ videos: next });
-              }}
-              onUp={() => patch({ videos: moveItem(content.videos ?? [], i, -1) })}
-              onDown={() => patch({ videos: moveItem(content.videos ?? [], i, 1) })}
-              onRemove={() =>
-                patch({ videos: (content.videos ?? []).filter((_, idx) => idx !== i) })
-              }
-            />
-          ))}
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() =>
-              patch({ videos: [...(content.videos ?? []), { youtube_id: "" } as Video] })
-            }
-          >
-            <Plus className="h-4 w-4" /> Add video
-          </Button>
-        </div>
-      </SectionCard>
-
-      <SectionCard title="Contact" defaultOpen={false}>
-        <Field
-          label="Heading (per language)"
-          hint="Shown above the contact form. Enter each language; empty locales fall back to the source language."
-        >
-          <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-            {READING_LANGS.map((l) => (
-              <Input
-                key={l}
-                dir={isRtlReading(l) ? "rtl" : "ltr"}
-                aria-label={`Contact heading (${LANG_LABELS[l]})`}
-                placeholder={CONTACT_HEADING_PLACEHOLDERS[l]}
-                value={content.contact?.heading_i18n?.[l] ?? ""}
-                onChange={(e) =>
-                  patchContact({
-                    heading_i18n: { ...(content.contact?.heading_i18n ?? {}), [l]: e.target.value },
+            {aboutFeatReorder ? (
+              <ReorderList
+                items={(content.about?.features ?? []).map((f, i) => ({
+                  f,
+                  icon: content.about?.feature_icons?.[i],
+                }))}
+                onReorder={(items) =>
+                  patchAbout({
+                    features: items.map((x) => x.f),
+                    feature_icons: items.map((x) => x.icon as string),
                   })
                 }
+                getLabel={(x) => x.f || "Feature"}
               />
-            ))}
+            ) : (
+              (content.about?.features ?? []).map((f, i) => (
+                <div key={i} className="flex items-center gap-2">
+                  <IconPicker
+                    value={content.about?.feature_icons?.[i]}
+                    onChange={(icon) => {
+                      const icons = (content.about?.feature_icons ?? []).slice();
+                      while (icons.length <= i) icons.push(undefined as unknown as string);
+                      icons[i] = icon as string;
+                      patchAbout({ feature_icons: icons });
+                    }}
+                  />
+                  <Input
+                    value={f}
+                    onChange={(e) => {
+                      const next = (content.about?.features ?? []).slice();
+                      next[i] = e.target.value;
+                      patchAbout({ features: next });
+                    }}
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 shrink-0"
+                    onClick={() => {
+                      const icons = (content.about?.feature_icons ?? []).filter(
+                        (_, idx) => idx !== i,
+                      );
+                      patchAbout({
+                        features: (content.about?.features ?? []).filter((_, idx) => idx !== i),
+                        feature_icons: icons,
+                      });
+                    }}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              ))
+            )}
+            <div className="flex flex-wrap items-center gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => patchAbout({ features: [...(content.about?.features ?? []), ""] })}
+              >
+                <Plus className="h-4 w-4" /> Add feature
+              </Button>
+              {(content.about?.features?.length ?? 0) > 1 && (
+                <ReorderToggle
+                  active={aboutFeatReorder}
+                  onToggle={() => setAboutFeatReorder((v) => !v)}
+                />
+              )}
+            </div>
           </div>
         </Field>
       </SectionCard>
+
+      {/* Section visibility + ordering */}
+      <div className="rounded-lg border border-border bg-card px-4 py-3">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <p className="font-medium text-foreground">Page sections</p>
+            <p className="text-xs text-muted-foreground">
+              Use the eye icon to show or hide a section. Turn on reordering to drag sections into a
+              new order, then save.
+            </p>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            {sectionsReorder && (
+              <Button type="button" size="sm" onClick={onSave} disabled={saving}>
+                <Save className="h-4 w-4" /> {saving ? "Saving…" : "Save changes"}
+              </Button>
+            )}
+            <Button
+              type="button"
+              size="sm"
+              variant={sectionsReorder ? "secondary" : "outline"}
+              onClick={() => setSectionsReorder((v) => !v)}
+            >
+              <ArrowUpDown className="h-4 w-4" />
+              {sectionsReorder ? "Done" : "Reorder sections"}
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      {orderedKeys.map((key, i) => {
+        const meta = sectionBodies[key];
+        return (
+          <div
+            key={key}
+            {...(sectionsReorder ? sectionDrag.rowProps(i) : {})}
+            className={cn(
+              sectionsReorder && "cursor-grab rounded-lg active:cursor-grabbing",
+              sectionsReorder &&
+                sectionDrag.overIndex === i &&
+                sectionDrag.dragIndex !== i &&
+                "ring-2 ring-primary",
+              sectionsReorder && sectionDrag.dragIndex === i && "opacity-50",
+            )}
+          >
+            <SectionCard
+              title={meta.title}
+              description={meta.description}
+              defaultOpen={meta.defaultOpen}
+              visible={!isSectionHidden(content, key)}
+              onToggleVisible={() => toggleSection(key)}
+              headerLeft={
+                sectionsReorder ? (
+                  <GripVertical className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
+                ) : undefined
+              }
+              collapsedForReorder={sectionsReorder}
+            >
+              {meta.body}
+            </SectionCard>
+          </div>
+        );
+      })}
 
       <SectionCard
         title="SEO & social"
