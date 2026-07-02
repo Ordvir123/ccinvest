@@ -676,6 +676,24 @@ function Videos({
   );
 }
 
+/** Full-bleed images spanning the whole screen width, stacked vertically. */
+function WideImages({ images }: { images?: PageContent["wide_images"] }) {
+  if (!hasItems(images)) return null;
+  return (
+    <section className="w-full">
+      {images!.map((img, i) => (
+        <img
+          key={i}
+          src={img.url}
+          alt={img.alt ?? ""}
+          loading="lazy"
+          className="block w-full object-cover"
+        />
+      ))}
+    </section>
+  );
+}
+
 export type PageRendererProps = {
   content: PageContent;
   /** Lead-capture context. When omitted, the contact form is inert (preview). */
@@ -703,15 +721,16 @@ export function PageRenderer({
         "--gradient-brand": `linear-gradient(135deg, ${settings.primaryColor}, ${settings.primaryColor})`,
       } as React.CSSProperties)
     : undefined;
-  return (
-    <main className="bg-background" style={brandStyle}>
-      <Hero hero={content.hero} settings={settings} lang={lang} />
-      <Stats stats={content.stats} />
-      {content.location &&
-        (hasText(content.location.text) || hasText(content.location.map_query)) && (
-          <LocationBlock location={content.location} labels={labels} lang={lang} />
-        )}
-      {content.category === "project" ? (
+
+  const nodes: Record<SectionKey, React.ReactNode> = {
+    stats: <Stats stats={content.stats} />,
+    location:
+      content.location &&
+      (hasText(content.location.text) || hasText(content.location.map_query)) ? (
+        <LocationBlock location={content.location} labels={labels} lang={lang} />
+      ) : null,
+    listing:
+      content.category === "project" ? (
         <Units
           units={content.units}
           labels={labels}
@@ -719,31 +738,29 @@ export function PageRenderer({
           specPresets={settings.specPresets}
           featurePresets={settings.featurePresets}
         />
-      ) : (
-        content.apartment &&
+      ) : content.apartment &&
         (hasText(content.apartment.unit_type) ||
           hasText(content.apartment.name) ||
           hasText(content.apartment.description) ||
           hasText(content.apartment.price) ||
           hasItems(content.apartment.specs) ||
           hasItems(content.apartment.featureRows) ||
-          hasText(content.apartment.image?.url)) && (
-          <ApartmentSection
-            apartment={content.apartment}
-            imageSide={content.apartment_image_side === "left" ? "left" : "right"}
-            heading={content.apartment_title}
-            headingIcon={content.apartment_title_icon}
-            labels={labels}
-            lang={lang}
-            specPresets={settings.specPresets}
-            featurePresets={settings.featurePresets}
-          />
-        )
-      )}
-
-      <Gallery gallery={content.gallery} labels={labels} />
-
-      <Videos videos={content.videos} labels={labels} />
+          hasText(content.apartment.image?.url)) ? (
+        <ApartmentSection
+          apartment={content.apartment}
+          imageSide={content.apartment_image_side === "left" ? "left" : "right"}
+          heading={content.apartment_title}
+          headingIcon={content.apartment_title_icon}
+          labels={labels}
+          lang={lang}
+          specPresets={settings.specPresets}
+          featurePresets={settings.featurePresets}
+        />
+      ) : null,
+    gallery: <Gallery gallery={content.gallery} labels={labels} />,
+    wide_images: <WideImages images={content.wide_images} />,
+    videos: <Videos videos={content.videos} labels={labels} />,
+    contact: (
       <ContactForm
         heading={
           pickI18n(content.contact?.heading_i18n, content.contact?.heading, lang) ??
@@ -756,6 +773,16 @@ export function PageRenderer({
         lang={lang}
         backgroundUrl={settings.contactBgUrl}
       />
+    ),
+  };
+
+  return (
+    <main className="bg-background" style={brandStyle}>
+      <Hero hero={content.hero} settings={settings} lang={lang} />
+      {orderedSectionKeys(content).map((key) =>
+        isSectionHidden(content, key) ? null : <Fragment key={key}>{nodes[key]}</Fragment>,
+      )}
     </main>
   );
 }
+
