@@ -120,6 +120,12 @@ export type PageContent = {
   };
   about?: { heading?: string; body?: string; features?: string[]; feature_icons?: string[] };
   gallery: Media[];
+  /** Full-bleed "wide images" section — images span the full screen width. */
+  wide_images?: Media[];
+  /** Custom order of rendered content sections (keys from page-sections). */
+  section_order?: string[];
+  /** Section keys hidden from the public page. */
+  hidden_sections?: string[];
   units?: Unit[];
   /** Single apartment block for apartment-type pages (mutually exclusive with units). */
   apartment?: Unit;
