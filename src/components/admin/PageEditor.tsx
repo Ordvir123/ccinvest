@@ -369,6 +369,7 @@ function FeatureRowsEditor({
   presets: SpecPreset[];
   onChange: (rows: DetailRow[]) => void;
 }) {
+  const [reorder, setReorder] = useState(false);
   const update = (i: number, p: Partial<DetailRow>) => {
     const next = rows.slice();
     next[i] = { ...next[i], ...p };
@@ -376,77 +377,93 @@ function FeatureRowsEditor({
   };
   return (
     <div className="space-y-2">
-      {rows.map((row, i) => {
-        const preset = resolvePreset(row.presetKey, presets, BUILTIN_FEATURE_PRESETS);
-        const isCustom = !row.presetKey;
-        const linked = !isCustom && row.linked !== false;
-        const effIcon = linked ? preset?.icon : row.icon || preset?.icon;
-        return (
-          <div key={i} className="space-y-2 rounded-md border border-border p-2">
-            <div className="flex items-center gap-2">
-              <IconPicker
-                value={effIcon}
-                onChange={(icon) => update(i, { icon: (icon as string) ?? "" })}
-              />
-              <LinkToggle
-                linked={linked}
-                disabled={isCustom}
-                onToggle={() =>
-                  update(i, {
-                    linked: !linked,
-                    value: !linked ? (preset?.labels.fr ?? "") : "",
-                    icon: !linked ? undefined : preset?.icon,
-                  })
-                }
-              />
-              <Select
-                value={row.presetKey ?? CUSTOM_PRESET}
-                onValueChange={(v) => {
-                  if (v === CUSTOM_PRESET)
-                    update(i, { presetKey: undefined, linked: false, icon: effIcon });
-                  else update(i, { presetKey: v, linked: true, value: "", icon: undefined });
-                }}
-              >
-                <SelectTrigger className="flex-1">
-                  <SelectValue placeholder="Choose a feature" />
-                </SelectTrigger>
-                <SelectContent>
-                  {presets.map((p) => (
-                    <SelectItem key={p.key} value={p.key}>
-                      {p.labels.fr || p.labels.en || p.labels.he || p.key}
-                    </SelectItem>
-                  ))}
-                  <SelectItem value={CUSTOM_PRESET}>Custom text…</SelectItem>
-                </SelectContent>
-              </Select>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8 shrink-0"
-                onClick={() => onChange(rows.filter((_, idx) => idx !== i))}
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
+      {reorder ? (
+        <ReorderList
+          items={rows}
+          onReorder={onChange}
+          getLabel={(row) => {
+            const p = resolvePreset(row.presetKey, presets, BUILTIN_FEATURE_PRESETS);
+            return (row.value || p?.labels.fr || "Feature") as string;
+          }}
+        />
+      ) : (
+        rows.map((row, i) => {
+          const preset = resolvePreset(row.presetKey, presets, BUILTIN_FEATURE_PRESETS);
+          const isCustom = !row.presetKey;
+          const linked = !isCustom && row.linked !== false;
+          const effIcon = linked ? preset?.icon : row.icon || preset?.icon;
+          return (
+            <div key={i} className="space-y-2 rounded-md border border-border p-2">
+              <div className="flex items-center gap-2">
+                <IconPicker
+                  value={effIcon}
+                  onChange={(icon) => update(i, { icon: (icon as string) ?? "" })}
+                />
+                <LinkToggle
+                  linked={linked}
+                  disabled={isCustom}
+                  onToggle={() =>
+                    update(i, {
+                      linked: !linked,
+                      value: !linked ? (preset?.labels.fr ?? "") : "",
+                      icon: !linked ? undefined : preset?.icon,
+                    })
+                  }
+                />
+                <Select
+                  value={row.presetKey ?? CUSTOM_PRESET}
+                  onValueChange={(v) => {
+                    if (v === CUSTOM_PRESET)
+                      update(i, { presetKey: undefined, linked: false, icon: effIcon });
+                    else update(i, { presetKey: v, linked: true, value: "", icon: undefined });
+                  }}
+                >
+                  <SelectTrigger className="flex-1">
+                    <SelectValue placeholder="Choose a feature" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {presets.map((p) => (
+                      <SelectItem key={p.key} value={p.key}>
+                        {p.labels.fr || p.labels.en || p.labels.he || p.key}
+                      </SelectItem>
+                    ))}
+                    <SelectItem value={CUSTOM_PRESET}>Custom text…</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 shrink-0"
+                  onClick={() => onChange(rows.filter((_, idx) => idx !== i))}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+              {(isCustom || !linked) && (
+                <Input
+                  placeholder="Feature text"
+                  value={row.value ?? ""}
+                  onChange={(e) => update(i, { value: e.target.value })}
+                />
+              )}
             </div>
-            {(isCustom || !linked) && (
-              <Input
-                placeholder="Feature text"
-                value={row.value ?? ""}
-                onChange={(e) => update(i, { value: e.target.value })}
-              />
-            )}
-          </div>
-        );
-      })}
-      <Button
-        type="button"
-        variant="outline"
-        size="sm"
-        onClick={() => onChange([...rows, { presetKey: undefined, linked: false, value: "" }])}
-      >
-        <Plus className="h-4 w-4" /> Add feature
-      </Button>
+          );
+        })
+      )}
+      <div className="flex flex-wrap items-center gap-2">
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={() => onChange([...rows, { presetKey: undefined, linked: false, value: "" }])}
+        >
+          <Plus className="h-4 w-4" /> Add feature
+        </Button>
+        {rows.length > 1 && (
+          <ReorderToggle active={reorder} onToggle={() => setReorder((v) => !v)} />
+        )}
+      </div>
     </div>
   );
 }
