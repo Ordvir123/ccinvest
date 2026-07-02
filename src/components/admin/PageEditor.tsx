@@ -768,6 +768,420 @@ export function PageEditor({
   };
 
   /* ---------- form panel ---------- */
+  const orderedKeys = orderedSectionKeys(content);
+  const sectionDrag = useDragReorder(orderedKeys, (next) => patch({ section_order: next }));
+  const [sectionsReorder, setSectionsReorder] = useState(false);
+  const [statsReorder, setStatsReorder] = useState(false);
+  const [aboutFeatReorder, setAboutFeatReorder] = useState(false);
+  const [videosReorder, setVideosReorder] = useState(false);
+  const [unitsReorder, setUnitsReorder] = useState(false);
+
+  const toggleSection = (key: SectionKey) => {
+    const hidden = content.hidden_sections ?? [];
+    patch({
+      hidden_sections: hidden.includes(key)
+        ? hidden.filter((k) => k !== key)
+        : [...hidden, key],
+    });
+  };
+
+  const listingIsProject = content.category === "project";
+
+  const sectionBodies: Record<
+    SectionKey,
+    { title: string; description?: string; defaultOpen?: boolean; body: React.ReactNode }
+  > = {
+    stats: {
+      title: SECTION_LABELS.stats,
+      description: "Repeatable value + label rows. Icons auto-match the label; override per row.",
+      defaultOpen: true,
+      body: (
+        <>
+          {statsReorder ? (
+            <ReorderList
+              items={content.stats ?? []}
+              onReorder={(stats) => patch({ stats })}
+              getLabel={(s) => s.value || s.label || "Stat"}
+            />
+          ) : (
+            (content.stats ?? []).map((s, i) => (
+              <div key={i} className="flex items-end gap-2">
+                <div className="space-y-1.5">
+                  <span className="text-sm font-medium text-foreground">Icon</span>
+                  <IconPicker
+                    value={s.icon}
+                    onChange={(icon) => {
+                      const next = content.stats.slice();
+                      next[i] = { ...next[i], icon };
+                      patch({ stats: next });
+                    }}
+                  />
+                </div>
+                <div className="flex-1">
+                  <Field label="Value">
+                    <Input
+                      value={s.value}
+                      onChange={(e) => {
+                        const next = content.stats.slice();
+                        next[i] = { ...next[i], value: e.target.value };
+                        patch({ stats: next });
+                      }}
+                    />
+                  </Field>
+                </div>
+                <div className="flex-1">
+                  <Field label="Label">
+                    <Input
+                      value={s.label}
+                      onChange={(e) => {
+                        const next = content.stats.slice();
+                        next[i] = { ...next[i], label: e.target.value };
+                        patch({ stats: next });
+                      }}
+                    />
+                  </Field>
+                </div>
+                <MoveRemove
+                  onUp={() => patch({ stats: moveItem(content.stats, i, -1) })}
+                  onDown={() => patch({ stats: moveItem(content.stats, i, 1) })}
+                  onRemove={() => patch({ stats: content.stats.filter((_, idx) => idx !== i) })}
+                />
+              </div>
+            ))
+          )}
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => patch({ stats: [...content.stats, { value: "", label: "" } as Stat] })}
+            >
+              <Plus className="h-4 w-4" /> Add stat
+            </Button>
+            {hasItems(content.stats) && content.stats.length > 1 && (
+              <ReorderToggle active={statsReorder} onToggle={() => setStatsReorder((v) => !v)} />
+            )}
+          </div>
+        </>
+      ),
+    },
+    location: {
+      title: SECTION_LABELS.location,
+      defaultOpen: false,
+      body: (
+        <>
+          <Field label="Heading">
+            <Input
+              value={content.location?.heading ?? ""}
+              onChange={(e) => patchLocation({ heading: e.target.value })}
+            />
+          </Field>
+          <Field label="Text">
+            <Textarea
+              rows={3}
+              value={content.location?.text ?? ""}
+              onChange={(e) => patchLocation({ text: e.target.value })}
+            />
+          </Field>
+          <Field label="Map query" hint="Used to build a Google Maps embed.">
+            <Input
+              value={content.location?.map_query ?? ""}
+              onChange={(e) => patchLocation({ map_query: e.target.value })}
+            />
+          </Field>
+          <Field
+            label="Street / location name (per language)"
+            hint="Proper nouns (Montefiore, Allenby…). Entered manually per locale — never machine-translated."
+          >
+            <div className="grid grid-cols-3 gap-2">
+              {READING_LANGS.map((l) => (
+                <Input
+                  key={l}
+                  placeholder={l.toUpperCase()}
+                  value={content.location?.name_i18n?.[l] ?? ""}
+                  onChange={(e) =>
+                    patchLocation({
+                      name_i18n: { ...(content.location?.name_i18n ?? {}), [l]: e.target.value },
+                    })
+                  }
+                />
+              ))}
+            </div>
+          </Field>
+          {content.location?.map_query && (
+            <iframe
+              title="Map preview"
+              className="h-48 w-full rounded-md border border-border"
+              loading="lazy"
+              src={`https://maps.google.com/maps?q=${encodeURIComponent(content.location.map_query)}&t=m&z=15&output=embed`}
+            />
+          )}
+        </>
+      ),
+    },
+    listing: {
+      title: listingIsProject ? "Units" : "About the apartment",
+      description: listingIsProject
+        ? "Repeatable apartment blocks."
+        : "The single apartment shown on this page.",
+      defaultOpen: !listingIsProject,
+      body: listingIsProject ? (
+        <div className="space-y-4">
+          {unitsReorder ? (
+            <ReorderList
+              items={content.units ?? []}
+              onReorder={(units) => patch({ units })}
+              getLabel={(u, i) => u.name || u.unit_type || `Unit ${i + 1}`}
+            />
+          ) : (
+            (content.units ?? []).map((u, i) => (
+              <UnitBlock
+                key={i}
+                index={i}
+                unit={u}
+                slug={slug}
+                canUpload={canUpload}
+                onChange={(unit) => {
+                  const next = (content.units ?? []).slice();
+                  next[i] = unit;
+                  patch({ units: next });
+                }}
+                onUp={() => patch({ units: moveItem(content.units ?? [], i, -1) })}
+                onDown={() => patch({ units: moveItem(content.units ?? [], i, 1) })}
+                onRemove={() =>
+                  patch({ units: (content.units ?? []).filter((_, idx) => idx !== i) })
+                }
+                specPresets={specPresets}
+                featurePresets={featurePresets}
+              />
+            ))
+          )}
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() =>
+                patch({
+                  units: [...(content.units ?? []), { name: "", unit_type: "apartment" } as Unit],
+                })
+              }
+            >
+              <Plus className="h-4 w-4" /> Add unit
+            </Button>
+            {(content.units?.length ?? 0) > 1 && (
+              <ReorderToggle active={unitsReorder} onToggle={() => setUnitsReorder((v) => !v)} />
+            )}
+          </div>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          <Field
+            label="Image side (desktop)"
+            hint="Which side the main image sits on. Mirrored automatically in Hebrew (RTL)."
+          >
+            <Select
+              value={content.apartment_image_side ?? "right"}
+              onValueChange={(v) => patch({ apartment_image_side: v as "left" | "right" })}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="right">Image on the right</SelectItem>
+                <SelectItem value="left">Image on the left</SelectItem>
+              </SelectContent>
+            </Select>
+          </Field>
+
+          <UnitBlock
+            index={0}
+            unit={content.apartment ?? ({ name: "", unit_type: "apartment" } as Unit)}
+            slug={slug}
+            canUpload={canUpload}
+            titleOverride="Apartment details"
+            forceOpen
+            specPresets={specPresets}
+            featurePresets={featurePresets}
+            titleNode={(() => {
+              const label = content.apartment_title?.trim() ?? "";
+              const matched = titleOptions.find((o) => o.label.trim() === label);
+              const isCustom = aptTitleCustom || (label.length > 0 && !matched);
+              const linked = !isCustom;
+              const selectValue = isCustom
+                ? CUSTOM_TITLE
+                : matched
+                  ? matched.label
+                  : DEFAULT_TITLE;
+              return (
+                <Field
+                  label="Section heading"
+                  hint="Choose a preset heading (label + icon) or unlink to edit freely — new custom headings are saved as future options on save."
+                >
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <IconPicker
+                        value={content.apartment_title_icon}
+                        onChange={(icon) => patch({ apartment_title_icon: (icon as string) ?? "" })}
+                      />
+                      <LinkToggle linked={linked} onToggle={() => setAptTitleCustom((v) => !v)} />
+                      <Select
+                        value={selectValue}
+                        onValueChange={(v) => {
+                          if (v === DEFAULT_TITLE) {
+                            setAptTitleCustom(false);
+                            patch({ apartment_title: "", apartment_title_icon: "" });
+                          } else if (v === CUSTOM_TITLE) {
+                            setAptTitleCustom(true);
+                          } else {
+                            setAptTitleCustom(false);
+                            const opt = titleOptions.find((o) => o.label === v);
+                            patch({
+                              apartment_title: v,
+                              apartment_title_icon: opt?.icon ?? content.apartment_title_icon ?? "",
+                            });
+                          }
+                        }}
+                      >
+                        <SelectTrigger className="flex-1">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value={DEFAULT_TITLE}>
+                            Default (À propos de l'appartement)
+                          </SelectItem>
+                          {titleOptions.map((o) => (
+                            <SelectItem key={o.label} value={o.label}>
+                              {o.label}
+                            </SelectItem>
+                          ))}
+                          <SelectItem value={CUSTOM_TITLE}>Custom text…</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    {isCustom && (
+                      <Input
+                        value={content.apartment_title ?? ""}
+                        onChange={(e) => patch({ apartment_title: e.target.value })}
+                        placeholder="Enter a custom heading…"
+                      />
+                    )}
+                  </div>
+                </Field>
+              );
+            })()}
+            onChange={(apartment) => patch({ apartment })}
+          />
+        </div>
+      ),
+    },
+    gallery: {
+      title: SECTION_LABELS.gallery,
+      defaultOpen: false,
+      body: (
+        <GalleryUpload
+          slug={slug}
+          value={content.gallery ?? []}
+          onChange={(gallery) => patch({ gallery })}
+          disabled={!canUpload}
+        />
+      ),
+    },
+    wide_images: {
+      title: SECTION_LABELS.wide_images,
+      description: "Full-width images, stacked one under another across the whole screen.",
+      defaultOpen: false,
+      body: (
+        <div className="space-y-3">
+          <p className="text-xs text-muted-foreground">
+            These images render edge-to-edge on the page (no cropping into cards).
+          </p>
+          <GalleryUpload
+            slug={slug}
+            value={content.wide_images ?? []}
+            onChange={(wide_images) => patch({ wide_images })}
+            disabled={!canUpload}
+          />
+        </div>
+      ),
+    },
+    videos: {
+      title: SECTION_LABELS.videos,
+      description: "YouTube links (any format).",
+      defaultOpen: false,
+      body: (
+        <div className="space-y-3">
+          {videosReorder ? (
+            <ReorderList
+              items={content.videos ?? []}
+              onReorder={(videos) => patch({ videos })}
+              getLabel={(v, i) => v.title || v.youtube_id || `Video ${i + 1}`}
+            />
+          ) : (
+            (content.videos ?? []).map((v, i) => (
+              <VideoRow
+                key={i}
+                video={v}
+                onChange={(video) => {
+                  const next = (content.videos ?? []).slice();
+                  next[i] = video;
+                  patch({ videos: next });
+                }}
+                onUp={() => patch({ videos: moveItem(content.videos ?? [], i, -1) })}
+                onDown={() => patch({ videos: moveItem(content.videos ?? [], i, 1) })}
+                onRemove={() =>
+                  patch({ videos: (content.videos ?? []).filter((_, idx) => idx !== i) })
+                }
+              />
+            ))
+          )}
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() =>
+                patch({ videos: [...(content.videos ?? []), { youtube_id: "" } as Video] })
+              }
+            >
+              <Plus className="h-4 w-4" /> Add video
+            </Button>
+            {(content.videos?.length ?? 0) > 1 && (
+              <ReorderToggle active={videosReorder} onToggle={() => setVideosReorder((v) => !v)} />
+            )}
+          </div>
+        </div>
+      ),
+    },
+    contact: {
+      title: SECTION_LABELS.contact,
+      defaultOpen: false,
+      body: (
+        <Field
+          label="Heading (per language)"
+          hint="Shown above the contact form. Enter each language; empty locales fall back to the source language."
+        >
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+            {READING_LANGS.map((l) => (
+              <Input
+                key={l}
+                dir={isRtlReading(l) ? "rtl" : "ltr"}
+                aria-label={`Contact heading (${LANG_LABELS[l]})`}
+                placeholder={CONTACT_HEADING_PLACEHOLDERS[l]}
+                value={content.contact?.heading_i18n?.[l] ?? ""}
+                onChange={(e) =>
+                  patchContact({
+                    heading_i18n: { ...(content.contact?.heading_i18n ?? {}), [l]: e.target.value },
+                  })
+                }
+              />
+            ))}
+          </div>
+        </Field>
+      ),
+    },
+  };
+
   const formPanel = (
     <div className="space-y-4">
       <SectionCard
