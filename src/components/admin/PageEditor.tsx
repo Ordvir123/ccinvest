@@ -190,6 +190,7 @@ function SpecRowsEditor({
   presets: SpecPreset[];
   onChange: (rows: DetailRow[]) => void;
 }) {
+  const [reorder, setReorder] = useState(false);
   const update = (i: number, p: Partial<DetailRow>) => {
     const next = rows.slice();
     next[i] = { ...next[i], ...p };
@@ -197,138 +198,154 @@ function SpecRowsEditor({
   };
   return (
     <div className="space-y-2">
-      {rows.map((row, i) => {
-        const preset = resolvePreset(row.presetKey, presets, BUILTIN_SPEC_PRESETS);
-        const isCustom = !row.presetKey;
-        const linked = !isCustom && row.linked !== false;
-        const kind = preset?.valueKind ?? "text";
-        const effIcon = linked ? preset?.icon : row.icon || preset?.icon;
-        return (
-          <div key={i} className="space-y-2 rounded-md border border-border p-2">
-            <div className="flex items-center gap-2">
-              <IconPicker
-                value={effIcon}
-                onChange={(icon) => update(i, { icon: (icon as string) ?? "" })}
-              />
-              <LinkToggle
-                linked={linked}
-                disabled={isCustom}
-                onToggle={() =>
-                  update(i, {
-                    linked: !linked,
-                    label: !linked ? undefined : (preset?.labels.fr ?? ""),
-                    icon: !linked ? undefined : preset?.icon,
-                  })
-                }
-              />
-              <Select
-                value={row.presetKey ?? CUSTOM_PRESET}
-                onValueChange={(v) => {
-                  if (v === CUSTOM_PRESET) {
+      {reorder ? (
+        <ReorderList
+          items={rows}
+          onReorder={onChange}
+          getLabel={(row) => {
+            const p = resolvePreset(row.presetKey, presets, BUILTIN_SPEC_PRESETS);
+            return (p?.labels.fr || row.label || row.value || "Detail") as string;
+          }}
+        />
+      ) : (
+        rows.map((row, i) => {
+          const preset = resolvePreset(row.presetKey, presets, BUILTIN_SPEC_PRESETS);
+          const isCustom = !row.presetKey;
+          const linked = !isCustom && row.linked !== false;
+          const kind = preset?.valueKind ?? "text";
+          const effIcon = linked ? preset?.icon : row.icon || preset?.icon;
+          return (
+            <div key={i} className="space-y-2 rounded-md border border-border p-2">
+              <div className="flex items-center gap-2">
+                <IconPicker
+                  value={effIcon}
+                  onChange={(icon) => update(i, { icon: (icon as string) ?? "" })}
+                />
+                <LinkToggle
+                  linked={linked}
+                  disabled={isCustom}
+                  onToggle={() =>
                     update(i, {
-                      presetKey: undefined,
-                      linked: false,
-                      label: row.label ?? "",
-                      icon: effIcon,
-                    });
-                  } else {
-                    const p = presets.find((x) => x.key === v);
-                    update(i, {
-                      presetKey: v,
-                      linked: true,
-                      label: undefined,
-                      icon: undefined,
-                      ...(p?.valueKind === "orientation" || p?.valueKind === "parking" ? {} : {}),
-                    });
+                      linked: !linked,
+                      label: !linked ? undefined : (preset?.labels.fr ?? ""),
+                      icon: !linked ? undefined : preset?.icon,
+                    })
                   }
-                }}
-              >
-                <SelectTrigger className="flex-1">
-                  <SelectValue placeholder="Choose a preset" />
-                </SelectTrigger>
-                <SelectContent>
-                  {presets.map((p) => (
-                    <SelectItem key={p.key} value={p.key}>
-                      {p.labels.fr || p.labels.en || p.labels.he || p.key}
-                    </SelectItem>
-                  ))}
-                  <SelectItem value={CUSTOM_PRESET}>Custom text…</SelectItem>
-                </SelectContent>
-              </Select>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8 shrink-0"
-                onClick={() => onChange(rows.filter((_, idx) => idx !== i))}
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
-            </div>
-            {(isCustom || !linked) && (
-              <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-                {READING_LANGS.map((l) => (
-                  <Input
-                    key={l}
-                    dir={isRtlReading(l) ? "rtl" : "ltr"}
-                    aria-label={`Label (${l})`}
-                    placeholder={`Label (${l.toUpperCase()})`}
-                    value={l === "fr" ? (row.label ?? "") : ""}
-                    disabled={l !== "fr"}
-                    onChange={(e) => update(i, { label: e.target.value })}
-                  />
-                ))}
+                />
+                <Select
+                  value={row.presetKey ?? CUSTOM_PRESET}
+                  onValueChange={(v) => {
+                    if (v === CUSTOM_PRESET) {
+                      update(i, {
+                        presetKey: undefined,
+                        linked: false,
+                        label: row.label ?? "",
+                        icon: effIcon,
+                      });
+                    } else {
+                      update(i, {
+                        presetKey: v,
+                        linked: true,
+                        label: undefined,
+                        icon: undefined,
+                      });
+                    }
+                  }}
+                >
+                  <SelectTrigger className="flex-1">
+                    <SelectValue placeholder="Choose a preset" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {presets.map((p) => (
+                      <SelectItem key={p.key} value={p.key}>
+                        {p.labels.fr || p.labels.en || p.labels.he || p.key}
+                      </SelectItem>
+                    ))}
+                    <SelectItem value={CUSTOM_PRESET}>Custom text…</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 shrink-0"
+                  onClick={() => onChange(rows.filter((_, idx) => idx !== i))}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
               </div>
-            )}
-            {kind === "orientation" ? (
-              <Select value={row.value ?? ""} onValueChange={(v) => update(i, { value: v })}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select orientation" />
-                </SelectTrigger>
-                <SelectContent>
-                  {ORIENTATION_CODES.map((c) => (
-                    <SelectItem key={c} value={c}>
-                      {ORIENTATION_OPTION_LABELS[c]}
-                    </SelectItem>
+              {(isCustom || !linked) && (
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+                  {READING_LANGS.map((l) => (
+                    <Input
+                      key={l}
+                      dir={isRtlReading(l) ? "rtl" : "ltr"}
+                      aria-label={`Label (${l})`}
+                      placeholder={`Label (${l.toUpperCase()})`}
+                      value={l === "fr" ? (row.label ?? "") : ""}
+                      disabled={l !== "fr"}
+                      onChange={(e) => update(i, { label: e.target.value })}
+                    />
                   ))}
-                </SelectContent>
-              </Select>
-            ) : kind === "parking" ? (
-              <Select value={row.value ?? ""} onValueChange={(v) => update(i, { value: v })}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select parking" />
-                </SelectTrigger>
-                <SelectContent>
-                  {PARKING_CODES.map((c) => (
-                    <SelectItem key={c} value={c}>
-                      {PARKING_OPTION_LABELS[c]}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            ) : (
-              <Input
-                inputMode={kind === "text" ? "text" : "decimal"}
-                placeholder="Value"
-                value={row.value ?? ""}
-                onChange={(e) =>
-                  update(i, {
-                    value: kind === "text" ? e.target.value : sanitizeNum(e.target.value),
-                  })
-                }
-              />
-            )}
-          </div>
-        );
-      })}
-      <Button
-        type="button"
-        variant="outline"
-        size="sm"
-        onClick={() => onChange([...rows, { presetKey: presets[0]?.key, linked: true, value: "" }])}
-      >
-        <Plus className="h-4 w-4" /> Add detail
-      </Button>
+                </div>
+              )}
+              {kind === "orientation" ? (
+                <Select value={row.value ?? ""} onValueChange={(v) => update(i, { value: v })}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select orientation" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {ORIENTATION_CODES.map((c) => (
+                      <SelectItem key={c} value={c}>
+                        {ORIENTATION_OPTION_LABELS[c]}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              ) : kind === "parking" ? (
+                <Select value={row.value ?? ""} onValueChange={(v) => update(i, { value: v })}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select parking" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {PARKING_CODES.map((c) => (
+                      <SelectItem key={c} value={c}>
+                        {PARKING_OPTION_LABELS[c]}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              ) : (
+                <Input
+                  inputMode={kind === "text" ? "text" : "decimal"}
+                  placeholder="Value"
+                  value={row.value ?? ""}
+                  onChange={(e) =>
+                    update(i, {
+                      value: kind === "text" ? e.target.value : sanitizeNum(e.target.value),
+                    })
+                  }
+                />
+              )}
+            </div>
+          );
+        })
+      )}
+      <div className="flex flex-wrap items-center gap-2">
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={() =>
+            onChange([...rows, { presetKey: presets[0]?.key, linked: true, value: "" }])
+          }
+        >
+          <Plus className="h-4 w-4" /> Add detail
+        </Button>
+        {rows.length > 1 && (
+          <ReorderToggle active={reorder} onToggle={() => setReorder((v) => !v)} />
+        )}
+      </div>
     </div>
   );
 }
