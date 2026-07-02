@@ -45,6 +45,15 @@ import { cn } from "@/lib/utils";
 import { SectionCard, Field } from "@/components/admin/editor-parts";
 import { SingleImageUpload, GalleryUpload, UnitFileUpload } from "@/components/admin/MediaUpload";
 import { IconPicker } from "@/components/admin/IconPicker";
+import { ReorderList, ReorderToggle, useDragReorder } from "@/components/admin/reorder";
+import {
+  orderedSectionKeys,
+  isSectionHidden,
+  SECTION_LABELS,
+  type SectionKey,
+} from "@/lib/page-sections";
+import { GripVertical, ArrowUpDown } from "lucide-react";
+import { hasItems } from "@/types/page";
 import {
   UNIT_TYPES,
   ORIENTATION_CODES,
