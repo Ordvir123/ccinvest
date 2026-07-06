@@ -837,9 +837,17 @@ export function PageRenderer({
   return (
     <main className="bg-background" style={brandStyle}>
       <Hero hero={content.hero} settings={settings} lang={lang} />
-      {orderedSectionKeys(content).map((key) =>
-        isSectionHidden(content, key) ? null : <Fragment key={key}>{nodes[key]}</Fragment>,
-      )}
+      {orderedSectionKeys(content).map((key) => {
+        const hidden = isSectionHidden(content, key);
+        if (!preview) {
+          return hidden ? null : <Fragment key={key}>{nodes[key]}</Fragment>;
+        }
+        return (
+          <PreviewSection key={key} sectionKey={key} hidden={hidden} onSelect={onSectionSelect}>
+            {nodes[key]}
+          </PreviewSection>
+        );
+      })}
     </main>
   );
 }
