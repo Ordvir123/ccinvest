@@ -4,6 +4,9 @@ import type { PageContent } from "@/types/page";
 
 export type EditLang = "fr" | "he" | "en";
 
+/** A media asset (already uploaded to page-media) sent to the AI for placement. */
+export type EditAsset = { url: string; kind: "image" | "pdf"; filename: string };
+
 export type AiEditResult = {
   content: PageContent;
   summary: string;
