@@ -323,8 +323,54 @@ export function PageEditor({
         </div>
 
         <TabsContent value="editor" className="mt-0">
-          <div className="mx-auto max-w-3xl flex-1 p-4 md:p-6">{formPanel}</div>
+          {/* Mobile Preview/Edit toggle (<md) */}
+          <div className="flex items-center gap-1 border-b border-border p-3 md:hidden">
+            <Button
+              type="button"
+              size="sm"
+              variant={mobileView === "edit" ? "secondary" : "ghost"}
+              onClick={() => setMobileView("edit")}
+            >
+              <PencilLine className="h-4 w-4" /> Edit
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant={mobileView === "preview" ? "secondary" : "ghost"}
+              onClick={() => setMobileView("preview")}
+            >
+              <Monitor className="h-4 w-4" /> Preview
+            </Button>
+          </div>
+
+          <div className="md:flex md:items-start">
+            {/* LEFT: live preview */}
+            <div
+              className={cn(
+                "md:sticky md:top-0 md:h-[calc(100vh-3.5rem)] md:w-1/2 md:border-r md:border-border",
+                mobileView === "preview" ? "block h-[calc(100vh-8rem)]" : "hidden md:block",
+              )}
+            >
+              <EditorPreview
+                content={content}
+                lang={(sourceLang as ReadingLang) ?? "fr"}
+                settings={settings}
+                onSelect={scrollToSection}
+              />
+            </div>
+
+            {/* RIGHT: editor panel */}
+            <div
+              className={cn(
+                "min-w-0 flex-1 p-4 md:w-1/2 md:p-6",
+                mobileView === "preview" && "hidden md:block",
+              )}
+            >
+              <div className="mx-auto max-w-3xl">{formPanel}</div>
+            </div>
+          </div>
         </TabsContent>
+
 
         <TabsContent value="translations" className="mt-0 p-4 md:p-6">
           <TranslationsTab pageId={pageId} source={cleanContent(content)} sourceLang={sourceLang} />
