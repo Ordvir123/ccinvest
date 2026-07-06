@@ -399,12 +399,8 @@ Deno.serve(async (req) => {
         return json({ error: `AI provider error (${result.status}).` }, 502);
       }
       lastRaw = result.text;
-      try {
-        parsed = JSON.parse(stripFences(result.text));
-        break;
-      } catch {
-        parsed = null; // retry
-      }
+      parsed = parseModelJson(result.text);
+      if (parsed !== null) break;
     }
     if (parsed === null) {
       console.error("[edit-page] JSON parse failed. Raw:", lastRaw.slice(0, 500));
