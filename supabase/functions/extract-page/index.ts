@@ -42,24 +42,24 @@ type Asset = z.infer<typeof assetSchema>;
 
 // ---- PageContent schema (mirrors src/types/page.ts) ----
 const mediaSchema = z.object({ url: z.string(), alt: z.string().optional() });
-const statSchema = z.object({ value: z.string(), label: z.string() });
+const statSchema = z.object({ value: z.coerce.string(), label: z.coerce.string() });
 const unitAttachmentSchema = z.object({
   url: z.string(),
   type: z.enum(["image", "pdf"]),
 });
 const unitSchema = z.object({
-  name: z.string(),
-  floor: z.string().optional(),
-  orientation: z.string().optional(),
-  rooms: z.string().optional(),
-  area_m2: z.string().optional(),
-  balcony_m2: z.string().optional(),
-  parking: z.string().optional(),
-  description: z.string().optional(),
-  price: z.string().optional(),
+  name: z.coerce.string(),
+  floor: z.coerce.string().optional(),
+  orientation: z.coerce.string().optional(),
+  rooms: z.coerce.string().optional(),
+  area_m2: z.coerce.string().optional(),
+  balcony_m2: z.coerce.string().optional(),
+  parking: z.coerce.string().optional(),
+  description: z.coerce.string().optional(),
+  price: z.coerce.string().optional(),
   image: mediaSchema.optional(),
   attachment: unitAttachmentSchema.optional(),
-  features: z.array(z.string()).optional(),
+  features: z.array(z.coerce.string()).optional(),
 });
 const videoSchema = z.object({
   title: z.string().optional(),
@@ -69,27 +69,27 @@ const videoSchema = z.object({
 const pageContentSchema = z.object({
   hero: z
     .object({
-      kicker: z.string().optional(),
-      title: z.string().optional(),
-      subtitle: z.string().optional(),
-      price: z.string().optional(),
-      cta_label: z.string().optional(),
+      kicker: z.coerce.string().optional(),
+      title: z.coerce.string().optional(),
+      subtitle: z.coerce.string().optional(),
+      price: z.coerce.string().optional(),
+      cta_label: z.coerce.string().optional(),
       background: mediaSchema.optional(),
     })
     .optional(),
   stats: z.array(statSchema).optional(),
   location: z
     .object({
-      heading: z.string().optional(),
-      text: z.string().optional(),
-      map_query: z.string().optional(),
+      heading: z.coerce.string().optional(),
+      text: z.coerce.string().optional(),
+      map_query: z.coerce.string().optional(),
     })
     .optional(),
   about: z
     .object({
-      heading: z.string().optional(),
-      body: z.string().optional(),
-      features: z.array(z.string()).optional(),
+      heading: z.coerce.string().optional(),
+      body: z.coerce.string().optional(),
+      features: z.array(z.coerce.string()).optional(),
     })
     .optional(),
   gallery: z.array(mediaSchema).optional(),
@@ -97,7 +97,7 @@ const pageContentSchema = z.object({
   units: z.array(unitSchema).optional(),
   apartment: unitSchema.optional(),
   videos: z.array(videoSchema).optional(),
-  contact: z.object({ heading: z.string().optional() }).optional(),
+  contact: z.object({ heading: z.coerce.string().optional() }).optional(),
 });
 
 const BASE_RULES = `You extract a real-estate landing page from inputs (pasted text, and optionally image/PDF assets) into a strict JSON object.
