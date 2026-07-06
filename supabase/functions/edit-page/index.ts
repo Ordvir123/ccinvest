@@ -437,6 +437,33 @@ Deno.serve(async (req) => {
       return json({ error: "The edited content did not match the expected shape." }, 422);
     }
 
+    // ---- Media-URL safety net ----
+    // Any media URL in the RESULT that was not already in the original content
+    // must be one of the attached asset URLs. This blocks the model from
+    // inventing URLs or smuggling in foreign ones via the patch.
+    const collectUrls = (value: unknown, out: Set<string>) => {
+      if (Array.isArray(value)) {
+        for (const v of value) collectUrls(v, out);
+      } else if (value && typeof value === "object") {
+        for (const [k, v] of Object.entries(value)) {
+          if (k === "url" && typeof v === "string") out.add(v);
+          else collectUrls(v, out);
+        }
+      }
+    };
+    const originalUrls = new Set<string>();
+    collectUrls(content, originalUrls);
+    const resultUrls = new Set<string>();
+    collectUrls(validatedResult.data, resultUrls);
+    for (const u of resultUrls) {
+      if (!originalUrls.has(u) && !assetUrls.has(u)) {
+        return json(
+          { error: "The edit tried to add a media URL that was not attached. Please try again." },
+          422,
+        );
+      }
+    }
+
     const changedPaths = patch.map((op) => op.path);
     return json({ content: validatedResult.data, summary, changedPaths });
   } catch (err) {
