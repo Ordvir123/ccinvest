@@ -219,6 +219,30 @@ function stripFences(s: string): string {
     .trim();
 }
 
+/**
+ * Robustly parse a JSON object out of a model response. Handles code fences and
+ * any leading/trailing prose the model may emit around the JSON object by
+ * falling back to the substring between the first "{" and the last "}".
+ */
+function parseModelJson(raw: string): unknown {
+  const cleaned = stripFences(raw);
+  try {
+    return JSON.parse(cleaned);
+  } catch {
+    /* fall through to substring extraction */
+  }
+  const start = cleaned.indexOf("{");
+  const end = cleaned.lastIndexOf("}");
+  if (start !== -1 && end > start) {
+    try {
+      return JSON.parse(cleaned.slice(start, end + 1));
+    } catch {
+      /* give up */
+    }
+  }
+  return null;
+}
+
 async function callAnthropic(
   apiKey: string,
   contentJson: string,
@@ -269,7 +293,7 @@ async function callAnthropic(
     },
     body: JSON.stringify({
       model: ANTHROPIC_MODEL,
-      max_tokens: 4000,
+      max_tokens: 8000,
       system: SYSTEM_PROMPT,
       messages,
     }),
@@ -375,12 +399,8 @@ Deno.serve(async (req) => {
         return json({ error: `AI provider error (${result.status}).` }, 502);
       }
       lastRaw = result.text;
-      try {
-        parsed = JSON.parse(stripFences(result.text));
-        break;
-      } catch {
-        parsed = null; // retry
-      }
+      parsed = parseModelJson(result.text);
+      if (parsed !== null) break;
     }
     if (parsed === null) {
       console.error("[edit-page] JSON parse failed. Raw:", lastRaw.slice(0, 500));
