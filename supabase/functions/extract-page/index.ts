@@ -42,24 +42,24 @@ type Asset = z.infer<typeof assetSchema>;
 
 // ---- PageContent schema (mirrors src/types/page.ts) ----
 const mediaSchema = z.object({ url: z.string(), alt: z.string().optional() });
-const statSchema = z.object({ value: z.string(), label: z.string() });
+const statSchema = z.object({ value: z.coerce.string(), label: z.coerce.string() });
 const unitAttachmentSchema = z.object({
   url: z.string(),
   type: z.enum(["image", "pdf"]),
 });
 const unitSchema = z.object({
-  name: z.string(),
-  floor: z.string().optional(),
-  orientation: z.string().optional(),
-  rooms: z.string().optional(),
-  area_m2: z.string().optional(),
-  balcony_m2: z.string().optional(),
-  parking: z.string().optional(),
-  description: z.string().optional(),
-  price: z.string().optional(),
+  name: z.coerce.string(),
+  floor: z.coerce.string().optional(),
+  orientation: z.coerce.string().optional(),
+  rooms: z.coerce.string().optional(),
+  area_m2: z.coerce.string().optional(),
+  balcony_m2: z.coerce.string().optional(),
+  parking: z.coerce.string().optional(),
+  description: z.coerce.string().optional(),
+  price: z.coerce.string().optional(),
   image: mediaSchema.optional(),
   attachment: unitAttachmentSchema.optional(),
-  features: z.array(z.string()).optional(),
+  features: z.array(z.coerce.string()).optional(),
 });
 const videoSchema = z.object({
   title: z.string().optional(),
