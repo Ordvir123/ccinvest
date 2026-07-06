@@ -79,7 +79,7 @@ import {
   setPageStatus,
   validateForPublish,
 } from "@/lib/pages";
-import { applyAiEdit, type EditLang } from "@/lib/edit-page";
+import { AiCorrectionsPanel } from "@/components/admin/AiCorrectionsPanel";
 import {
   READING_LANGS,
   isRtlReading,
