@@ -225,18 +225,40 @@ async function callAnthropic(
   instruction: string,
   sourceLang: string | undefined,
   history: { role: "user" | "assistant"; text: string }[],
+  assets: Asset[],
 ) {
-  const messages: { role: "user" | "assistant"; content: string }[] = [];
+  const messages: { role: "user" | "assistant"; content: unknown }[] = [];
   for (const turn of history) {
     messages.push({ role: turn.role, content: turn.text });
   }
-  messages.push({
-    role: "user",
-    content:
-      (sourceLang ? `Source language: ${sourceLang}\n\n` : "") +
-      `CURRENT CONTENT:\n"""\n${contentJson}\n"""\n\n` +
-      `INSTRUCTION:\n"""\n${instruction}\n"""`,
-  });
+
+  const images = assets.filter((a) => a.kind === "image");
+  const pdfs = assets.filter((a) => a.kind === "pdf");
+  const ordered = [...images, ...pdfs];
+
+  const textBlock =
+    (sourceLang ? `Source language: ${sourceLang}\n\n` : "") +
+    (ordered.length
+      ? `ATTACHED ASSETS (use these EXACT URLs, each at most once):\n${ordered
+          .map((a, i) => `Asset ${i + 1}: ${a.filename} - ${a.url}`)
+          .join("\n")}\n\n`
+      : "") +
+    `CURRENT CONTENT:\n"""\n${contentJson}\n"""\n\n` +
+    `INSTRUCTION:\n"""\n${instruction}\n"""`;
+
+  if (ordered.length) {
+    const blocks: unknown[] = [];
+    for (const img of images) {
+      blocks.push({ type: "image", source: { type: "url", url: img.url } });
+    }
+    for (const pdf of pdfs) {
+      blocks.push({ type: "document", source: { type: "url", url: pdf.url } });
+    }
+    blocks.push({ type: "text", text: textBlock });
+    messages.push({ role: "user", content: blocks });
+  } else {
+    messages.push({ role: "user", content: textBlock });
+  }
 
   const res = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
