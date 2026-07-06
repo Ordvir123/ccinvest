@@ -398,7 +398,9 @@ Deno.serve(async (req) => {
     // Reject remove/replace/move ops that target protected media paths, UNLESS
     // the instruction explicitly mentions media (keyword check, case-insensitive).
     const instructionLower = instruction.toLowerCase();
-    const mediaRequested = MEDIA_KEYWORDS.some((k) => instructionLower.includes(k.toLowerCase()));
+    const mediaRequested =
+      assets.length > 0 ||
+      MEDIA_KEYWORDS.some((k) => instructionLower.includes(k.toLowerCase()));
     if (!mediaRequested) {
       for (const op of patch) {
         const touchesProtected =
