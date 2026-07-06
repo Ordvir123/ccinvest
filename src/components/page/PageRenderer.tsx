@@ -1,6 +1,12 @@
 import { Fragment, useState } from "react";
-import { ChevronRight, FileText } from "lucide-react";
-import { orderedSectionKeys, isSectionHidden, type SectionKey } from "@/lib/page-sections";
+import { ChevronRight, FileText, EyeOff } from "lucide-react";
+import {
+  orderedSectionKeys,
+  isSectionHidden,
+  SECTION_LABELS,
+  type SectionKey,
+} from "@/lib/page-sections";
+import { cn } from "@/lib/utils";
 
 import { getIcon, guessIcon } from "@/lib/page-icons";
 import {
