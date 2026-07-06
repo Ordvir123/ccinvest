@@ -768,6 +768,8 @@ export function PageRenderer({
   slug,
   lang = "fr",
   settings = DEFAULT_TEMPLATE_SETTINGS,
+  preview = false,
+  onSectionSelect,
 }: PageRendererProps) {
   const labels = LABELS[lang] ?? LABELS.fr;
   const brandStyle = hasText(settings.primaryColor)
