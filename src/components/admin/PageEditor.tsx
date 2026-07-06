@@ -15,8 +15,7 @@ import {
   Copy,
   ExternalLink,
   RefreshCw,
-  Sparkles,
-  Loader2,
+
   Link2,
   Link2Off,
 } from "lucide-react";
