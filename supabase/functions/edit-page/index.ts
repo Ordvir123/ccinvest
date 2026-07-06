@@ -219,6 +219,30 @@ function stripFences(s: string): string {
     .trim();
 }
 
+/**
+ * Robustly parse a JSON object out of a model response. Handles code fences and
+ * any leading/trailing prose the model may emit around the JSON object by
+ * falling back to the substring between the first "{" and the last "}".
+ */
+function parseModelJson(raw: string): unknown {
+  const cleaned = stripFences(raw);
+  try {
+    return JSON.parse(cleaned);
+  } catch {
+    /* fall through to substring extraction */
+  }
+  const start = cleaned.indexOf("{");
+  const end = cleaned.lastIndexOf("}");
+  if (start !== -1 && end > start) {
+    try {
+      return JSON.parse(cleaned.slice(start, end + 1));
+    } catch {
+      /* give up */
+    }
+  }
+  return null;
+}
+
 async function callAnthropic(
   apiKey: string,
   contentJson: string,
