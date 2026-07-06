@@ -58,14 +58,12 @@ export function PageEditor({
   initialSourceLang?: string;
   showAiNote?: boolean;
 }) {
-  
   const s = usePageEditorState({ initialPage, initialContent, initialSourceLang });
   const {
     isEdit,
     pageId,
     slug,
     sourceLang,
-    setSourceLang,
     status,
     publishing,
     content,
@@ -73,6 +71,7 @@ export function PageEditor({
     seo,
     setSeo,
     saving,
+    settings,
     listingIsProject,
     onSave,
     liveUrl,
@@ -80,11 +79,27 @@ export function PageEditor({
     onUnpublish,
     copyShareLink,
     orderedKeys,
-    sectionDrag,
-    sectionsReorder,
-    setSectionsReorder,
+    patch,
     toggleSection,
   } = s;
+
+  // Mobile (<md) shows either the preview or the editor; md+ shows both panes.
+  const [mobileView, setMobileView] = useState<"edit" | "preview">("edit");
+  // Briefly highlight a section's editor card after it's selected in the preview.
+  const [highlightKey, setHighlightKey] = useState<SectionKey | null>(null);
+
+  const scrollToSection = (key: SectionKey) => {
+    setMobileView("edit");
+    // Defer so the editor pane is visible before scrolling (mobile toggle).
+    requestAnimationFrame(() => {
+      const el = document.getElementById(`editor-card-${key}`);
+      el?.scrollIntoView({ behavior: "smooth", block: "start" });
+      setHighlightKey(key);
+      window.setTimeout(() => setHighlightKey((k) => (k === key ? null : k)), 1500);
+    });
+  };
+
+
 
   const sectionBodies: Record<
     SectionKey,
