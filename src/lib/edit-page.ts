@@ -24,13 +24,14 @@ export async function applyAiEdit(
   instruction: string,
   sourceLang?: EditLang,
   history?: { role: "user" | "assistant"; text: string }[],
+  assets?: EditAsset[],
 ): Promise<AiEditResult> {
   const { data: sessionData } = await supabase.auth.getSession();
   const accessToken = sessionData.session?.access_token;
   if (!accessToken) throw new Error("You must be signed in to use AI editing.");
 
   const { data, error } = await supabase.functions.invoke("edit-page", {
-    body: { content, instruction, sourceLang, history },
+    body: { content, instruction, sourceLang, history, assets: assets ?? [] },
   });
 
   if (error) {
