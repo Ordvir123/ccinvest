@@ -24,6 +24,15 @@ import { applyPatch, deepClone } from "https://esm.sh/fast-json-patch@3.1.1";
 const MAX_INSTRUCTION_LENGTH = 4_000;
 const MAX_CONTENT_LENGTH = 60_000;
 const MAX_HISTORY_TURNS = 10;
+const MAX_ASSETS = 18;
+
+// ---- Input asset schema (already uploaded to the public page-media bucket) ----
+const assetSchema = z.object({
+  url: z.string().url(),
+  kind: z.enum(["image", "pdf"]),
+  filename: z.string(),
+});
+type Asset = z.infer<typeof assetSchema>;
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
