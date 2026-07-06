@@ -55,7 +55,7 @@ export function PageEditor({
   initialSourceLang?: string;
   showAiNote?: boolean;
 }) {
-  const navigate = useNavigate();
+  
   const s = usePageEditorState({ initialPage, initialContent, initialSourceLang });
   const {
     isEdit,
