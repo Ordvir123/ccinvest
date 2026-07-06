@@ -152,6 +152,14 @@ export function PageEditor({
     <div className="space-y-4">
       <AiCorrectionsPanel content={content} setContent={setContent} sourceLang={sourceLang} />
 
+      <SectionManager
+        orderedKeys={orderedKeys}
+        content={content}
+        onReorder={(next) => patch({ section_order: next })}
+        onToggle={toggleSection}
+        onSelect={scrollToSection}
+      />
+
       <SectionCard title="Page meta">
         <MetaSection s={s} />
       </SectionCard>
@@ -164,48 +172,15 @@ export function PageEditor({
         <AboutSection s={s} />
       </SectionCard>
 
-      {/* Section visibility + ordering */}
-      <div className="rounded-lg border border-border bg-card px-4 py-3">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <div>
-            <p className="font-medium text-foreground">Page sections</p>
-            <p className="text-xs text-muted-foreground">
-              Use the eye icon to show or hide a section. Turn on reordering to drag sections into a
-              new order, then save.
-            </p>
-          </div>
-          <div className="flex flex-wrap items-center gap-2">
-            {sectionsReorder && (
-              <Button type="button" size="sm" onClick={onSave} disabled={saving}>
-                <Save className="h-4 w-4" /> {saving ? "Saving…" : "Save changes"}
-              </Button>
-            )}
-            <Button
-              type="button"
-              size="sm"
-              variant={sectionsReorder ? "secondary" : "outline"}
-              onClick={() => setSectionsReorder((v) => !v)}
-            >
-              <ArrowUpDown className="h-4 w-4" />
-              {sectionsReorder ? "Done" : "Reorder sections"}
-            </Button>
-          </div>
-        </div>
-      </div>
-
-      {orderedKeys.map((key, i) => {
+      {orderedKeys.map((key) => {
         const meta = sectionBodies[key];
         return (
           <div
             key={key}
-            {...(sectionsReorder ? sectionDrag.rowProps(i) : {})}
+            id={`editor-card-${key}`}
             className={cn(
-              sectionsReorder && "cursor-grab rounded-lg active:cursor-grabbing",
-              sectionsReorder &&
-                sectionDrag.overIndex === i &&
-                sectionDrag.dragIndex !== i &&
-                "ring-2 ring-primary",
-              sectionsReorder && sectionDrag.dragIndex === i && "opacity-50",
+              "scroll-mt-4 rounded-lg transition-shadow",
+              highlightKey === key && "ring-2 ring-primary ring-offset-2 ring-offset-background",
             )}
           >
             <SectionCard
@@ -214,18 +189,13 @@ export function PageEditor({
               defaultOpen={meta.defaultOpen}
               visible={!isSectionHidden(content, key)}
               onToggleVisible={() => toggleSection(key)}
-              headerLeft={
-                sectionsReorder ? (
-                  <GripVertical className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
-                ) : undefined
-              }
-              collapsedForReorder={sectionsReorder}
             >
               {meta.body}
             </SectionCard>
           </div>
         );
       })}
+
 
       <SectionCard
         title="SEO & social"
