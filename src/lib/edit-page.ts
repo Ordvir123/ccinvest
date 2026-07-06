@@ -1,31 +1,54 @@
 import { supabase } from "@/integrations/supabase/client";
 import { emptyPageContent } from "@/lib/pages";
-import { applyPageEdit } from "@/lib/edit-page.functions";
 import type { PageContent } from "@/types/page";
 
 export type EditLang = "fr" | "he" | "en";
 
+export type AiEditResult = {
+  content: PageContent;
+  summary: string;
+  changedPaths: string[];
+};
+
 /**
- * Apply a natural-language correction to an existing PageContent via Lovable AI.
- * Returns a complete, normalized PageContent. Throws a user-friendly Error.
+ * Apply a natural-language correction to an existing PageContent via the
+ * Anthropic-backed `edit-page` edge function (JSON Patch approach).
+ * Returns the complete, normalized PageContent plus a human summary and the
+ * list of changed paths. Throws a user-friendly Error.
  */
 export async function applyAiEdit(
   content: PageContent,
   instruction: string,
   sourceLang?: EditLang,
-): Promise<PageContent> {
+  history?: { role: "user" | "assistant"; text: string }[],
+): Promise<AiEditResult> {
   const { data: sessionData } = await supabase.auth.getSession();
   const accessToken = sessionData.session?.access_token;
   if (!accessToken) throw new Error("You must be signed in to use AI editing.");
 
-  const result = await applyPageEdit({
-    data: { content, instruction, sourceLang, accessToken },
+  const { data, error } = await supabase.functions.invoke("edit-page", {
+    body: { content, instruction, sourceLang, history },
   });
 
-  const next = (result?.content ?? {}) as Partial<PageContent>;
-  // Guard the shape so a malformed AI response can never corrupt the editor.
+  if (error) {
+    // Surface the edge function's JSON { error } message when available.
+    let message = error.message ?? "AI edit failed.";
+    const ctx = (error as { context?: Response }).context;
+    if (ctx && typeof ctx.json === "function") {
+      try {
+        const body = await ctx.json();
+        if (body?.error) message = body.error;
+      } catch {
+        /* ignore parse errors */
+      }
+    }
+    throw new Error(message);
+  }
+
+  const next = (data?.content ?? {}) as Partial<PageContent>;
+  // Guard the shape so a malformed response can never corrupt the editor.
   const base = emptyPageContent();
-  return {
+  const merged: PageContent = {
     ...base,
     ...next,
     hero: { ...base.hero, ...(next.hero ?? {}) },
@@ -36,5 +59,11 @@ export async function applyAiEdit(
     units: Array.isArray(next.units) ? next.units : base.units,
     videos: Array.isArray(next.videos) ? next.videos : base.videos,
     contact: next.contact ?? base.contact,
+  };
+
+  return {
+    content: merged,
+    summary: typeof data?.summary === "string" ? data.summary : "",
+    changedPaths: Array.isArray(data?.changedPaths) ? data.changedPaths : [],
   };
 }

@@ -529,11 +529,15 @@ export function PageEditor({
     setAiRunning(true);
     const before = content;
     try {
-      const next = await applyAiEdit(content, aiInstruction.trim(), sourceLang as EditLang);
-      setContent(next);
+      const result = await applyAiEdit(content, aiInstruction.trim(), sourceLang as EditLang);
+      setContent(result.content);
       setAiUndo(before);
       setAiInstruction("");
-      toast.success("AI applied your change. Review the preview, then save.");
+      toast.success(
+        result.summary
+          ? `${result.summary} Review the preview, then save.`
+          : "AI applied your change. Review the preview, then save.",
+      );
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "AI edit failed.");
     } finally {
