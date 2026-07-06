@@ -318,6 +318,7 @@ export function usePageEditorState({
   const listingIsProject = content.category === "project";
 
   return {
+    settings: settingsQuery.data,
     isEdit,
     pageId,
     slug,

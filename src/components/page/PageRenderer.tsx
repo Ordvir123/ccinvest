@@ -1,6 +1,12 @@
 import { Fragment, useState } from "react";
-import { ChevronRight, FileText } from "lucide-react";
-import { orderedSectionKeys, isSectionHidden, type SectionKey } from "@/lib/page-sections";
+import { ChevronRight, FileText, EyeOff } from "lucide-react";
+import {
+  orderedSectionKeys,
+  isSectionHidden,
+  SECTION_LABELS,
+  type SectionKey,
+} from "@/lib/page-sections";
+import { cn } from "@/lib/utils";
 
 import { getIcon, guessIcon } from "@/lib/page-icons";
 import {
@@ -694,6 +700,48 @@ function WideImages({ images }: { images?: PageContent["wide_images"] }) {
   );
 }
 
+/**
+ * Preview-only wrapper: tags a rendered section with data-section-key, shows a
+ * hover outline + name badge, dims hidden sections, and forwards clicks. Only
+ * used inside the admin editor preview — never in the public page output.
+ */
+function PreviewSection({
+  sectionKey,
+  hidden,
+  onSelect,
+  children,
+}: {
+  sectionKey: SectionKey;
+  hidden: boolean;
+  onSelect?: (key: SectionKey) => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <div
+      data-section-key={sectionKey}
+      onClick={() => onSelect?.(sectionKey)}
+      className={cn(
+        "group/preview relative cursor-pointer",
+        hidden && "opacity-40 grayscale",
+      )}
+    >
+      {/* Hover outline */}
+      <div className="pointer-events-none absolute inset-0 z-30 ring-inset ring-2 ring-transparent transition-colors group-hover/preview:ring-primary/70" />
+      {/* Section-name badge on hover */}
+      <div className="pointer-events-none absolute left-3 top-3 z-40 rounded-md bg-primary px-2 py-0.5 text-xs font-medium text-primary-foreground opacity-0 shadow transition-opacity group-hover/preview:opacity-100">
+        {SECTION_LABELS[sectionKey]}
+      </div>
+      {/* Persistent "hidden" badge for hidden sections */}
+      {hidden && (
+        <div className="pointer-events-none absolute right-3 top-3 z-40 inline-flex items-center gap-1 rounded-md bg-foreground/80 px-2 py-0.5 text-xs font-medium text-background shadow">
+          <EyeOff className="h-3 w-3" /> hidden
+        </div>
+      )}
+      {children}
+    </div>
+  );
+}
+
 export type PageRendererProps = {
   content: PageContent;
   /** Lead-capture context. When omitted, the contact form is inert (preview). */
@@ -703,6 +751,14 @@ export type PageRendererProps = {
   lang?: ReadingLang;
   /** Global template settings (logo, colors, defaults). */
   settings?: TemplateSettings;
+  /**
+   * Admin editor preview mode: wraps each section with a clickable overlay and
+   * renders hidden sections dimmed instead of removing them. Off by default so
+   * the public page output stays pixel-identical.
+   */
+  preview?: boolean;
+  /** Called when a section is clicked in preview mode. */
+  onSectionSelect?: (key: SectionKey) => void;
 };
 
 export function PageRenderer({
@@ -712,6 +768,8 @@ export function PageRenderer({
   slug,
   lang = "fr",
   settings = DEFAULT_TEMPLATE_SETTINGS,
+  preview = false,
+  onSectionSelect,
 }: PageRendererProps) {
   const labels = LABELS[lang] ?? LABELS.fr;
   const brandStyle = hasText(settings.primaryColor)
@@ -779,9 +837,17 @@ export function PageRenderer({
   return (
     <main className="bg-background" style={brandStyle}>
       <Hero hero={content.hero} settings={settings} lang={lang} />
-      {orderedSectionKeys(content).map((key) =>
-        isSectionHidden(content, key) ? null : <Fragment key={key}>{nodes[key]}</Fragment>,
-      )}
+      {orderedSectionKeys(content).map((key) => {
+        const hidden = isSectionHidden(content, key);
+        if (!preview) {
+          return hidden ? null : <Fragment key={key}>{nodes[key]}</Fragment>;
+        }
+        return (
+          <PreviewSection key={key} sectionKey={key} hidden={hidden} onSelect={onSectionSelect}>
+            {nodes[key]}
+          </PreviewSection>
+        );
+      })}
     </main>
   );
 }
