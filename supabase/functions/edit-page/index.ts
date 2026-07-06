@@ -24,6 +24,15 @@ import { applyPatch, deepClone } from "https://esm.sh/fast-json-patch@3.1.1";
 const MAX_INSTRUCTION_LENGTH = 4_000;
 const MAX_CONTENT_LENGTH = 60_000;
 const MAX_HISTORY_TURNS = 10;
+const MAX_ASSETS = 18;
+
+// ---- Input asset schema (already uploaded to the public page-media bucket) ----
+const assetSchema = z.object({
+  url: z.string().url(),
+  kind: z.enum(["image", "pdf"]),
+  filename: z.string(),
+});
+type Asset = z.infer<typeof assetSchema>;
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -198,6 +207,7 @@ PATCH RULES — follow exactly:
 * "replace"/"add" require "value". "move"/"copy" require "from".
 * Do NOT translate. Keep the existing source language unless the instruction explicitly asks to rewrite copy.
 * Do NOT touch media (images, gallery, wide_images, backgrounds, attachments, youtube_id) unless the instruction explicitly asks about media.
+* If ATTACHED ASSETS are provided (listed below), you MAY place them into the content with "add"/"replace" ops. Use ONLY the EXACT asset URLs given — NEVER invent, guess, modify or shorten a URL. Each asset URL may be used AT MOST ONCE. Media objects use the shape { "url": "...", "alt"?: "..." }; unit attachments use { "url": "...", "type": "image"|"pdf" }. Place gallery photos into /gallery, panoramic shots into /wide_images, a hero photo into /hero/background, and floor plans into the matching /units/N/attachment (or /apartment/attachment).
 * If the instruction is ambiguous or cannot be applied, return an empty patch array and explain in the summary.
 * Use plain hyphens "-" only. Do NOT introduce em dashes or en dashes.`;
 
@@ -215,18 +225,40 @@ async function callAnthropic(
   instruction: string,
   sourceLang: string | undefined,
   history: { role: "user" | "assistant"; text: string }[],
+  assets: Asset[],
 ) {
-  const messages: { role: "user" | "assistant"; content: string }[] = [];
+  const messages: { role: "user" | "assistant"; content: unknown }[] = [];
   for (const turn of history) {
     messages.push({ role: turn.role, content: turn.text });
   }
-  messages.push({
-    role: "user",
-    content:
-      (sourceLang ? `Source language: ${sourceLang}\n\n` : "") +
-      `CURRENT CONTENT:\n"""\n${contentJson}\n"""\n\n` +
-      `INSTRUCTION:\n"""\n${instruction}\n"""`,
-  });
+
+  const images = assets.filter((a) => a.kind === "image");
+  const pdfs = assets.filter((a) => a.kind === "pdf");
+  const ordered = [...images, ...pdfs];
+
+  const textBlock =
+    (sourceLang ? `Source language: ${sourceLang}\n\n` : "") +
+    (ordered.length
+      ? `ATTACHED ASSETS (use these EXACT URLs, each at most once):\n${ordered
+          .map((a, i) => `Asset ${i + 1}: ${a.filename} - ${a.url}`)
+          .join("\n")}\n\n`
+      : "") +
+    `CURRENT CONTENT:\n"""\n${contentJson}\n"""\n\n` +
+    `INSTRUCTION:\n"""\n${instruction}\n"""`;
+
+  if (ordered.length) {
+    const blocks: unknown[] = [];
+    for (const img of images) {
+      blocks.push({ type: "image", source: { type: "url", url: img.url } });
+    }
+    for (const pdf of pdfs) {
+      blocks.push({ type: "document", source: { type: "url", url: pdf.url } });
+    }
+    blocks.push({ type: "text", text: textBlock });
+    messages.push({ role: "user", content: blocks });
+  } else {
+    messages.push({ role: "user", content: textBlock });
+  }
 
   const res = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
@@ -311,11 +343,31 @@ Deno.serve(async (req) => {
       history = parsedHistory.data.slice(-MAX_HISTORY_TURNS);
     }
 
+    // ---- Parse + validate attached assets (already in the page-media bucket) ----
+    let assets: Asset[] = [];
+    if (input.assets !== undefined) {
+      const parsedAssets = z.array(assetSchema).max(MAX_ASSETS).safeParse(input.assets);
+      if (!parsedAssets.success) return json({ error: "Invalid assets payload." }, 400);
+      assets = parsedAssets.data;
+    }
+    // SECURITY: every asset URL must live in THIS project's public page-media
+    // bucket. This prevents the function being used to fetch arbitrary URLs.
+    const allowedPrefix = `${supaUrl}/storage/v1/object/public/page-media/`;
+    for (const a of assets) {
+      if (!a.url.startsWith(allowedPrefix)) {
+        return json(
+          { error: "Asset URLs must point to the page-media storage bucket." },
+          400,
+        );
+      }
+    }
+    const assetUrls = new Set(assets.map((a) => a.url));
+
     // ---- Call model, parse patch JSON, retry once on parse failure ----
     let parsed: unknown = null;
     let lastRaw = "";
     for (let attempt = 0; attempt < 2; attempt++) {
-      const result = await callAnthropic(apiKey, contentJson, instruction, sourceLang, history);
+      const result = await callAnthropic(apiKey, contentJson, instruction, sourceLang, history, assets);
       if (!result.ok) {
         if (result.status === 401) return json({ error: "Invalid Anthropic API key." }, 502);
         if (result.status === 429)
@@ -346,7 +398,9 @@ Deno.serve(async (req) => {
     // Reject remove/replace/move ops that target protected media paths, UNLESS
     // the instruction explicitly mentions media (keyword check, case-insensitive).
     const instructionLower = instruction.toLowerCase();
-    const mediaRequested = MEDIA_KEYWORDS.some((k) => instructionLower.includes(k.toLowerCase()));
+    const mediaRequested =
+      assets.length > 0 ||
+      MEDIA_KEYWORDS.some((k) => instructionLower.includes(k.toLowerCase()));
     if (!mediaRequested) {
       for (const op of patch) {
         const touchesProtected =
@@ -381,6 +435,33 @@ Deno.serve(async (req) => {
     if (!validatedResult.success) {
       console.error("[edit-page] result schema invalid:", validatedResult.error.message);
       return json({ error: "The edited content did not match the expected shape." }, 422);
+    }
+
+    // ---- Media-URL safety net ----
+    // Any media URL in the RESULT that was not already in the original content
+    // must be one of the attached asset URLs. This blocks the model from
+    // inventing URLs or smuggling in foreign ones via the patch.
+    const collectUrls = (value: unknown, out: Set<string>) => {
+      if (Array.isArray(value)) {
+        for (const v of value) collectUrls(v, out);
+      } else if (value && typeof value === "object") {
+        for (const [k, v] of Object.entries(value)) {
+          if (k === "url" && typeof v === "string") out.add(v);
+          else collectUrls(v, out);
+        }
+      }
+    };
+    const originalUrls = new Set<string>();
+    collectUrls(content, originalUrls);
+    const resultUrls = new Set<string>();
+    collectUrls(validatedResult.data, resultUrls);
+    for (const u of resultUrls) {
+      if (!originalUrls.has(u) && !assetUrls.has(u)) {
+        return json(
+          { error: "The edit tried to add a media URL that was not attached. Please try again." },
+          422,
+        );
+      }
     }
 
     const changedPaths = patch.map((op) => op.path);
