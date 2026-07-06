@@ -367,7 +367,7 @@ Deno.serve(async (req) => {
     let parsed: unknown = null;
     let lastRaw = "";
     for (let attempt = 0; attempt < 2; attempt++) {
-      const result = await callAnthropic(apiKey, contentJson, instruction, sourceLang, history);
+      const result = await callAnthropic(apiKey, contentJson, instruction, sourceLang, history, assets);
       if (!result.ok) {
         if (result.status === 401) return json({ error: "Invalid Anthropic API key." }, 502);
         if (result.status === 429)
