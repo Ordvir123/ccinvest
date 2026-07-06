@@ -343,6 +343,26 @@ Deno.serve(async (req) => {
       history = parsedHistory.data.slice(-MAX_HISTORY_TURNS);
     }
 
+    // ---- Parse + validate attached assets (already in the page-media bucket) ----
+    let assets: Asset[] = [];
+    if (input.assets !== undefined) {
+      const parsedAssets = z.array(assetSchema).max(MAX_ASSETS).safeParse(input.assets);
+      if (!parsedAssets.success) return json({ error: "Invalid assets payload." }, 400);
+      assets = parsedAssets.data;
+    }
+    // SECURITY: every asset URL must live in THIS project's public page-media
+    // bucket. This prevents the function being used to fetch arbitrary URLs.
+    const allowedPrefix = `${supaUrl}/storage/v1/object/public/page-media/`;
+    for (const a of assets) {
+      if (!a.url.startsWith(allowedPrefix)) {
+        return json(
+          { error: "Asset URLs must point to the page-media storage bucket." },
+          400,
+        );
+      }
+    }
+    const assetUrls = new Set(assets.map((a) => a.url));
+
     // ---- Call model, parse patch JSON, retry once on parse failure ----
     let parsed: unknown = null;
     let lastRaw = "";
