@@ -207,6 +207,7 @@ PATCH RULES — follow exactly:
 * "replace"/"add" require "value". "move"/"copy" require "from".
 * Do NOT translate. Keep the existing source language unless the instruction explicitly asks to rewrite copy.
 * Do NOT touch media (images, gallery, wide_images, backgrounds, attachments, youtube_id) unless the instruction explicitly asks about media.
+* If ATTACHED ASSETS are provided (listed below), you MAY place them into the content with "add"/"replace" ops. Use ONLY the EXACT asset URLs given — NEVER invent, guess, modify or shorten a URL. Each asset URL may be used AT MOST ONCE. Media objects use the shape { "url": "...", "alt"?: "..." }; unit attachments use { "url": "...", "type": "image"|"pdf" }. Place gallery photos into /gallery, panoramic shots into /wide_images, a hero photo into /hero/background, and floor plans into the matching /units/N/attachment (or /apartment/attachment).
 * If the instruction is ambiguous or cannot be applied, return an empty patch array and explain in the summary.
 * Use plain hyphens "-" only. Do NOT introduce em dashes or en dashes.`;
 
