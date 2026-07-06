@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { toast } from "sonner";
 import {
   Save,
@@ -7,8 +8,8 @@ import {
   Copy,
   ExternalLink,
   RefreshCw,
-  GripVertical,
-  ArrowUpDown,
+  Monitor,
+  PencilLine,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -26,7 +27,7 @@ import { TranslationsTab } from "@/components/admin/TranslationsTab";
 import { SeoEditor } from "@/components/admin/SeoEditor";
 import { AiCorrectionsPanel } from "@/components/admin/AiCorrectionsPanel";
 import { cleanContent } from "@/lib/pages";
-import { READING_LANGS, type Page, type PageContent } from "@/types/page";
+import { READING_LANGS, type Page, type PageContent, type ReadingLang } from "@/types/page";
 
 import {
   usePageEditorState,
@@ -42,6 +43,8 @@ import { VideosSection } from "@/components/admin/editor/VideosSection";
 import { LocationSection } from "@/components/admin/editor/LocationSection";
 import { ContactSection } from "@/components/admin/editor/ContactSection";
 import { MetaSection } from "@/components/admin/editor/MetaSection";
+import { EditorPreview } from "@/components/admin/editor/EditorPreview";
+import { SectionManager } from "@/components/admin/editor/SectionManager";
 
 export function PageEditor({
   initialPage,
