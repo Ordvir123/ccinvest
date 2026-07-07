@@ -130,7 +130,28 @@ const pageContentSchema = z.object({
       heading_i18n: langMap,
     })
     .optional(),
+  // Duplicated section instances. `data` matches the base field shape of its type.
+  extra_sections: z
+    .array(
+      z.object({
+        id: z.string(),
+        type: z.enum(["about", "gallery", "wide_images", "videos", "stats"]),
+        data: z.union([
+          z.object({
+            heading: z.string().optional(),
+            body: z.string().optional(),
+            features: z.array(z.string()).optional(),
+            feature_icons: z.array(z.string()).optional(),
+          }),
+          z.array(mediaSchema),
+          z.array(videoSchema),
+          z.array(statSchema),
+        ]),
+      }),
+    )
+    .optional(),
 });
+
 
 // ---- Patch schema (RFC 6902 ops) ----
 const patchOpSchema = z
