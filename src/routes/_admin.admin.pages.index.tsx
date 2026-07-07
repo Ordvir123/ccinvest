@@ -290,8 +290,7 @@ function PagesList() {
             <AlertDialogDescription>
               {toDuplicate ? (
                 <>
-                  A copy of “{toDuplicate.title}” will be created as a draft. The copy will be
-                  created as a draft.
+                  A copy of “{toDuplicate.title}” will be created as a draft.
                 </>
               ) : null}
             </AlertDialogDescription>
