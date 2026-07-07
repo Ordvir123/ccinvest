@@ -107,6 +107,33 @@ export function listTranslatableFields(c: PageContent): TransField[] {
   (c.videos ?? []).forEach((v, i) => push(`videos.${i}.title`, `Video ${i + 1} · Title`, v.title));
 
   // contact.heading is authored per-locale (heading_i18n) — not machine-translated.
+
+  // Duplicated section instances (extra_sections). Paths are prefixed with the
+  // instance id ("about#2.heading", "gallery#2.0.alt") — see getPath/setPath.
+  (c.extra_sections ?? []).forEach((sec) => {
+    const id = sec.id;
+    if (sec.type === "about") {
+      const a = sec.data as AboutData;
+      push(`${id}.heading`, `About (${id}) · Heading`, a.heading);
+      push(`${id}.body`, `About (${id}) · Body`, a.body);
+      (a.features ?? []).forEach((f, i) =>
+        push(`${id}.features.${i}`, `About (${id}) · Feature ${i + 1}`, f),
+      );
+    } else if (sec.type === "gallery" || sec.type === "wide_images") {
+      (sec.data as Media[]).forEach((m, i) =>
+        push(`${id}.${i}.alt`, `${id} · Image ${i + 1} · Alt`, m.alt),
+      );
+    } else if (sec.type === "videos") {
+      (sec.data as Video[]).forEach((v, i) =>
+        push(`${id}.${i}.title`, `${id} · Video ${i + 1} · Title`, v.title),
+      );
+    } else if (sec.type === "stats") {
+      (sec.data as Stat[]).forEach((st, i) =>
+        push(`${id}.${i}.label`, `${id} · Stat ${i + 1} · Label`, st.label),
+      );
+    }
+  });
+
   return out;
 }
 
