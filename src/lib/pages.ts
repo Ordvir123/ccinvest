@@ -285,7 +285,7 @@ export function cleanContent(content: PageContent): PageContent {
   const about = cleanAboutData(content.about);
 
 
-  const gallery = (content.gallery ?? []).filter((m) => t(m.url));
+  const gallery = cleanMediaData(content.gallery);
 
   // Migrate legacy text in numeric fields to a bare number string.
   // "1er étage" -> "1", "6ème étage" -> "6", "RDC"/"rez-de-chaussée" -> "0",
