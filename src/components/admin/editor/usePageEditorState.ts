@@ -8,14 +8,19 @@ import {
   orderedSectionIds,
   isSectionHidden,
   SECTION_LABELS,
+  LAYOUT_LABELS,
   getSectionData,
   setSectionData,
   getSectionLayout,
   setSectionLayout,
+  getSectionType,
+  layoutFits,
+  defaultLayoutForType,
   duplicateSection,
   deleteSection,
   type SectionKey,
 } from "@/lib/page-sections";
+
 import { BUILTIN_SPEC_PRESETS, BUILTIN_FEATURE_PRESETS } from "@/lib/unit-i18n";
 import {
   emptyPageContent,
