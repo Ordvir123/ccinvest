@@ -28,7 +28,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { listPages, setPageStatus, deletePage, type PageListItem } from "@/lib/pages";
+import { listPages, setPageStatus, deletePage, duplicatePage, type PageListItem } from "@/lib/pages";
 
 export const Route = createFileRoute("/_admin/admin/pages/")({
   component: PagesList,
