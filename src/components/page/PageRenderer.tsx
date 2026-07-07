@@ -523,11 +523,10 @@ function Gallery({
   if (!hasItems(gallery)) return null;
 
   // No stored layout → keep the legacy carousel (pixel-identical). Any stored
-  // value renders as a CSS grid; unknown values fall back to the default.
+  // value renders as a CSS grid; unknown / non-fitting values fall back safely.
   const useGrid = layout !== undefined;
-  const effective = (GALLERY_LAYOUTS as readonly string[]).includes(layout ?? "")
-    ? (layout as string)
-    : DEFAULT_GALLERY_LAYOUT;
+  const effective = effectiveLayout("gallery", layout, gallery.length);
+
 
   return (
     <Section>
