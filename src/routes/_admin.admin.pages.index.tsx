@@ -2,7 +2,7 @@ import { useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { FilePlus2, Pencil, Copy, CopyPlus, ExternalLink, Archive, ArchiveRestore, Trash2 } from "lucide-react";
+import { FilePlus2, Pencil, Copy, CopyPlus, ExternalLink, Archive, ArchiveRestore, Trash2, Loader2 } from "lucide-react";
 
 const SITE_ORIGIN = "https://ccinvest.lovable.app";
 
@@ -180,67 +180,86 @@ function PagesList() {
                         <>
                           <Button
                             variant="ghost"
-                            size="sm"
+                            size="icon"
+                            title="Restore"
+                            aria-label="Restore"
                             onClick={() => restoreMut.mutate(p.id)}
                             disabled={restoreMut.isPending}
                           >
-                            <ArchiveRestore className="h-4 w-4" /> Restore
+                            <ArchiveRestore className="h-4 w-4" />
                           </Button>
                           <Button
                             variant="ghost"
-                            size="sm"
+                            size="icon"
+                            title="Delete permanently"
+                            aria-label="Delete permanently"
                             className="text-destructive hover:text-destructive"
                             onClick={() => setToDelete(p)}
                           >
-                            <Trash2 className="h-4 w-4" /> Delete
+                            <Trash2 className="h-4 w-4" />
                           </Button>
                         </>
                       ) : (
                         <>
                           {p.status === "published" && (
                             <>
-                              <Button asChild variant="ghost" size="sm">
+                              <Button asChild variant="ghost" size="icon" title="View" aria-label="View">
                                 <a href={`${SITE_ORIGIN}/${p.slug}`} target="_blank" rel="noreferrer">
-                                  <ExternalLink className="h-4 w-4" /> View
+                                  <ExternalLink className="h-4 w-4" />
                                 </a>
                               </Button>
                               <Button
                                 variant="ghost"
-                                size="sm"
+                                size="icon"
+                                title="Copy link"
+                                aria-label="Copy link"
                                 onClick={async () => {
                                   await navigator.clipboard.writeText(`${SITE_ORIGIN}/${p.slug}`);
                                   toast.success("Share link copied.");
                                 }}
                               >
-                                <Copy className="h-4 w-4" /> Link
+                                <Copy className="h-4 w-4" />
                               </Button>
                             </>
                           )}
-                          <Button asChild variant="ghost" size="sm">
+                          <Button asChild variant="ghost" size="icon" title="Edit" aria-label="Edit">
                             <Link to="/admin/pages/$id" params={{ id: p.id }}>
-                              <Pencil className="h-4 w-4" /> Edit
+                              <Pencil className="h-4 w-4" />
                             </Link>
                           </Button>
                           <Button
                             variant="ghost"
-                            size="sm"
+                            size="icon"
+                            title={
+                              duplicateMut.isPending && duplicateMut.variables === p.id
+                                ? "Duplicating…"
+                                : "Duplicate"
+                            }
+                            aria-label={
+                              duplicateMut.isPending && duplicateMut.variables === p.id
+                                ? "Duplicating…"
+                                : "Duplicate"
+                            }
                             onClick={() => setToDuplicate(p)}
                             disabled={
                               duplicateMut.isPending && duplicateMut.variables === p.id
                             }
                           >
-                            <CopyPlus className="h-4 w-4" />{" "}
-                            {duplicateMut.isPending && duplicateMut.variables === p.id
-                              ? "Duplicating…"
-                              : "Duplicate"}
+                            {duplicateMut.isPending && duplicateMut.variables === p.id ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <CopyPlus className="h-4 w-4" />
+                            )}
                           </Button>
                           <Button
                             variant="ghost"
-                            size="sm"
+                            size="icon"
+                            title="Archive"
+                            aria-label="Archive"
                             onClick={() => archiveMut.mutate(p.id)}
                             disabled={archiveMut.isPending}
                           >
-                            <Archive className="h-4 w-4" /> Archive
+                            <Archive className="h-4 w-4" />
                           </Button>
 
                         </>
