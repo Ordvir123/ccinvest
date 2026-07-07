@@ -202,12 +202,14 @@ export function usePageEditorState({
   };
 
   const onSave = async () => {
-    if (!content.hero.title.trim()) {
+    if (!content.hero?.title?.trim()) {
       toast.error("Hero title is required.");
+      console.error("[editor] onSave aborted: missing hero title");
       return;
     }
     if (!slug) {
       toast.error("A slug is required.");
+      console.error("[editor] onSave aborted: missing slug");
       return;
     }
     setSaving(true);
