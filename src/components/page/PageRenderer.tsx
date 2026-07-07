@@ -836,6 +836,7 @@ export function PageRenderer({
     : undefined;
 
   const nodes: Record<SectionKey, React.ReactNode> = {
+    about: <About about={content.about} />,
     stats: <Stats stats={content.stats} />,
     location:
       content.location &&
