@@ -416,34 +416,55 @@ function Gallery({
   const [active, setActive] = useState(0);
   if (!hasItems(gallery)) return null;
 
+  // No stored layout → keep the legacy carousel (pixel-identical). Any stored
+  // value renders as a CSS grid; unknown values fall back to the default.
+  const useGrid = layout !== undefined;
+  const effective = (GALLERY_LAYOUTS as readonly string[]).includes(layout ?? "")
+    ? (layout as string)
+    : DEFAULT_GALLERY_LAYOUT;
+
   return (
     <Section>
       <h2 className="mb-8 text-center text-3xl text-ink md:text-4xl">{labels.gallery}</h2>
-      <Carousel opts={{ loop: true }} className="mx-auto w-full max-w-4xl">
-        <CarouselContent>
-          {gallery.map((img, i) => (
-            <CarouselItem key={i} className="md:basis-2/3">
-              <button
-                type="button"
-                onClick={() => {
-                  setActive(i);
-                  setOpen(true);
-                }}
-                className="block w-full overflow-hidden rounded-lg border border-border"
-              >
-                <img
-                  src={img.url}
-                  alt={img.alt ?? `Image ${i + 1}`}
-                  loading="lazy"
-                  className="aspect-[4/3] w-full object-cover transition-transform duration-300 hover:scale-[1.03]"
-                />
-              </button>
-            </CarouselItem>
-          ))}
-        </CarouselContent>
-        <CarouselPrevious />
-        <CarouselNext />
-      </Carousel>
+      {useGrid ? (
+        <div className="mx-auto w-full max-w-5xl">
+          <MediaLayout
+            images={gallery}
+            layout={effective}
+            framed
+            onImageClick={(i) => {
+              setActive(i);
+              setOpen(true);
+            }}
+          />
+        </div>
+      ) : (
+        <Carousel opts={{ loop: true }} className="mx-auto w-full max-w-4xl">
+          <CarouselContent>
+            {gallery.map((img, i) => (
+              <CarouselItem key={i} className="md:basis-2/3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActive(i);
+                    setOpen(true);
+                  }}
+                  className="block w-full overflow-hidden rounded-lg border border-border"
+                >
+                  <img
+                    src={img.url}
+                    alt={img.alt ?? `Image ${i + 1}`}
+                    loading="lazy"
+                    className="aspect-[4/3] w-full object-cover transition-transform duration-300 hover:scale-[1.03]"
+                  />
+                </button>
+              </CarouselItem>
+            ))}
+          </CarouselContent>
+          <CarouselPrevious />
+          <CarouselNext />
+        </Carousel>
+      )}
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-4xl border-none bg-transparent p-0 shadow-none">
