@@ -93,7 +93,9 @@ const pageContentSchema = z.object({
     })
     .optional(),
   gallery: z.array(mediaSchema).optional(),
+  gallery_layout: z.string().optional(),
   wide_images: z.array(mediaSchema).optional(),
+  wide_images_layout: z.string().optional(),
   units: z.array(unitSchema).optional(),
   apartment: unitSchema.optional(),
   videos: z.array(videoSchema).optional(),
@@ -116,6 +118,7 @@ const pageContentSchema = z.object({
           z.array(videoSchema),
           z.array(statSchema),
         ]),
+        layout: z.string().optional(),
       }),
     )
     .optional(),

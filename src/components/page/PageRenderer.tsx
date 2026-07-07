@@ -5,7 +5,11 @@ import {
   isSectionHidden,
   sectionLabel,
   getSectionData,
+  getSectionLayout,
   getSectionType,
+  GALLERY_LAYOUTS,
+  WIDE_LAYOUTS,
+  DEFAULT_GALLERY_LAYOUT,
   type SectionKey,
 } from "@/lib/page-sections";
 import { cn } from "@/lib/utils";
@@ -265,45 +269,202 @@ function LocationBlock({
   );
 }
 
+/** Split an array into consecutive groups of `size`. */
+function chunk<T>(arr: T[], size: number): T[][] {
+  const out: T[][] = [];
+  for (let i = 0; i < arr.length; i += size) out.push(arr.slice(i, i + size));
+  return out;
+}
+
+/** Single image cell, optionally clickable (gallery lightbox) and framed. */
+function MediaCell({
+  img,
+  index,
+  onClick,
+  framed,
+  aspect,
+}: {
+  img: Media;
+  index: number;
+  onClick?: (i: number) => void;
+  framed: boolean;
+  aspect?: string;
+}) {
+  const image = (
+    <img
+      src={img.url}
+      alt={img.alt ?? `Image ${index + 1}`}
+      loading="lazy"
+      className={cn(
+        "block h-full w-full object-cover transition-transform duration-300",
+        onClick && "hover:scale-[1.03]",
+        aspect,
+      )}
+    />
+  );
+  const cls = cn("block h-full w-full overflow-hidden", framed && "rounded-lg border border-border");
+  return onClick ? (
+    <button type="button" onClick={() => onClick(index)} className={cls}>
+      {image}
+    </button>
+  ) : (
+    <div className={cls}>{image}</div>
+  );
+}
+
+/**
+ * Render a list of images using a layout preset. Patterns repeat in groups; an
+ * incomplete final group degrades to full-width cells (never a broken hole).
+ * `one-large-three-stack` is dir-aware: the large image sits on the start side
+ * (left in LTR, right in RTL) automatically via the grid's reading direction.
+ */
+function MediaLayout({
+  images,
+  layout,
+  framed,
+  gap = "gap-4",
+  onImageClick,
+}: {
+  images: Media[];
+  layout: string;
+  framed: boolean;
+  gap?: string;
+  onImageClick?: (i: number) => void;
+}) {
+  const cell = (img: Media, i: number, aspect?: string) => (
+    <MediaCell key={i} img={img} index={i} onClick={onImageClick} framed={framed} aspect={aspect} />
+  );
+
+  // Uniform grids — no grouping.
+  if (layout === "grid-3" || layout === "grid-2") {
+    const cols = layout === "grid-3" ? "sm:grid-cols-2 lg:grid-cols-3" : "sm:grid-cols-2";
+    const aspect = layout === "grid-3" ? "aspect-[4/3]" : "aspect-video";
+    return (
+      <div className={cn("grid grid-cols-1", cols, gap)}>
+        {images.map((img, i) => cell(img, i, aspect))}
+      </div>
+    );
+  }
+
+  // Full-width stack (gallery "one-wide" / wide "stack").
+  if (layout === "one-wide" || layout === "stack") {
+    return <div className={cn("flex flex-col", gap)}>{images.map((img, i) => cell(img, i))}</div>;
+  }
+
+  const size = layout === "one-large-three-stack" ? 4 : layout === "two-top-one-wide" ? 3 : 2;
+  const groups = chunk(images, size);
+
+  return (
+    <div className={cn("flex flex-col", gap)}>
+      {groups.map((g, gi) => {
+        const base = gi * size;
+        // Incomplete final group → full-width cells.
+        if (g.length < size) {
+          return (
+            <div key={gi} className={cn("flex flex-col", gap)}>
+              {g.map((img, j) => cell(img, base + j))}
+            </div>
+          );
+        }
+        if (layout === "two-landscape" || layout === "two-portrait") {
+          const aspect = layout === "two-portrait" ? "aspect-[3/4]" : "aspect-[4/3]";
+          return (
+            <div key={gi} className={cn("grid grid-cols-2", gap)}>
+              {g.map((img, j) => cell(img, base + j, aspect))}
+            </div>
+          );
+        }
+        if (layout === "two-top-one-wide") {
+          return (
+            <div key={gi} className={cn("flex flex-col", gap)}>
+              <div className={cn("grid grid-cols-2", gap)}>
+                {cell(g[0], base, "aspect-[4/3]")}
+                {cell(g[1], base + 1, "aspect-[4/3]")}
+              </div>
+              {cell(g[2], base + 2, "aspect-video")}
+            </div>
+          );
+        }
+        // one-large-three-stack: large on the start side (dir-aware), three stacked.
+        return (
+          <div key={gi} className={cn("grid md:grid-cols-2", gap)}>
+            <div className="aspect-[4/3] md:aspect-auto">
+              {cell(g[0], base, "h-full")}
+            </div>
+            <div className={cn("grid grid-rows-3", gap)}>
+              {cell(g[1], base + 1, "h-full")}
+              {cell(g[2], base + 2, "h-full")}
+              {cell(g[3], base + 3, "h-full")}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 function Gallery({
   gallery,
   labels,
+  layout,
 }: {
   gallery: PageContent["gallery"];
   labels: Record<string, string>;
+  layout?: string;
 }) {
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(0);
   if (!hasItems(gallery)) return null;
 
+  // No stored layout → keep the legacy carousel (pixel-identical). Any stored
+  // value renders as a CSS grid; unknown values fall back to the default.
+  const useGrid = layout !== undefined;
+  const effective = (GALLERY_LAYOUTS as readonly string[]).includes(layout ?? "")
+    ? (layout as string)
+    : DEFAULT_GALLERY_LAYOUT;
+
   return (
     <Section>
       <h2 className="mb-8 text-center text-3xl text-ink md:text-4xl">{labels.gallery}</h2>
-      <Carousel opts={{ loop: true }} className="mx-auto w-full max-w-4xl">
-        <CarouselContent>
-          {gallery.map((img, i) => (
-            <CarouselItem key={i} className="md:basis-2/3">
-              <button
-                type="button"
-                onClick={() => {
-                  setActive(i);
-                  setOpen(true);
-                }}
-                className="block w-full overflow-hidden rounded-lg border border-border"
-              >
-                <img
-                  src={img.url}
-                  alt={img.alt ?? `Image ${i + 1}`}
-                  loading="lazy"
-                  className="aspect-[4/3] w-full object-cover transition-transform duration-300 hover:scale-[1.03]"
-                />
-              </button>
-            </CarouselItem>
-          ))}
-        </CarouselContent>
-        <CarouselPrevious />
-        <CarouselNext />
-      </Carousel>
+      {useGrid ? (
+        <div className="mx-auto w-full max-w-5xl">
+          <MediaLayout
+            images={gallery}
+            layout={effective}
+            framed
+            onImageClick={(i) => {
+              setActive(i);
+              setOpen(true);
+            }}
+          />
+        </div>
+      ) : (
+        <Carousel opts={{ loop: true }} className="mx-auto w-full max-w-4xl">
+          <CarouselContent>
+            {gallery.map((img, i) => (
+              <CarouselItem key={i} className="md:basis-2/3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActive(i);
+                    setOpen(true);
+                  }}
+                  className="block w-full overflow-hidden rounded-lg border border-border"
+                >
+                  <img
+                    src={img.url}
+                    alt={img.alt ?? `Image ${i + 1}`}
+                    loading="lazy"
+                    className="aspect-[4/3] w-full object-cover transition-transform duration-300 hover:scale-[1.03]"
+                  />
+                </button>
+              </CarouselItem>
+            ))}
+          </CarouselContent>
+          <CarouselPrevious />
+          <CarouselNext />
+        </Carousel>
+      )}
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-4xl border-none bg-transparent p-0 shadow-none">
@@ -689,19 +850,38 @@ function Videos({
 }
 
 /** Full-bleed images spanning the whole screen width, stacked vertically. */
-function WideImages({ images }: { images?: PageContent["wide_images"] }) {
+function WideImages({
+  images,
+  layout,
+}: {
+  images?: PageContent["wide_images"];
+  layout?: string;
+}) {
   if (!hasItems(images)) return null;
+
+  // Absent / "stack" / unknown → the legacy edge-to-edge stack (pixel-identical).
+  const effective =
+    layout && (WIDE_LAYOUTS as readonly string[]).includes(layout) ? layout : "stack";
+
+  if (effective === "stack") {
+    return (
+      <section className="w-full">
+        {images!.map((img, i) => (
+          <img
+            key={i}
+            src={img.url}
+            alt={img.alt ?? ""}
+            loading="lazy"
+            className="block w-full object-cover"
+          />
+        ))}
+      </section>
+    );
+  }
+
   return (
     <section className="w-full">
-      {images!.map((img, i) => (
-        <img
-          key={i}
-          src={img.url}
-          alt={img.alt ?? ""}
-          loading="lazy"
-          className="block w-full object-cover"
-        />
-      ))}
+      <MediaLayout images={images!} layout={effective} framed={false} gap="gap-1" />
     </section>
   );
 }
@@ -855,10 +1035,19 @@ export function PageRenderer({
         return <Stats stats={(getSectionData(content, id) as Stat[] | undefined) ?? []} />;
       case "gallery":
         return (
-          <Gallery gallery={(getSectionData(content, id) as Media[] | undefined) ?? []} labels={labels} />
+          <Gallery
+            gallery={(getSectionData(content, id) as Media[] | undefined) ?? []}
+            labels={labels}
+            layout={getSectionLayout(content, id)}
+          />
         );
       case "wide_images":
-        return <WideImages images={getSectionData(content, id) as Media[] | undefined} />;
+        return (
+          <WideImages
+            images={getSectionData(content, id) as Media[] | undefined}
+            layout={getSectionLayout(content, id)}
+          />
+        );
       case "videos":
         return <Videos videos={getSectionData(content, id) as Video[] | undefined} labels={labels} />;
       case "location":

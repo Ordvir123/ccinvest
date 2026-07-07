@@ -108,6 +108,8 @@ export type ExtraSection = {
   id: string;
   type: DuplicableSectionType;
   data: ExtraSectionData;
+  /** Layout preset for gallery / wide_images instances (see page-sections). */
+  layout?: string;
 };
 
 
@@ -142,8 +144,12 @@ export type PageContent = {
   };
   about?: { heading?: string; body?: string; features?: string[]; feature_icons?: string[] };
   gallery: Media[];
+  /** Layout preset for the base gallery section (see page-sections). Absent = legacy carousel. */
+  gallery_layout?: string;
   /** Full-bleed "wide images" section — images span the full screen width. */
   wide_images?: Media[];
+  /** Layout preset for the base wide-images section. Absent = legacy stack. */
+  wide_images_layout?: string;
   /**
    * Extra (duplicated) section instances. Base instances keep living in their
    * own PageContent fields above; these are additional copies. Each has a

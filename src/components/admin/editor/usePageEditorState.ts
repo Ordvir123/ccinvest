@@ -10,6 +10,8 @@ import {
   SECTION_LABELS,
   getSectionData,
   setSectionData,
+  getSectionLayout,
+  setSectionLayout,
   duplicateSection,
   deleteSection,
   type SectionKey,
@@ -324,6 +326,11 @@ export function usePageEditorState({
   const setData = (id: string, data: ReturnType<typeof getSectionData>) =>
     setContent((c) => setSectionData(c, id, data!));
 
+  // Per-instance layout preset (gallery / wide_images only).
+  const getLayout = (id: string) => getSectionLayout(content, id);
+  const setLayout = (id: string, layout: string) =>
+    setContent((c) => setSectionLayout(c, id, layout));
+
   const duplicateInstance = (id: string) =>
     setContent((c) => duplicateSection(c, id).content);
   const deleteInstance = (id: string) => setContent((c) => deleteSection(c, id));
@@ -375,6 +382,8 @@ export function usePageEditorState({
     orderedIds,
     getData,
     setData,
+    getLayout,
+    setLayout,
     duplicateInstance,
     deleteInstance,
     reorderSections,

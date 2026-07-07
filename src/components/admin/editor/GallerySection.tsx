@@ -1,4 +1,5 @@
 import { GalleryUpload } from "@/components/admin/MediaUpload";
+import { LayoutPicker } from "@/components/admin/editor/LayoutPicker";
 import type { Media } from "@/types/page";
 import type { PageEditorState } from "@/components/admin/editor/usePageEditorState";
 
@@ -6,12 +7,15 @@ export function GallerySection({ s, id = "gallery" }: { s: PageEditorState; id?:
   const { getData, setData, slug, canUpload } = s;
   const value = (getData(id) as Media[] | undefined) ?? [];
   return (
-    <GalleryUpload
-      slug={slug}
-      value={value}
-      onChange={(gallery) => setData(id, gallery)}
-      disabled={!canUpload}
-    />
+    <div className="space-y-5">
+      <LayoutPicker s={s} id={id} type="gallery" />
+      <GalleryUpload
+        slug={slug}
+        value={value}
+        onChange={(gallery) => setData(id, gallery)}
+        disabled={!canUpload}
+      />
+    </div>
   );
 }
 
@@ -25,10 +29,11 @@ export function WideImagesSection({
   const { getData, setData, slug, canUpload } = s;
   const value = (getData(id) as Media[] | undefined) ?? [];
   return (
-    <div className="space-y-3">
+    <div className="space-y-5">
       <p className="text-xs text-muted-foreground">
         These images render edge-to-edge on the page (no cropping into cards).
       </p>
+      <LayoutPicker s={s} id={id} type="wide_images" />
       <GalleryUpload
         slug={slug}
         value={value}
