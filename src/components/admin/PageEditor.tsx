@@ -211,7 +211,7 @@ export function PageEditor({
   );
 
   return (
-    <div className="flex h-full min-h-screen flex-col">
+    <div className="flex h-full min-h-screen flex-col md:h-screen md:min-h-0 md:overflow-hidden">
       {/* Sticky action bar */}
       <div className="sticky top-0 z-20 flex items-center justify-between gap-3 border-b border-border bg-background/95 px-4 py-3 backdrop-blur md:px-6">
         <div className="flex items-center gap-3">
