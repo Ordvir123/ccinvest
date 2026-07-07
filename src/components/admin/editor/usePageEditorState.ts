@@ -246,14 +246,20 @@ export function usePageEditorState({
   const liveUrl = slug ? `${SITE_ORIGIN}/${slug}` : "";
 
   const onPublish = async () => {
-    const problem = await validateForPublish({ id: pageId, slug, title: content.hero.title });
-    if (problem) {
-      setSlugError(problem.includes("slug") ? problem : null);
-      toast.error(problem);
+    if (!content.hero?.title?.trim()) {
+      toast.error("Hero title is required before publishing.");
+      console.error("[editor] onPublish aborted: missing hero title");
       return;
     }
     setPublishing(true);
     try {
+      const problem = await validateForPublish({ id: pageId, slug, title: content.hero.title });
+      if (problem) {
+        setSlugError(problem.includes("slug") ? problem : null);
+        toast.error(problem);
+        console.error("[editor] onPublish validation failed:", problem);
+        return;
+      }
       // Save AND publish in a single write so a brand-new page is created with
       // status 'published' (avoids a save→navigate→status-flip race).
       const saved = await savePage({
@@ -272,11 +278,13 @@ export function usePageEditorState({
         navigate({ to: "/admin/pages/$id", params: { id: saved.id }, replace: true });
       }
     } catch (err) {
+      console.error("[editor] onPublish failed:", err);
       toast.error(err instanceof Error ? err.message : "Failed to publish.");
     } finally {
       setPublishing(false);
     }
   };
+
 
   const onUnpublish = async () => {
     if (!pageId) return;
