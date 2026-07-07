@@ -224,6 +224,19 @@ function PagesList() {
                           <Button
                             variant="ghost"
                             size="sm"
+                            onClick={() => setToDuplicate(p)}
+                            disabled={
+                              duplicateMut.isPending && duplicateMut.variables === p.id
+                            }
+                          >
+                            <CopyPlus className="h-4 w-4" />{" "}
+                            {duplicateMut.isPending && duplicateMut.variables === p.id
+                              ? "Duplicating…"
+                              : "Duplicate"}
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
                             onClick={() => archiveMut.mutate(p.id)}
                             disabled={archiveMut.isPending}
                           >
