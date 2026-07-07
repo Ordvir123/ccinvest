@@ -36,8 +36,10 @@ export const Route = createFileRoute("/_admin/admin/pages/")({
 
 function PagesList() {
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const [showArchived, setShowArchived] = useState(false);
   const [toDelete, setToDelete] = useState<PageListItem | null>(null);
+  const [toDuplicate, setToDuplicate] = useState<PageListItem | null>(null);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["admin-pages"],
