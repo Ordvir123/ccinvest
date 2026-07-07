@@ -7,11 +7,11 @@ import {
   getSectionData,
   getSectionLayout,
   getSectionType,
-  GALLERY_LAYOUTS,
-  WIDE_LAYOUTS,
-  DEFAULT_GALLERY_LAYOUT,
+  effectiveLayout,
+  layoutGroupSize,
   type SectionKey,
 } from "@/lib/page-sections";
+
 import { cn } from "@/lib/utils";
 
 import { getIcon, guessIcon } from "@/lib/page-icons";
@@ -313,10 +313,12 @@ function MediaCell({
 }
 
 /**
- * Render a list of images using a layout preset. Patterns repeat in groups; an
- * incomplete final group degrades to full-width cells (never a broken hole).
- * `one-large-three-stack` is dir-aware: the large image sits on the start side
- * (left in LTR, right in RTL) automatically via the grid's reading direction.
+ * Render a list of images using a layout preset. Strict patterns repeat in
+ * groups; the caller (via `effectiveLayout`) guarantees the count fits the
+ * preset, so no leftover-degradation logic is needed. Dir-aware presets
+ * (asym-pair, one-large-two-stack, one-large-three-stack) place the large
+ * image first in DOM order so it sits on the reading-start side automatically
+ * (left in LTR, right in RTL).
  */
 function MediaLayout({
   images,
@@ -335,7 +337,12 @@ function MediaLayout({
     <MediaCell key={i} img={img} index={i} onClick={onImageClick} framed={framed} aspect={aspect} />
   );
 
-  // Uniform grids — no grouping.
+  // Full-width stack.
+  if (layout === "stacked") {
+    return <div className={cn("flex flex-col", gap)}>{images.map((img, i) => cell(img, i))}</div>;
+  }
+
+  // Uniform column grids — no grouping.
   if (layout === "grid-3" || layout === "grid-2") {
     const cols = layout === "grid-3" ? "sm:grid-cols-2 lg:grid-cols-3" : "sm:grid-cols-2";
     const aspect = layout === "grid-3" ? "aspect-[4/3]" : "aspect-video";
@@ -346,26 +353,27 @@ function MediaLayout({
     );
   }
 
-  // Full-width stack (gallery "one-wide" / wide "stack").
-  if (layout === "one-wide" || layout === "stack") {
-    return <div className={cn("flex flex-col", gap)}>{images.map((img, i) => cell(img, i))}</div>;
+  // Masonry — natural image heights across CSS columns.
+  if (layout === "masonry") {
+    return (
+      <div className={cn("columns-1 sm:columns-2 lg:columns-3", gap)}>
+        {images.map((img, i) => (
+          <div key={i} className={cn("mb-4 break-inside-avoid")}>
+            {cell(img, i)}
+          </div>
+        ))}
+      </div>
+    );
   }
 
-  const size = layout === "one-large-three-stack" ? 4 : layout === "two-top-one-wide" ? 3 : 2;
+  const size = layoutGroupSize(layout);
   const groups = chunk(images, size);
 
   return (
     <div className={cn("flex flex-col", gap)}>
       {groups.map((g, gi) => {
         const base = gi * size;
-        // Incomplete final group → full-width cells.
-        if (g.length < size) {
-          return (
-            <div key={gi} className={cn("flex flex-col", gap)}>
-              {g.map((img, j) => cell(img, base + j))}
-            </div>
-          );
-        }
+
         if (layout === "two-landscape" || layout === "two-portrait") {
           const aspect = layout === "two-portrait" ? "aspect-[3/4]" : "aspect-[4/3]";
           return (
@@ -374,6 +382,40 @@ function MediaLayout({
             </div>
           );
         }
+
+        // asym-pair: 2/3 + 1/3, alternating the wide side each row (zigzag).
+        if (layout === "asym-pair") {
+          const wideFirst = gi % 2 === 0;
+          return (
+            <div key={gi} className={cn("grid grid-cols-3", gap)}>
+              {wideFirst ? (
+                <>
+                  <div className="col-span-2">{cell(g[0], base, "aspect-[4/3]")}</div>
+                  <div className="col-span-1">{cell(g[1], base + 1, "h-full")}</div>
+                </>
+              ) : (
+                <>
+                  <div className="col-span-1">{cell(g[0], base, "h-full")}</div>
+                  <div className="col-span-2">{cell(g[1], base + 1, "aspect-[4/3]")}</div>
+                </>
+              )}
+            </div>
+          );
+        }
+
+        // one-large-two-stack: large on start side (dir-aware) + column of 2.
+        if (layout === "one-large-two-stack") {
+          return (
+            <div key={gi} className={cn("grid md:grid-cols-2", gap)}>
+              <div className="aspect-[4/3] md:aspect-auto">{cell(g[0], base, "h-full")}</div>
+              <div className={cn("grid grid-rows-2", gap)}>
+                {cell(g[1], base + 1, "h-full")}
+                {cell(g[2], base + 2, "h-full")}
+              </div>
+            </div>
+          );
+        }
+
         if (layout === "two-top-one-wide") {
           return (
             <div key={gi} className={cn("flex flex-col", gap)}>
@@ -385,23 +427,87 @@ function MediaLayout({
             </div>
           );
         }
-        // one-large-three-stack: large on the start side (dir-aware), three stacked.
+
+        if (layout === "one-wide-two-bottom") {
+          return (
+            <div key={gi} className={cn("flex flex-col", gap)}>
+              {cell(g[0], base, "aspect-video")}
+              <div className={cn("grid grid-cols-2", gap)}>
+                {cell(g[1], base + 1, "aspect-[4/3]")}
+                {cell(g[2], base + 2, "aspect-[4/3]")}
+              </div>
+            </div>
+          );
+        }
+
+        // one-large-three-stack: large on start side (dir-aware) + column of 3.
+        if (layout === "one-large-three-stack") {
+          return (
+            <div key={gi} className={cn("grid md:grid-cols-2", gap)}>
+              <div className="aspect-[4/3] md:aspect-auto">{cell(g[0], base, "h-full")}</div>
+              <div className={cn("grid grid-rows-3", gap)}>
+                {cell(g[1], base + 1, "h-full")}
+                {cell(g[2], base + 2, "h-full")}
+                {cell(g[3], base + 3, "h-full")}
+              </div>
+            </div>
+          );
+        }
+
+        if (layout === "one-wide-three-cols") {
+          return (
+            <div key={gi} className={cn("flex flex-col", gap)}>
+              {cell(g[0], base, "aspect-video")}
+              <div className={cn("grid grid-cols-3", gap)}>
+                {cell(g[1], base + 1, "aspect-[4/3]")}
+                {cell(g[2], base + 2, "aspect-[4/3]")}
+                {cell(g[3], base + 3, "aspect-[4/3]")}
+              </div>
+            </div>
+          );
+        }
+
+        if (layout === "two-over-three") {
+          return (
+            <div key={gi} className={cn("flex flex-col", gap)}>
+              <div className={cn("grid grid-cols-2", gap)}>
+                {cell(g[0], base, "aspect-[4/3]")}
+                {cell(g[1], base + 1, "aspect-[4/3]")}
+              </div>
+              <div className={cn("grid grid-cols-3", gap)}>
+                {cell(g[2], base + 2, "aspect-[4/3]")}
+                {cell(g[3], base + 3, "aspect-[4/3]")}
+                {cell(g[4], base + 4, "aspect-[4/3]")}
+              </div>
+            </div>
+          );
+        }
+
+        if (layout === "one-wide-2x2") {
+          return (
+            <div key={gi} className={cn("flex flex-col", gap)}>
+              {cell(g[0], base, "aspect-video")}
+              <div className={cn("grid grid-cols-2", gap)}>
+                {cell(g[1], base + 1, "aspect-[4/3]")}
+                {cell(g[2], base + 2, "aspect-[4/3]")}
+                {cell(g[3], base + 3, "aspect-[4/3]")}
+                {cell(g[4], base + 4, "aspect-[4/3]")}
+              </div>
+            </div>
+          );
+        }
+
+        // Unknown → full-width cells (defensive; effectiveLayout prevents this).
         return (
-          <div key={gi} className={cn("grid md:grid-cols-2", gap)}>
-            <div className="aspect-[4/3] md:aspect-auto">
-              {cell(g[0], base, "h-full")}
-            </div>
-            <div className={cn("grid grid-rows-3", gap)}>
-              {cell(g[1], base + 1, "h-full")}
-              {cell(g[2], base + 2, "h-full")}
-              {cell(g[3], base + 3, "h-full")}
-            </div>
+          <div key={gi} className={cn("flex flex-col", gap)}>
+            {g.map((img, j) => cell(img, base + j))}
           </div>
         );
       })}
     </div>
   );
 }
+
 
 function Gallery({
   gallery,
@@ -417,11 +523,10 @@ function Gallery({
   if (!hasItems(gallery)) return null;
 
   // No stored layout → keep the legacy carousel (pixel-identical). Any stored
-  // value renders as a CSS grid; unknown values fall back to the default.
+  // value renders as a CSS grid; unknown / non-fitting values fall back safely.
   const useGrid = layout !== undefined;
-  const effective = (GALLERY_LAYOUTS as readonly string[]).includes(layout ?? "")
-    ? (layout as string)
-    : DEFAULT_GALLERY_LAYOUT;
+  const effective = effectiveLayout("gallery", layout, gallery.length);
+
 
   return (
     <Section>
@@ -859,11 +964,12 @@ function WideImages({
 }) {
   if (!hasItems(images)) return null;
 
-  // Absent / "stack" / unknown → the legacy edge-to-edge stack (pixel-identical).
-  const effective =
-    layout && (WIDE_LAYOUTS as readonly string[]).includes(layout) ? layout : "stack";
+  // Absent → legacy edge-to-edge stack (pixel-identical). Stored values resolve
+  // to a fitting preset; "stacked" also renders as the edge-to-edge stack.
+  const effective = layout === undefined ? "stacked" : effectiveLayout("wide_images", layout, images!.length);
 
-  if (effective === "stack") {
+
+  if (effective === "stacked") {
     return (
       <section className="w-full">
         {images!.map((img, i) => (
