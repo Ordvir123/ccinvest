@@ -892,6 +892,8 @@ export function PageRenderer({
 
   return (
     <main className="bg-background" style={brandStyle}>
+      {/* Hero always renders first and is intentionally NOT part of the
+          reorderable/hideable section list (absent from SectionKey/SectionManager). */}
       <Hero hero={content.hero} settings={settings} lang={lang} />
       {orderedSectionKeys(content).map((key) => {
         const hidden = isSectionHidden(content, key);
