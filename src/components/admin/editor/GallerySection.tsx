@@ -33,7 +33,7 @@ export function WideImagesSection({
       <p className="text-xs text-muted-foreground">
         These images render edge-to-edge on the page (no cropping into cards).
       </p>
-      <LayoutPicker s={s} id={id} type="wide_images" />
+      <LayoutPicker s={s} id={id} type="wide_images" count={value.length} />
       <GalleryUpload
         slug={slug}
         value={value}
