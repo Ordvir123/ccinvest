@@ -317,7 +317,7 @@ export function PageEditor({
       )}
 
       {/* Editor vs Translations */}
-      <Tabs defaultValue="editor" className="flex-1">
+      <Tabs defaultValue="editor" className="flex-1 md:flex md:min-h-0 md:flex-col">
         <div className="border-b border-border px-4 pt-3 md:px-6">
           <TabsList>
             <TabsTrigger value="editor">Editor</TabsTrigger>
@@ -325,7 +325,7 @@ export function PageEditor({
           </TabsList>
         </div>
 
-        <TabsContent value="editor" className="mt-0">
+        <TabsContent value="editor" className="mt-0 md:flex md:min-h-0 md:flex-1 md:flex-col">
           {/* Mobile Preview/Edit toggle (<md) */}
           <div className="flex items-center gap-1 border-b border-border p-3 md:hidden">
             <Button
