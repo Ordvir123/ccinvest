@@ -850,19 +850,38 @@ function Videos({
 }
 
 /** Full-bleed images spanning the whole screen width, stacked vertically. */
-function WideImages({ images }: { images?: PageContent["wide_images"] }) {
+function WideImages({
+  images,
+  layout,
+}: {
+  images?: PageContent["wide_images"];
+  layout?: string;
+}) {
   if (!hasItems(images)) return null;
+
+  // Absent / "stack" / unknown → the legacy edge-to-edge stack (pixel-identical).
+  const effective =
+    layout && (WIDE_LAYOUTS as readonly string[]).includes(layout) ? layout : "stack";
+
+  if (effective === "stack") {
+    return (
+      <section className="w-full">
+        {images!.map((img, i) => (
+          <img
+            key={i}
+            src={img.url}
+            alt={img.alt ?? ""}
+            loading="lazy"
+            className="block w-full object-cover"
+          />
+        ))}
+      </section>
+    );
+  }
+
   return (
     <section className="w-full">
-      {images!.map((img, i) => (
-        <img
-          key={i}
-          src={img.url}
-          alt={img.alt ?? ""}
-          loading="lazy"
-          className="block w-full object-cover"
-        />
-      ))}
+      <MediaLayout images={images!} layout={effective} framed={false} gap="gap-1" />
     </section>
   );
 }
