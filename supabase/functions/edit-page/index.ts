@@ -194,7 +194,8 @@ You receive:
 1. The CURRENT content as a JSON object.
 2. An INSTRUCTION describing the change to make.
 
-You MUST return ONLY a JSON object of this EXACT shape (no markdown, no prose, no code fences):
+You MUST respond by calling the "emit_patch" tool with the patch and a one-sentence summary. Do NOT write prose or JSON in the message body — always call the tool.
+The tool takes:
 {
   "patch": [ /* array of RFC-6902 operations */ ],
   "summary": "one-sentence human summary of the change, in the SAME language as the instruction"
