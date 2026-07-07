@@ -77,6 +77,19 @@ function PagesList() {
     onError: (e) => toast.error(e instanceof Error ? e.message : "Failed to delete."),
   });
 
+  const duplicateMut = useMutation({
+    mutationFn: (id: string) => duplicatePage(id),
+    onSuccess: async (newId) => {
+      toast.success("Page duplicated as a draft.");
+      setToDuplicate(null);
+      await queryClient.invalidateQueries({ queryKey: ["admin-pages"] });
+      navigate({ to: "/admin/pages/$id", params: { id: newId } });
+    },
+    onError: (e) => toast.error(e instanceof Error ? e.message : "Failed to duplicate."),
+  });
+
+
+
   const all = data ?? [];
   const rows = all.filter((p) =>
     showArchived ? p.status === "archived" : p.status !== "archived",
