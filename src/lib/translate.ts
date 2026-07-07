@@ -313,6 +313,66 @@ export function preserveStableFields(source: PageContent, translated: PageConten
   out.wide_images = source.wide_images;
   out.section_order = source.section_order;
   out.hidden_sections = source.hidden_sections;
+
+  // Duplicated section instances: preserve structure from source, keeping only
+  // translated TEXT and restoring non-translatable fields (media URLs, chosen
+  // icons, youtube ids) from the source entry with the same id.
+  if (Array.isArray(source.extra_sections)) {
+    const trById = new Map(
+      (out.extra_sections ?? []).map((e) => [e.id, e] as const),
+    );
+    out.extra_sections = source.extra_sections.map((src) => {
+      const tr = trById.get(src.id);
+      if (!tr || tr.type !== src.type) return structuredClone(src);
+      switch (src.type) {
+        case "about": {
+          const s = src.data as AboutData;
+          const t = tr.data as AboutData;
+          return {
+            ...src,
+            data: {
+              heading: t.heading ?? s.heading,
+              body: t.body ?? s.body,
+              features: Array.isArray(t.features) ? t.features : s.features,
+              feature_icons: s.feature_icons, // never translated
+            },
+          };
+        }
+        case "gallery":
+        case "wide_images": {
+          const s = src.data as Media[];
+          const t = tr.data as Media[];
+          return {
+            ...src,
+            data: s.map((m, i) => ({ url: m.url, alt: t[i]?.alt ?? m.alt })),
+          };
+        }
+        case "videos": {
+          const s = src.data as Video[];
+          const t = tr.data as Video[];
+          return {
+            ...src,
+            data: s.map((v, i) => ({ youtube_id: v.youtube_id, title: t[i]?.title ?? v.title })),
+          };
+        }
+        case "stats": {
+          const s = src.data as Stat[];
+          const t = tr.data as Stat[];
+          return {
+            ...src,
+            data: s.map((st, i) => ({
+              value: st.value,
+              label: t[i]?.label ?? st.label,
+              icon: st.icon, // never translated
+            })),
+          };
+        }
+        default:
+          return structuredClone(src);
+      }
+    });
+  }
+
   // Per-locale proper names are authored manually, not machine-translated.
   if (source.location?.name_i18n) {
     out.location = { ...out.location, name_i18n: source.location.name_i18n };
