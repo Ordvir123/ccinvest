@@ -1,6 +1,13 @@
 import { supabase } from "@/integrations/supabase/client";
 import { translatePageContent } from "@/lib/translate-page.functions";
-import type { PageContent, ReadingLang } from "@/types/page";
+import type {
+  AboutData,
+  Media,
+  PageContent,
+  ReadingLang,
+  Stat,
+  Video,
+} from "@/types/page";
 
 /* ============================================================
  * Stable source hash — MUST match the edge function's canonicalJson + sha256.

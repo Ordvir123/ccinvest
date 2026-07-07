@@ -1,9 +1,11 @@
 import { Fragment, useState } from "react";
 import { ChevronRight, FileText, EyeOff } from "lucide-react";
 import {
-  orderedSectionKeys,
+  orderedSectionIds,
   isSectionHidden,
-  SECTION_LABELS,
+  sectionLabel,
+  getSectionData,
+  getSectionType,
   type SectionKey,
 } from "@/lib/page-sections";
 import { cn } from "@/lib/utils";
@@ -34,10 +36,14 @@ import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import {
   hasItems,
   hasText,
+  type AboutData,
+  type Media,
   type PageContent,
   type ReadingLang,
   type SpecPreset,
+  type Stat,
   type Unit,
+  type Video,
 } from "@/types/page";
 import { ContactForm } from "@/components/page/ContactForm";
 import { DEFAULT_TEMPLATE_SETTINGS, type TemplateSettings } from "@/lib/template-settings";
@@ -761,20 +767,22 @@ function About({ about }: { about?: PageContent["about"] }) {
  * used inside the admin editor preview — never in the public page output.
  */
 function PreviewSection({
-  sectionKey,
+  sectionId,
+  label,
   hidden,
   onSelect,
   children,
 }: {
-  sectionKey: SectionKey;
+  sectionId: string;
+  label: string;
   hidden: boolean;
-  onSelect?: (key: SectionKey) => void;
+  onSelect?: (id: string) => void;
   children: React.ReactNode;
 }) {
   return (
     <div
-      data-section-key={sectionKey}
-      onClick={() => onSelect?.(sectionKey)}
+      data-section-key={sectionId}
+      onClick={() => onSelect?.(sectionId)}
       className={cn(
         "group/preview relative cursor-pointer",
         hidden && "opacity-40 grayscale",
@@ -784,7 +792,7 @@ function PreviewSection({
       <div className="pointer-events-none absolute inset-0 z-30 ring-inset ring-2 ring-transparent transition-colors group-hover/preview:ring-primary/70" />
       {/* Section-name badge on hover */}
       <div className="pointer-events-none absolute left-3 top-3 z-40 rounded-md bg-primary px-2 py-0.5 text-xs font-medium text-primary-foreground opacity-0 shadow transition-opacity group-hover/preview:opacity-100">
-        {SECTION_LABELS[sectionKey]}
+        {label}
       </div>
       {/* Persistent "hidden" badge for hidden sections */}
       {hidden && (
@@ -796,6 +804,7 @@ function PreviewSection({
     </div>
   );
 }
+
 
 export type PageRendererProps = {
   content: PageContent;
@@ -812,8 +821,8 @@ export type PageRendererProps = {
    * the public page output stays pixel-identical.
    */
   preview?: boolean;
-  /** Called when a section is clicked in preview mode. */
-  onSectionSelect?: (key: SectionKey) => void;
+  /** Called when a section instance is clicked in preview mode. */
+  onSectionSelect?: (id: string) => void;
 };
 
 export function PageRenderer({
@@ -835,59 +844,74 @@ export function PageRenderer({
       } as React.CSSProperties)
     : undefined;
 
-  const nodes: Record<SectionKey, React.ReactNode> = {
-    about: <About about={content.about} />,
-    stats: <Stats stats={content.stats} />,
-    location:
-      content.location &&
-      (hasText(content.location.text) || hasText(content.location.map_query)) ? (
-        <LocationBlock location={content.location} labels={labels} lang={lang} />
-      ) : null,
-    listing:
-      content.category === "project" ? (
-        <Units
-          units={content.units}
-          labels={labels}
-          lang={lang}
-          specPresets={settings.specPresets}
-          featurePresets={settings.featurePresets}
-        />
-      ) : content.apartment &&
-        (hasText(content.apartment.unit_type) ||
-          hasText(content.apartment.name) ||
-          hasText(content.apartment.description) ||
-          hasText(content.apartment.price) ||
-          hasItems(content.apartment.specs) ||
-          hasItems(content.apartment.featureRows) ||
-          hasText(content.apartment.image?.url)) ? (
-        <ApartmentSection
-          apartment={content.apartment}
-          imageSide={content.apartment_image_side === "left" ? "left" : "right"}
-          heading={content.apartment_title}
-          headingIcon={content.apartment_title_icon}
-          labels={labels}
-          lang={lang}
-          specPresets={settings.specPresets}
-          featurePresets={settings.featurePresets}
-        />
-      ) : null,
-    gallery: <Gallery gallery={content.gallery} labels={labels} />,
-    wide_images: <WideImages images={content.wide_images} />,
-    videos: <Videos videos={content.videos} labels={labels} />,
-    contact: (
-      <ContactForm
-        heading={
-          pickI18n(content.contact?.heading_i18n, content.contact?.heading, lang) ??
-          (hasText(settings.defaultContactHeading) ? settings.defaultContactHeading : undefined)
-        }
-        interactive={interactive}
-        pageId={pageId}
-        slug={slug}
-        projectTitle={content.hero?.title}
-        lang={lang}
-        backgroundUrl={settings.contactBgUrl}
-      />
-    ),
+  // Resolve a section instance id to its rendered node. Base ids read the
+  // existing content fields; duplicate ids read their extra_sections data.
+  const renderById = (id: string): React.ReactNode => {
+    const type = getSectionType(id);
+    switch (type) {
+      case "about":
+        return <About about={getSectionData(content, id) as AboutData | undefined} />;
+      case "stats":
+        return <Stats stats={(getSectionData(content, id) as Stat[] | undefined) ?? []} />;
+      case "gallery":
+        return (
+          <Gallery gallery={(getSectionData(content, id) as Media[] | undefined) ?? []} labels={labels} />
+        );
+      case "wide_images":
+        return <WideImages images={getSectionData(content, id) as Media[] | undefined} />;
+      case "videos":
+        return <Videos videos={getSectionData(content, id) as Video[] | undefined} labels={labels} />;
+      case "location":
+        return content.location &&
+          (hasText(content.location.text) || hasText(content.location.map_query)) ? (
+          <LocationBlock location={content.location} labels={labels} lang={lang} />
+        ) : null;
+      case "listing":
+        return content.category === "project" ? (
+          <Units
+            units={content.units}
+            labels={labels}
+            lang={lang}
+            specPresets={settings.specPresets}
+            featurePresets={settings.featurePresets}
+          />
+        ) : content.apartment &&
+          (hasText(content.apartment.unit_type) ||
+            hasText(content.apartment.name) ||
+            hasText(content.apartment.description) ||
+            hasText(content.apartment.price) ||
+            hasItems(content.apartment.specs) ||
+            hasItems(content.apartment.featureRows) ||
+            hasText(content.apartment.image?.url)) ? (
+          <ApartmentSection
+            apartment={content.apartment}
+            imageSide={content.apartment_image_side === "left" ? "left" : "right"}
+            heading={content.apartment_title}
+            headingIcon={content.apartment_title_icon}
+            labels={labels}
+            lang={lang}
+            specPresets={settings.specPresets}
+            featurePresets={settings.featurePresets}
+          />
+        ) : null;
+      case "contact":
+        return (
+          <ContactForm
+            heading={
+              pickI18n(content.contact?.heading_i18n, content.contact?.heading, lang) ??
+              (hasText(settings.defaultContactHeading) ? settings.defaultContactHeading : undefined)
+            }
+            interactive={interactive}
+            pageId={pageId}
+            slug={slug}
+            projectTitle={content.hero?.title}
+            lang={lang}
+            backgroundUrl={settings.contactBgUrl}
+          />
+        );
+      default:
+        return null;
+    }
   };
 
   return (
@@ -895,18 +919,25 @@ export function PageRenderer({
       {/* Hero always renders first and is intentionally NOT part of the
           reorderable/hideable section list (absent from SectionKey/SectionManager). */}
       <Hero hero={content.hero} settings={settings} lang={lang} />
-      {orderedSectionKeys(content).map((key) => {
-        const hidden = isSectionHidden(content, key);
+      {orderedSectionIds(content).map((id) => {
+        const hidden = isSectionHidden(content, id);
         if (!preview) {
-          return hidden ? null : <Fragment key={key}>{nodes[key]}</Fragment>;
+          return hidden ? null : <Fragment key={id}>{renderById(id)}</Fragment>;
         }
         return (
-          <PreviewSection key={key} sectionKey={key} hidden={hidden} onSelect={onSectionSelect}>
-            {nodes[key]}
+          <PreviewSection
+            key={id}
+            sectionId={id}
+            label={sectionLabel(content, id)}
+            hidden={hidden}
+            onSelect={onSectionSelect}
+          >
+            {renderById(id)}
           </PreviewSection>
         );
       })}
     </main>
+
   );
 }
 

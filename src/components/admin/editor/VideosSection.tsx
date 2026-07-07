@@ -63,31 +63,31 @@ function VideoRow({
   );
 }
 
-export function VideosSection({ s }: { s: PageEditorState }) {
-  const { content, patch, videosReorder, setVideosReorder } = s;
+export function VideosSection({ s, id = "videos" }: { s: PageEditorState; id?: string }) {
+  const { getData, setData, videosReorder, setVideosReorder } = s;
+  const videos = (getData(id) as Video[] | undefined) ?? [];
+  const set = (next: Video[]) => setData(id, next);
   return (
     <div className="space-y-3">
       {videosReorder ? (
         <ReorderList
-          items={content.videos ?? []}
-          onReorder={(videos) => patch({ videos })}
+          items={videos}
+          onReorder={(next) => set(next)}
           getLabel={(v, i) => v.title || v.youtube_id || `Video ${i + 1}`}
         />
       ) : (
-        (content.videos ?? []).map((v, i) => (
+        videos.map((v, i) => (
           <VideoRow
             key={i}
             video={v}
             onChange={(video) => {
-              const next = (content.videos ?? []).slice();
+              const next = videos.slice();
               next[i] = video;
-              patch({ videos: next });
+              set(next);
             }}
-            onUp={() => patch({ videos: moveItem(content.videos ?? [], i, -1) })}
-            onDown={() => patch({ videos: moveItem(content.videos ?? [], i, 1) })}
-            onRemove={() =>
-              patch({ videos: (content.videos ?? []).filter((_, idx) => idx !== i) })
-            }
+            onUp={() => set(moveItem(videos, i, -1))}
+            onDown={() => set(moveItem(videos, i, 1))}
+            onRemove={() => set(videos.filter((_, idx) => idx !== i))}
           />
         ))
       )}
@@ -96,16 +96,15 @@ export function VideosSection({ s }: { s: PageEditorState }) {
           type="button"
           variant="outline"
           size="sm"
-          onClick={() =>
-            patch({ videos: [...(content.videos ?? []), { youtube_id: "" } as Video] })
-          }
+          onClick={() => set([...videos, { youtube_id: "" } as Video])}
         >
           <Plus className="h-4 w-4" /> Add video
         </Button>
-        {(content.videos?.length ?? 0) > 1 && (
+        {videos.length > 1 && (
           <ReorderToggle active={videosReorder} onToggle={() => setVideosReorder((v) => !v)} />
         )}
       </div>
     </div>
   );
 }
+
