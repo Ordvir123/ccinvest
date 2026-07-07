@@ -282,6 +282,34 @@ function PagesList() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <AlertDialog open={!!toDuplicate} onOpenChange={(open) => !open && setToDuplicate(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Duplicate this page?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {toDuplicate ? (
+                <>
+                  A copy of “{toDuplicate.title}” will be created as a draft. The copy will be
+                  created as a draft.
+                </>
+              ) : null}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={duplicateMut.isPending}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={duplicateMut.isPending}
+              onClick={(e) => {
+                e.preventDefault();
+                if (toDuplicate) duplicateMut.mutate(toDuplicate.id);
+              }}
+            >
+              {duplicateMut.isPending ? "Duplicating…" : "Duplicate"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Section>
   );
 }
