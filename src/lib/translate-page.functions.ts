@@ -38,6 +38,22 @@ const videoSchema = z.object({
   title: z.string().optional(),
   youtube_id: z.string(),
 });
+const aboutDataSchema = z.object({
+  heading: z.string().optional(),
+  body: z.string().optional(),
+  features: z.array(z.string()).optional(),
+  feature_icons: z.array(z.string()).optional(),
+});
+const extraSectionSchema = z.object({
+  id: z.string(),
+  type: z.enum(["about", "gallery", "wide_images", "videos", "stats"]),
+  data: z.union([
+    aboutDataSchema,
+    z.array(mediaSchema),
+    z.array(videoSchema),
+    z.array(statSchema),
+  ]),
+});
 const pageContentSchema = z.object({
   hero: z
     .object({
@@ -56,19 +72,16 @@ const pageContentSchema = z.object({
       map_query: z.string().optional(),
     })
     .optional(),
-  about: z
-    .object({
-      heading: z.string().optional(),
-      body: z.string().optional(),
-      features: z.array(z.string()).optional(),
-    })
-    .optional(),
+  about: aboutDataSchema.optional(),
   gallery: z.array(mediaSchema).optional(),
+  wide_images: z.array(mediaSchema).optional(),
   units: z.array(unitSchema).optional(),
   apartment: unitSchema.optional(),
   videos: z.array(videoSchema).optional(),
   contact: z.object({ heading: z.string().optional() }).optional(),
+  extra_sections: z.array(extraSectionSchema).optional(),
 });
+
 
 const LANG_NAMES: Record<string, string> = {
   fr: "French",
