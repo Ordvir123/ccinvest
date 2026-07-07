@@ -282,18 +282,8 @@ export function cleanContent(content: PageContent): PageContent {
         }
       : undefined;
 
-  const aboutFeatures = (content.about?.features ?? []).map(t).filter(Boolean);
-  const aboutIcons = (content.about?.feature_icons ?? []).slice(0, aboutFeatures.length);
-  const about =
-    content.about &&
-    (keepText(content.about.heading) || keepText(content.about.body) || aboutFeatures.length > 0)
-      ? {
-          heading: keepText(content.about.heading),
-          body: keepText(content.about.body),
-          features: aboutFeatures.length ? aboutFeatures : undefined,
-          feature_icons: aboutIcons.some((x) => x) ? aboutIcons : undefined,
-        }
-      : undefined;
+  const about = cleanAboutData(content.about);
+
 
   const gallery = (content.gallery ?? []).filter((m) => t(m.url));
 
