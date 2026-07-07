@@ -382,6 +382,8 @@ export function usePageEditorState({
     orderedIds,
     getData,
     setData,
+    getLayout,
+    setLayout,
     duplicateInstance,
     deleteInstance,
     reorderSections,
