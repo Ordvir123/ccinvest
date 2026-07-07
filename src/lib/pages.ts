@@ -379,14 +379,55 @@ export function cleanContent(content: PageContent): PageContent {
   const apartment_title = !isProject ? keepText(content.apartment_title) : undefined;
   const apartment_title_icon = !isProject ? keepText(content.apartment_title_icon) : undefined;
 
-  const videos = (content.videos ?? []).filter((v) => t(v.youtube_id));
-  const wide_images = (content.wide_images ?? []).filter((m) => t(m.url));
+  const videos = cleanVideosData(content.videos);
+  const wide_images = cleanMediaData(content.wide_images);
 
   const contactHeadingI18n = cleanI18n(content.contact?.heading_i18n);
   const contact =
     content.contact && (keepText(content.contact.heading) || contactHeadingI18n)
       ? { heading: keepText(content.contact.heading), heading_i18n: contactHeadingI18n }
       : undefined;
+
+  // Preserve media layout presets for the base sections.
+  const gallery_layout = keepText(content.gallery_layout);
+  const wide_images_layout = keepText(content.wide_images_layout);
+
+  // Clean duplicated section instances with the same per-type logic as bases.
+  const DUPLICABLE = ["about", "gallery", "wide_images", "videos", "stats"];
+  const cleanedExtras = (content.extra_sections ?? [])
+    .map((e) => {
+      if (!e || typeof e.id !== "string" || !e.id.trim()) return null;
+      if (!DUPLICABLE.includes(e.type)) return null;
+      let data: import("@/types/page").ExtraSectionData | undefined;
+      switch (e.type) {
+        case "about": {
+          data = cleanAboutData(e.data as import("@/types/page").AboutData);
+          break;
+        }
+        case "gallery":
+        case "wide_images": {
+          const media = cleanMediaData(e.data as Media[]);
+          data = media.length ? media : undefined;
+          break;
+        }
+        case "videos": {
+          const vids = cleanVideosData(e.data as import("@/types/page").Video[]);
+          data = vids.length ? vids : undefined;
+          break;
+        }
+        case "stats": {
+          const st = cleanStatsData(e.data as import("@/types/page").Stat[]);
+          data = st.length ? st : undefined;
+          break;
+        }
+      }
+      if (!data) return null;
+      const layout = keepText(e.layout);
+      return { id: e.id, type: e.type, data, ...(layout ? { layout } : {}) };
+    })
+    .filter(Boolean) as import("@/types/page").ExtraSection[];
+  const extra_sections = cleanedExtras.length ? cleanedExtras : undefined;
+
 
   return {
     category,
