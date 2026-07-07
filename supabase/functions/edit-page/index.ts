@@ -294,9 +294,25 @@ async function callAnthropic(
     },
     body: JSON.stringify({
       model: ANTHROPIC_MODEL,
-      max_tokens: 8000,
+      max_tokens: 16000,
       system: SYSTEM_PROMPT,
       messages,
+      tools: [
+        {
+          name: "emit_patch",
+          description:
+            "Emit the JSON Patch and a one-sentence summary for the requested page edit.",
+          input_schema: {
+            type: "object",
+            properties: {
+              patch: { type: "array", items: { type: "object" } },
+              summary: { type: "string" },
+            },
+            required: ["patch", "summary"],
+          },
+        },
+      ],
+      tool_choice: { type: "tool", name: "emit_patch" },
     }),
   });
 
@@ -305,11 +321,30 @@ async function callAnthropic(
     return { ok: false as const, status: res.status, body };
   }
   const data = await res.json();
-  const out = (data?.content ?? [])
+  const blockTypes = (data?.content ?? []).map((b: any) => b?.type);
+  const stopReason = data?.stop_reason as string | undefined;
+
+  // Truncated output: do not attempt to parse a partial result.
+  if (stopReason === "max_tokens") {
+    console.error(
+      "[edit-page] stop_reason=max_tokens; content block types:",
+      JSON.stringify(blockTypes),
+    );
+    return { ok: false as const, truncated: true as const };
+  }
+
+  // Forced tool_choice guarantees a tool_use block — read its already-parsed input.
+  const toolBlock = (data?.content ?? []).find((b: any) => b?.type === "tool_use");
+  if (toolBlock && toolBlock.input && typeof toolBlock.input === "object") {
+    return { ok: true as const, parsed: toolBlock.input as unknown, stopReason, blockTypes };
+  }
+
+  // Belt-and-suspenders fallback: concatenate any text blocks and parse them.
+  const text = (data?.content ?? [])
     .filter((b: any) => b?.type === "text")
     .map((b: any) => b.text)
     .join("");
-  return { ok: true as const, text: out as string };
+  return { ok: true as const, parsed: parseModelJson(text), text, stopReason, blockTypes };
 }
 
 Deno.serve(async (req) => {
