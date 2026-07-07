@@ -379,7 +379,10 @@ export function PageEditor({
         </TabsContent>
 
 
-        <TabsContent value="translations" className="mt-0 p-4 md:p-6">
+        <TabsContent
+          value="translations"
+          className="mt-0 p-4 md:min-h-0 md:flex-1 md:overflow-y-auto md:p-6"
+        >
           <TranslationsTab pageId={pageId} source={cleanContent(content)} sourceLang={sourceLang} />
         </TabsContent>
       </Tabs>
