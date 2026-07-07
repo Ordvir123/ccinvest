@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ImagePlus, FileText, Loader2, Trash2, ArrowUp, ArrowDown, ClipboardPaste } from "lucide-react";
 import { toast } from "sonner";
 
