@@ -108,6 +108,8 @@ export type ExtraSection = {
   id: string;
   type: DuplicableSectionType;
   data: ExtraSectionData;
+  /** Layout preset for gallery / wide_images instances (see page-sections). */
+  layout?: string;
 };
 
 
