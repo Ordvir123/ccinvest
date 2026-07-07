@@ -673,3 +673,85 @@ export async function deletePage(id: string): Promise<void> {
   const { error } = await supabase.from("pages").delete().eq("id", id);
   if (error) throw error;
 }
+
+/** Find a free "<slug>-copy[-N]" slug (max 20 attempts). */
+async function findCopySlug(baseSlug: string): Promise<string> {
+  const first = `${baseSlug}-copy`;
+  if (!(await isSlugTaken(first))) return first;
+  for (let n = 2; n <= 20; n++) {
+    const candidate = `${baseSlug}-copy-${n}`;
+    if (!(await isSlugTaken(candidate))) return candidate;
+  }
+  throw new Error("Could not find a free slug for the copy. Rename the original first.");
+}
+
+/**
+ * Duplicate a whole page (content + all translations) as a fresh draft.
+ * Returns the new page id. Leads/analytics are never copied.
+ */
+export async function duplicatePage(id: string): Promise<string> {
+  // Fetch the full source row so page-level columns (e.g. category) copy as-is.
+  const { data: source, error: srcErr } = await supabase
+    .from("pages")
+    .select("*")
+    .eq("id", id)
+    .single();
+  if (srcErr) throw srcErr;
+  if (!source) throw new Error("Source page not found.");
+
+  const src = source as Record<string, unknown>;
+  const baseSlug = normalizeSlug(String(src.slug ?? "")) || "page";
+  const newSlug = await findCopySlug(baseSlug);
+
+  // Deep copy the ENTIRE content jsonb, then suffix the admin/list title.
+  const content = structuredClone(src.content ?? {}) as PageContent;
+  if (content.hero) {
+    content.hero.title = `${(content.hero.title ?? "").trim()} (copy)`.trim();
+  }
+
+  // Build the insert from all source columns, overriding the ones that must change.
+  const insertRow: Record<string, unknown> = { ...src };
+  delete insertRow.id;
+  delete insertRow.created_at;
+  delete insertRow.updated_at;
+
+  const { data: userData } = await supabase.auth.getUser();
+  insertRow.slug = newSlug;
+  insertRow.status = "draft";
+  insertRow.content = content;
+  insertRow.created_by = userData.user?.id ?? null;
+
+  const { data: created, error: insErr } = await supabase
+    .from("pages")
+    .insert(insertRow)
+    .select("id")
+    .single();
+  if (insErr) throw insErr;
+  const newId = (created as { id: string }).id;
+
+  // Copy all translation rows to the new page. Roll back the page on failure.
+  try {
+    const { data: translations, error: trErr } = await supabase
+      .from("page_translations")
+      .select("lang, content")
+      .eq("page_id", id);
+    if (trErr) throw trErr;
+
+    if (translations && translations.length) {
+      const rows = translations.map((t) => ({
+        page_id: newId,
+        lang: (t as { lang: string }).lang,
+        content: (t as { content: unknown }).content,
+      }));
+      const { error: copyErr } = await supabase.from("page_translations").insert(rows);
+      if (copyErr) throw copyErr;
+    }
+  } catch (err) {
+    // Avoid half-duplicated pages: remove the just-created page row.
+    await supabase.from("pages").delete().eq("id", newId);
+    throw err;
+  }
+
+  return newId;
+}
+

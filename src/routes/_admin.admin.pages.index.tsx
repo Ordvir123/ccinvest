@@ -1,8 +1,8 @@
 import { useState } from "react";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { FilePlus2, Pencil, Copy, ExternalLink, Archive, ArchiveRestore, Trash2 } from "lucide-react";
+import { FilePlus2, Pencil, Copy, CopyPlus, ExternalLink, Archive, ArchiveRestore, Trash2 } from "lucide-react";
 
 const SITE_ORIGIN = "https://ccinvest.lovable.app";
 
@@ -28,7 +28,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { listPages, setPageStatus, deletePage, type PageListItem } from "@/lib/pages";
+import { listPages, setPageStatus, deletePage, duplicatePage, type PageListItem } from "@/lib/pages";
 
 export const Route = createFileRoute("/_admin/admin/pages/")({
   component: PagesList,
@@ -36,8 +36,10 @@ export const Route = createFileRoute("/_admin/admin/pages/")({
 
 function PagesList() {
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const [showArchived, setShowArchived] = useState(false);
   const [toDelete, setToDelete] = useState<PageListItem | null>(null);
+  const [toDuplicate, setToDuplicate] = useState<PageListItem | null>(null);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["admin-pages"],
@@ -74,6 +76,19 @@ function PagesList() {
     },
     onError: (e) => toast.error(e instanceof Error ? e.message : "Failed to delete."),
   });
+
+  const duplicateMut = useMutation({
+    mutationFn: (id: string) => duplicatePage(id),
+    onSuccess: async (newId) => {
+      toast.success("Page duplicated as a draft.");
+      setToDuplicate(null);
+      await queryClient.invalidateQueries({ queryKey: ["admin-pages"] });
+      navigate({ to: "/admin/pages/$id", params: { id: newId } });
+    },
+    onError: (e) => toast.error(e instanceof Error ? e.message : "Failed to duplicate."),
+  });
+
+
 
   const all = data ?? [];
   const rows = all.filter((p) =>
@@ -209,6 +224,19 @@ function PagesList() {
                           <Button
                             variant="ghost"
                             size="sm"
+                            onClick={() => setToDuplicate(p)}
+                            disabled={
+                              duplicateMut.isPending && duplicateMut.variables === p.id
+                            }
+                          >
+                            <CopyPlus className="h-4 w-4" />{" "}
+                            {duplicateMut.isPending && duplicateMut.variables === p.id
+                              ? "Duplicating…"
+                              : "Duplicate"}
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
                             onClick={() => archiveMut.mutate(p.id)}
                             disabled={archiveMut.isPending}
                           >
@@ -250,6 +278,33 @@ function PagesList() {
               }}
             >
               {deleteMut.isPending ? "Deleting…" : "Delete permanently"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={!!toDuplicate} onOpenChange={(open) => !open && setToDuplicate(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Duplicate this page?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {toDuplicate ? (
+                <>
+                  A copy of “{toDuplicate.title}” will be created as a draft.
+                </>
+              ) : null}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={duplicateMut.isPending}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={duplicateMut.isPending}
+              onClick={(e) => {
+                e.preventDefault();
+                if (toDuplicate) duplicateMut.mutate(toDuplicate.id);
+              }}
+            >
+              {duplicateMut.isPending ? "Duplicating…" : "Duplicate"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
