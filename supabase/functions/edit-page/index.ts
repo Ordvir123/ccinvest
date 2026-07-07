@@ -115,7 +115,9 @@ const pageContentSchema = z.object({
     })
     .optional(),
   gallery: z.array(mediaSchema),
+  gallery_layout: z.string().optional(),
   wide_images: z.array(mediaSchema).optional(),
+  wide_images_layout: z.string().optional(),
   section_order: z.array(z.string()).optional(),
   hidden_sections: z.array(z.string()).optional(),
   units: z.array(unitSchema).optional(),
