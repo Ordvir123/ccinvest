@@ -194,7 +194,8 @@ You receive:
 1. The CURRENT content as a JSON object.
 2. An INSTRUCTION describing the change to make.
 
-You MUST return ONLY a JSON object of this EXACT shape (no markdown, no prose, no code fences):
+You MUST respond by calling the "emit_patch" tool with the patch and a one-sentence summary. Do NOT write prose or JSON in the message body — always call the tool.
+The tool takes:
 {
   "patch": [ /* array of RFC-6902 operations */ ],
   "summary": "one-sentence human summary of the change, in the SAME language as the instruction"
@@ -293,9 +294,25 @@ async function callAnthropic(
     },
     body: JSON.stringify({
       model: ANTHROPIC_MODEL,
-      max_tokens: 8000,
+      max_tokens: 16000,
       system: SYSTEM_PROMPT,
       messages,
+      tools: [
+        {
+          name: "emit_patch",
+          description:
+            "Emit the JSON Patch and a one-sentence summary for the requested page edit.",
+          input_schema: {
+            type: "object",
+            properties: {
+              patch: { type: "array", items: { type: "object" } },
+              summary: { type: "string" },
+            },
+            required: ["patch", "summary"],
+          },
+        },
+      ],
+      tool_choice: { type: "tool", name: "emit_patch" },
     }),
   });
 
@@ -304,11 +321,30 @@ async function callAnthropic(
     return { ok: false as const, status: res.status, body };
   }
   const data = await res.json();
-  const out = (data?.content ?? [])
+  const blockTypes = (data?.content ?? []).map((b: any) => b?.type);
+  const stopReason = data?.stop_reason as string | undefined;
+
+  // Truncated output: do not attempt to parse a partial result.
+  if (stopReason === "max_tokens") {
+    console.error(
+      "[edit-page] stop_reason=max_tokens; content block types:",
+      JSON.stringify(blockTypes),
+    );
+    return { ok: false as const, truncated: true as const };
+  }
+
+  // Forced tool_choice guarantees a tool_use block — read its already-parsed input.
+  const toolBlock = (data?.content ?? []).find((b: any) => b?.type === "tool_use");
+  if (toolBlock && toolBlock.input && typeof toolBlock.input === "object") {
+    return { ok: true as const, parsed: toolBlock.input as unknown, stopReason, blockTypes };
+  }
+
+  // Belt-and-suspenders fallback: concatenate any text blocks and parse them.
+  const text = (data?.content ?? [])
     .filter((b: any) => b?.type === "text")
     .map((b: any) => b.text)
     .join("");
-  return { ok: true as const, text: out as string };
+  return { ok: true as const, parsed: parseModelJson(text), text, stopReason, blockTypes };
 }
 
 Deno.serve(async (req) => {
@@ -387,23 +423,43 @@ Deno.serve(async (req) => {
     }
     const assetUrls = new Set(assets.map((a) => a.url));
 
-    // ---- Call model, parse patch JSON, retry once on parse failure ----
+    // ---- Call model, read patch from forced tool use, retry once on failure ----
     let parsed: unknown = null;
     let lastRaw = "";
+    let lastBlockTypes: string[] = [];
+    let lastStopReason: string | undefined;
     for (let attempt = 0; attempt < 2; attempt++) {
       const result = await callAnthropic(apiKey, contentJson, instruction, sourceLang, history, assets);
       if (!result.ok) {
+        if ("truncated" in result && result.truncated) {
+          return json(
+            {
+              error:
+                "The requested change is too large for one instruction - please split it into smaller instructions.",
+            },
+            502,
+          );
+        }
         if (result.status === 401) return json({ error: "Invalid Anthropic API key." }, 502);
         if (result.status === 429)
           return json({ error: "Rate limited by the AI provider. Try again shortly." }, 429);
         return json({ error: `AI provider error (${result.status}).` }, 502);
       }
-      lastRaw = result.text;
-      parsed = parseModelJson(result.text);
-      if (parsed !== null) break;
+      lastRaw = result.text ?? "";
+      lastBlockTypes = result.blockTypes ?? [];
+      lastStopReason = result.stopReason;
+      parsed = result.parsed;
+      if (parsed !== null && parsed !== undefined) break;
     }
-    if (parsed === null) {
-      console.error("[edit-page] JSON parse failed. Raw:", lastRaw.slice(0, 500));
+    if (parsed === null || parsed === undefined) {
+      console.error(
+        "[edit-page] parse failed. stop_reason:",
+        lastStopReason,
+        "block types:",
+        JSON.stringify(lastBlockTypes),
+        "raw:",
+        lastRaw.slice(0, 500),
+      );
       return json({ error: "The AI response could not be parsed. Please try again." }, 502);
     }
 
