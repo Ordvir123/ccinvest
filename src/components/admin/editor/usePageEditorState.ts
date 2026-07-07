@@ -287,17 +287,23 @@ export function usePageEditorState({
 
 
   const onUnpublish = async () => {
-    if (!pageId) return;
+    if (!pageId) {
+      toast.error("Save the page before unpublishing.");
+      console.error("[editor] onUnpublish aborted: no page id");
+      return;
+    }
     setPublishing(true);
     try {
       const next = await setPageStatus(pageId, "draft");
       setStatus(next);
       toast.success("Page unpublished — now a draft.");
     } catch (err) {
+      console.error("[editor] onUnpublish failed:", err);
       toast.error(err instanceof Error ? err.message : "Failed to unpublish.");
     } finally {
       setPublishing(false);
     }
+
   };
 
   const copyShareLink = async (lang?: ReadingLang) => {
