@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ImagePlus, FileText, Loader2, Trash2, ArrowUp, ArrowDown, ClipboardPaste } from "lucide-react";
 import { toast } from "sonner";
 
@@ -17,25 +17,45 @@ import type { UnitAttachment } from "@/types/page";
 
 const ACCEPT = ACCEPTED_IMAGE_TYPES.join(",");
 
+/** Convert an image Blob into a named File. */
+function blobToImageFile(blob: Blob, type: string): File {
+  const ext = type.split("/")[1]?.replace("jpeg", "jpg") || "png";
+  return new File([blob], `pasted-${Date.now()}.${ext}`, { type });
+}
+
 /** Read an image File from the system clipboard (no local file needed). */
 async function readClipboardImageFile(): Promise<File | null> {
   const anyNav = navigator as Navigator & {
     clipboard?: { read?: () => Promise<ClipboardItem[]> };
   };
   if (!anyNav.clipboard?.read) {
-    throw new Error("Clipboard paste isn't supported in this browser.");
+    throw new Error("Clipboard read isn't supported in this browser.");
   }
   const items = await anyNav.clipboard.read();
   for (const item of items) {
     const type = item.types.find((t) => t.startsWith("image/"));
     if (type) {
       const blob = await item.getType(type);
-      const ext = type.split("/")[1]?.replace("jpeg", "jpg") || "png";
-      return new File([blob], `pasted-${Date.now()}.${ext}`, { type });
+      return blobToImageFile(blob, type);
     }
   }
   return null;
 }
+
+/** Extract the first image File from a native paste event's clipboardData. */
+function imageFileFromPasteEvent(event: ClipboardEvent): File | null {
+  const items = event.clipboardData?.items;
+  if (!items) return null;
+  for (const item of Array.from(items)) {
+    if (item.kind === "file" && item.type.startsWith("image/")) {
+      const file = item.getAsFile();
+      if (file) return file;
+    }
+  }
+  return null;
+}
+
+const isMac = typeof navigator !== "undefined" && /Mac|iPhone|iPad|iPod/.test(navigator.platform || navigator.userAgent);
 
 /** Small "paste from clipboard" button shared by the upload controls. */
 function PasteButton({
@@ -50,7 +70,56 @@ function PasteButton({
   label?: string;
 }) {
   const [reading, setReading] = useState(false);
+  const [capturing, setCapturing] = useState(false);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Clean up on unmount.
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    };
+  }, []);
+
+  // While in capture mode, listen for a real paste event (works without permission).
+  useEffect(() => {
+    if (!capturing) return;
+
+    const exit = () => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+      setCapturing(false);
+    };
+
+    const onPaste = async (event: ClipboardEvent) => {
+      const file = imageFileFromPasteEvent(event);
+      if (!file) {
+        toast.error("No image found on the clipboard. Copy an image first.");
+        return; // stay in capture mode
+      }
+      event.preventDefault();
+      exit();
+      await onImage(file);
+    };
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") exit();
+    };
+
+    window.addEventListener("paste", onPaste);
+    window.addEventListener("keydown", onKeyDown);
+    timeoutRef.current = setTimeout(exit, 15000);
+
+    return () => {
+      window.removeEventListener("paste", onPaste);
+      window.removeEventListener("keydown", onKeyDown);
+    };
+  }, [capturing, onImage]);
+
   const onClick = async () => {
+    if (capturing) {
+      setCapturing(false);
+      return;
+    }
     setReading(true);
     try {
       const file = await readClipboardImageFile();
@@ -59,25 +128,34 @@ function PasteButton({
         return;
       }
       await onImage(file);
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Could not read clipboard.");
+    } catch {
+      // clipboard.read unavailable or permission/security error → fall back to
+      // a native paste event, which needs no permission and works everywhere.
+      setCapturing(true);
     } finally {
       setReading(false);
     }
   };
+
   return (
     <Button
       type="button"
-      variant="outline"
+      variant={capturing ? "default" : "outline"}
       size="sm"
       disabled={disabled || busy || reading}
       onClick={onClick}
+      className={capturing ? "animate-pulse" : undefined}
     >
-      {reading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ClipboardPaste className="h-4 w-4" />}
-      {label}
+      {reading ? (
+        <Loader2 className="h-4 w-4 animate-spin" />
+      ) : (
+        <ClipboardPaste className="h-4 w-4" />
+      )}
+      {capturing ? `Press ${isMac ? "⌘V" : "Ctrl+V"} now` : label}
     </Button>
   );
 }
+
 
 function useUploader(slug: string) {
   const [busy, setBusy] = useState(false);
