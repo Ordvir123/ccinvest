@@ -7,11 +7,11 @@ import {
   getSectionData,
   getSectionLayout,
   getSectionType,
-  GALLERY_LAYOUTS,
-  WIDE_LAYOUTS,
-  DEFAULT_GALLERY_LAYOUT,
+  effectiveLayout,
+  layoutGroupSize,
   type SectionKey,
 } from "@/lib/page-sections";
+
 import { cn } from "@/lib/utils";
 
 import { getIcon, guessIcon } from "@/lib/page-icons";
