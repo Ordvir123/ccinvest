@@ -149,6 +149,7 @@ const pageContentSchema = z.object({
           z.array(videoSchema),
           z.array(statSchema),
         ]),
+        layout: z.string().optional(),
       }),
     )
     .optional(),
