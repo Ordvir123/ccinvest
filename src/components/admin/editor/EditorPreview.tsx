@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from "react";
 import { PageRenderer } from "@/components/page/PageRenderer";
 import { isRtlReading, type PageContent, type ReadingLang } from "@/types/page";
 import type { TemplateSettings } from "@/lib/template-settings";
-import type { SectionKey } from "@/lib/page-sections";
 
 /** Desktop base width the preview is authored at, then scaled to fit the pane. */
 const BASE_WIDTH = 1280;
@@ -21,7 +20,7 @@ export function EditorPreview({
   content: PageContent;
   lang: ReadingLang;
   settings?: TemplateSettings;
-  onSelect?: (key: SectionKey) => void;
+  onSelect?: (id: string) => void;
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(0.5);

@@ -1,20 +1,29 @@
 import { GalleryUpload } from "@/components/admin/MediaUpload";
+import type { Media } from "@/types/page";
 import type { PageEditorState } from "@/components/admin/editor/usePageEditorState";
 
-export function GallerySection({ s }: { s: PageEditorState }) {
-  const { content, patch, slug, canUpload } = s;
+export function GallerySection({ s, id = "gallery" }: { s: PageEditorState; id?: string }) {
+  const { getData, setData, slug, canUpload } = s;
+  const value = (getData(id) as Media[] | undefined) ?? [];
   return (
     <GalleryUpload
       slug={slug}
-      value={content.gallery ?? []}
-      onChange={(gallery) => patch({ gallery })}
+      value={value}
+      onChange={(gallery) => setData(id, gallery)}
       disabled={!canUpload}
     />
   );
 }
 
-export function WideImagesSection({ s }: { s: PageEditorState }) {
-  const { content, patch, slug, canUpload } = s;
+export function WideImagesSection({
+  s,
+  id = "wide_images",
+}: {
+  s: PageEditorState;
+  id?: string;
+}) {
+  const { getData, setData, slug, canUpload } = s;
+  const value = (getData(id) as Media[] | undefined) ?? [];
   return (
     <div className="space-y-3">
       <p className="text-xs text-muted-foreground">
@@ -22,8 +31,8 @@ export function WideImagesSection({ s }: { s: PageEditorState }) {
       </p>
       <GalleryUpload
         slug={slug}
-        value={content.wide_images ?? []}
-        onChange={(wide_images) => patch({ wide_images })}
+        value={value}
+        onChange={(wide_images) => setData(id, wide_images)}
         disabled={!canUpload}
       />
     </div>

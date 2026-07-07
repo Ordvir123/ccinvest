@@ -5,9 +5,13 @@ import { toast } from "sonner";
 import { fetchTemplateSettings, saveTemplateSettings } from "@/lib/template-settings";
 import { ReorderList, ReorderToggle, useDragReorder } from "@/components/admin/reorder";
 import {
-  orderedSectionKeys,
+  orderedSectionIds,
   isSectionHidden,
   SECTION_LABELS,
+  getSectionData,
+  setSectionData,
+  duplicateSection,
+  deleteSection,
   type SectionKey,
 } from "@/lib/page-sections";
 import { BUILTIN_SPEC_PRESETS, BUILTIN_FEATURE_PRESETS } from "@/lib/unit-i18n";
@@ -298,24 +302,36 @@ export function usePageEditorState({
   };
 
   /* ---------- form panel ---------- */
-  const orderedKeys = orderedSectionKeys(content);
-  const sectionDrag = useDragReorder(orderedKeys, (next) => patch({ section_order: next }));
+  const orderedIds = orderedSectionIds(content);
   const [sectionsReorder, setSectionsReorder] = useState(false);
   const [statsReorder, setStatsReorder] = useState(false);
   const [aboutFeatReorder, setAboutFeatReorder] = useState(false);
   const [videosReorder, setVideosReorder] = useState(false);
   const [unitsReorder, setUnitsReorder] = useState(false);
 
-  const toggleSection = (key: SectionKey) => {
+  // Hide/show a section INSTANCE (base or duplicate) by its id.
+  const toggleSection = (id: string) => {
     const hidden = content.hidden_sections ?? [];
     patch({
-      hidden_sections: hidden.includes(key)
-        ? hidden.filter((k) => k !== key)
-        : [...hidden, key],
+      hidden_sections: hidden.includes(id)
+        ? hidden.filter((k) => k !== id)
+        : [...hidden, id],
     });
   };
 
+  // Per-instance data access (base field or extra_sections entry).
+  const getData = (id: string) => getSectionData(content, id);
+  const setData = (id: string, data: ReturnType<typeof getSectionData>) =>
+    setContent((c) => setSectionData(c, id, data!));
+
+  const duplicateInstance = (id: string) =>
+    setContent((c) => duplicateSection(c, id).content);
+  const deleteInstance = (id: string) => setContent((c) => deleteSection(c, id));
+
+  const reorderSections = (next: string[]) => patch({ section_order: next });
+
   const listingIsProject = content.category === "project";
+
 
   return {
     settings: settingsQuery.data,
@@ -356,8 +372,12 @@ export function usePageEditorState({
     onPublish,
     onUnpublish,
     copyShareLink,
-    orderedKeys,
-    sectionDrag,
+    orderedIds,
+    getData,
+    setData,
+    duplicateInstance,
+    deleteInstance,
+    reorderSections,
     sectionsReorder,
     setSectionsReorder,
     statsReorder,

@@ -89,6 +89,28 @@ export type SpecPreset = {
 
 export type Video = { title?: string; youtube_id: string };
 
+/** About section shape (also used by duplicated About instances). */
+export type AboutData = {
+  heading?: string;
+  body?: string;
+  features?: string[];
+  feature_icons?: string[];
+};
+
+/** Section types that can appear multiple times per page. */
+export type DuplicableSectionType = "about" | "gallery" | "wide_images" | "videos" | "stats";
+
+/** Data payload for a duplicated instance, matching its base field's shape. */
+export type ExtraSectionData = AboutData | Media[] | Video[] | Stat[];
+
+/** A duplicated section instance stored alongside the base fields. */
+export type ExtraSection = {
+  id: string;
+  type: DuplicableSectionType;
+  data: ExtraSectionData;
+};
+
+
 /** Which public listing page a page belongs to. */
 export type PageCategory = "apartment" | "project";
 
@@ -122,9 +144,16 @@ export type PageContent = {
   gallery: Media[];
   /** Full-bleed "wide images" section — images span the full screen width. */
   wide_images?: Media[];
-  /** Custom order of rendered content sections (keys from page-sections). */
+  /**
+   * Extra (duplicated) section instances. Base instances keep living in their
+   * own PageContent fields above; these are additional copies. Each has a
+   * unique id ("<type>#2", "<type>#3", …) referenced in section_order /
+   * hidden_sections, and `data` matching the base field shape of that type.
+   */
+  extra_sections?: ExtraSection[];
+  /** Custom order of rendered content sections (instance ids from page-sections). */
   section_order?: string[];
-  /** Section keys hidden from the public page. */
+  /** Section instance ids hidden from the public page. */
   hidden_sections?: string[];
   units?: Unit[];
   /** Single apartment block for apartment-type pages (mutually exclusive with units). */

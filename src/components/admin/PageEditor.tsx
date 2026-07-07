@@ -35,6 +35,7 @@ import {
   SECTION_LABELS,
   type SectionKey,
 } from "@/components/admin/editor/usePageEditorState";
+import { sectionLabel, getSectionType } from "@/lib/page-sections";
 import { HeroSection } from "@/components/admin/editor/HeroSection";
 import { AboutSection, StatsBody } from "@/components/admin/editor/AboutSection";
 import { ListingBody } from "@/components/admin/editor/UnitsSection";
@@ -78,79 +79,79 @@ export function PageEditor({
     onPublish,
     onUnpublish,
     copyShareLink,
-    orderedKeys,
-    patch,
+    orderedIds,
+    reorderSections,
     toggleSection,
+    duplicateInstance,
+    deleteInstance,
   } = s;
 
   // Mobile (<md) shows either the preview or the editor; md+ shows both panes.
   const [mobileView, setMobileView] = useState<"edit" | "preview">("edit");
   // Briefly highlight a section's editor card after it's selected in the preview.
-  const [highlightKey, setHighlightKey] = useState<SectionKey | null>(null);
+  const [highlightKey, setHighlightKey] = useState<string | null>(null);
 
-  const scrollToSection = (key: SectionKey) => {
+  const scrollToSection = (id: string) => {
     setMobileView("edit");
     // Defer so the editor pane is visible before scrolling (mobile toggle).
     requestAnimationFrame(() => {
-      const el = document.getElementById(`editor-card-${key}`);
+      const el = document.getElementById(`editor-card-${id}`);
       el?.scrollIntoView({ behavior: "smooth", block: "start" });
-      setHighlightKey(key);
-      window.setTimeout(() => setHighlightKey((k) => (k === key ? null : k)), 1500);
+      setHighlightKey(id);
+      window.setTimeout(() => setHighlightKey((k) => (k === id ? null : k)), 1500);
     });
   };
 
-
-
-  const sectionBodies: Record<
+  // Metadata (title/description/defaultOpen) per section TYPE. Titles for
+  // duplicates are overridden with the instance label below.
+  const sectionMeta: Record<
     SectionKey,
-    { title: string; description?: string; defaultOpen?: boolean; body: React.ReactNode }
+    { title: string; description?: string; defaultOpen?: boolean }
   > = {
-    about: {
-      title: SECTION_LABELS.about,
-      defaultOpen: false,
-      body: <AboutSection s={s} />,
-    },
+    about: { title: SECTION_LABELS.about, defaultOpen: false },
     stats: {
       title: SECTION_LABELS.stats,
       description: "Repeatable value + label rows. Icons auto-match the label; override per row.",
       defaultOpen: true,
-      body: <StatsBody s={s} />,
     },
-    location: {
-      title: SECTION_LABELS.location,
-      defaultOpen: false,
-      body: <LocationSection s={s} />,
-    },
+    location: { title: SECTION_LABELS.location, defaultOpen: false },
     listing: {
       title: listingIsProject ? "Units" : "About the apartment",
       description: listingIsProject
         ? "Repeatable apartment blocks."
         : "The single apartment shown on this page.",
       defaultOpen: !listingIsProject,
-      body: <ListingBody s={s} />,
     },
-    gallery: {
-      title: SECTION_LABELS.gallery,
-      defaultOpen: false,
-      body: <GallerySection s={s} />,
-    },
+    gallery: { title: SECTION_LABELS.gallery, defaultOpen: false },
     wide_images: {
       title: SECTION_LABELS.wide_images,
       description: "Full-width images, stacked one under another across the whole screen.",
       defaultOpen: false,
-      body: <WideImagesSection s={s} />,
     },
-    videos: {
-      title: SECTION_LABELS.videos,
-      description: "YouTube links (any format).",
-      defaultOpen: false,
-      body: <VideosSection s={s} />,
-    },
-    contact: {
-      title: SECTION_LABELS.contact,
-      defaultOpen: false,
-      body: <ContactSection s={s} />,
-    },
+    videos: { title: SECTION_LABELS.videos, description: "YouTube links (any format).", defaultOpen: false },
+    contact: { title: SECTION_LABELS.contact, defaultOpen: false },
+  };
+
+  // Render the editor body for a section instance, parameterized by its id.
+  const renderSectionBody = (type: SectionKey, id: string): React.ReactNode => {
+    switch (type) {
+      case "about":
+        return <AboutSection s={s} id={id} />;
+      case "stats":
+        return <StatsBody s={s} id={id} />;
+      case "location":
+        return <LocationSection s={s} />;
+      case "listing":
+        return <ListingBody s={s} />;
+      case "gallery":
+        return <GallerySection s={s} id={id} />;
+      case "wide_images":
+        return <WideImagesSection s={s} id={id} />;
+      case "videos":
+        return <VideosSection s={s} id={id} />;
+      case "contact":
+        return <ContactSection s={s} />;
+    }
   };
 
   const formPanel = (
@@ -158,11 +159,13 @@ export function PageEditor({
       <AiCorrectionsPanel content={content} setContent={setContent} sourceLang={sourceLang} />
 
       <SectionManager
-        orderedKeys={orderedKeys}
+        orderedIds={orderedIds}
         content={content}
-        onReorder={(next) => patch({ section_order: next })}
+        onReorder={reorderSections}
         onToggle={toggleSection}
         onSelect={scrollToSection}
+        onDuplicate={duplicateInstance}
+        onDelete={deleteInstance}
       />
 
       <SectionCard title="Page meta">
@@ -173,31 +176,31 @@ export function PageEditor({
         <HeroSection s={s} />
       </SectionCard>
 
-
-
-      {orderedKeys.map((key) => {
-        const meta = sectionBodies[key];
+      {orderedIds.map((id) => {
+        const type = getSectionType(id);
+        const meta = sectionMeta[type];
         return (
           <div
-            key={key}
-            id={`editor-card-${key}`}
+            key={id}
+            id={`editor-card-${id}`}
             className={cn(
               "scroll-mt-4 rounded-lg transition-shadow",
-              highlightKey === key && "ring-2 ring-primary ring-offset-2 ring-offset-background",
+              highlightKey === id && "ring-2 ring-primary ring-offset-2 ring-offset-background",
             )}
           >
             <SectionCard
-              title={meta.title}
+              title={sectionLabel(content, id)}
               description={meta.description}
               defaultOpen={meta.defaultOpen}
-              visible={!isSectionHidden(content, key)}
-              onToggleVisible={() => toggleSection(key)}
+              visible={!isSectionHidden(content, id)}
+              onToggleVisible={() => toggleSection(id)}
             >
-              {meta.body}
+              {renderSectionBody(type, id)}
             </SectionCard>
           </div>
         );
       })}
+
 
 
       <SectionCard

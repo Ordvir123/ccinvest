@@ -1,6 +1,13 @@
 import { supabase } from "@/integrations/supabase/client";
 import { translatePageContent } from "@/lib/translate-page.functions";
-import type { PageContent, ReadingLang } from "@/types/page";
+import type {
+  AboutData,
+  Media,
+  PageContent,
+  ReadingLang,
+  Stat,
+  Video,
+} from "@/types/page";
 
 /* ============================================================
  * Stable source hash — MUST match the edge function's canonicalJson + sha256.
@@ -100,25 +107,68 @@ export function listTranslatableFields(c: PageContent): TransField[] {
   (c.videos ?? []).forEach((v, i) => push(`videos.${i}.title`, `Video ${i + 1} · Title`, v.title));
 
   // contact.heading is authored per-locale (heading_i18n) — not machine-translated.
+
+  // Duplicated section instances (extra_sections). Paths are prefixed with the
+  // instance id ("about#2.heading", "gallery#2.0.alt") — see getPath/setPath.
+  (c.extra_sections ?? []).forEach((sec) => {
+    const id = sec.id;
+    if (sec.type === "about") {
+      const a = sec.data as AboutData;
+      push(`${id}.heading`, `About (${id}) · Heading`, a.heading);
+      push(`${id}.body`, `About (${id}) · Body`, a.body);
+      (a.features ?? []).forEach((f, i) =>
+        push(`${id}.features.${i}`, `About (${id}) · Feature ${i + 1}`, f),
+      );
+    } else if (sec.type === "gallery" || sec.type === "wide_images") {
+      (sec.data as Media[]).forEach((m, i) =>
+        push(`${id}.${i}.alt`, `${id} · Image ${i + 1} · Alt`, m.alt),
+      );
+    } else if (sec.type === "videos") {
+      (sec.data as Video[]).forEach((v, i) =>
+        push(`${id}.${i}.title`, `${id} · Video ${i + 1} · Title`, v.title),
+      );
+    } else if (sec.type === "stats") {
+      (sec.data as Stat[]).forEach((st, i) =>
+        push(`${id}.${i}.label`, `${id} · Stat ${i + 1} · Label`, st.label),
+      );
+    }
+  });
+
   return out;
 }
 
 /* ============================================================
  * dot-path get/set on plain objects (clones via structuredClone).
+ * A leading "<type>#<n>" segment resolves into the matching extra_sections
+ * entry's `data` (duplicated section instances).
  * ============================================================ */
+type ExtraEntry = { id: string; data: unknown };
+
 export function getPath<T = unknown>(obj: unknown, path: string): T | undefined {
-  return path
-    .split(".")
-    .reduce<unknown>(
-      (acc, key) => (acc == null ? acc : (acc as Record<string, unknown>)[key]),
-      obj,
-    ) as T | undefined;
+  const keys = path.split(".");
+  let base: unknown = obj;
+  if (keys[0]?.includes("#")) {
+    const id = keys.shift() as string;
+    const extras = (obj as { extra_sections?: ExtraEntry[] })?.extra_sections ?? [];
+    base = extras.find((e) => e.id === id)?.data;
+  }
+  return keys.reduce<unknown>(
+    (acc, key) => (acc == null ? acc : (acc as Record<string, unknown>)[key]),
+    base,
+  ) as T | undefined;
 }
 
 export function setPath<T extends object>(obj: T, path: string, val: unknown): T {
   const next = structuredClone(obj);
   const keys = path.split(".");
   let cur: Record<string, unknown> = next as Record<string, unknown>;
+  if (keys[0]?.includes("#")) {
+    const id = keys.shift() as string;
+    const extras = (next as { extra_sections?: ExtraEntry[] }).extra_sections ?? [];
+    const entry = extras.find((e) => e.id === id);
+    if (!entry) return next; // instance no longer exists — nothing to set.
+    cur = entry.data as Record<string, unknown>;
+  }
   for (let i = 0; i < keys.length - 1; i++) {
     const k = keys[i];
     if (cur[k] == null || typeof cur[k] !== "object") {
@@ -263,6 +313,66 @@ export function preserveStableFields(source: PageContent, translated: PageConten
   out.wide_images = source.wide_images;
   out.section_order = source.section_order;
   out.hidden_sections = source.hidden_sections;
+
+  // Duplicated section instances: preserve structure from source, keeping only
+  // translated TEXT and restoring non-translatable fields (media URLs, chosen
+  // icons, youtube ids) from the source entry with the same id.
+  if (Array.isArray(source.extra_sections)) {
+    const trById = new Map(
+      (out.extra_sections ?? []).map((e) => [e.id, e] as const),
+    );
+    out.extra_sections = source.extra_sections.map((src) => {
+      const tr = trById.get(src.id);
+      if (!tr || tr.type !== src.type) return structuredClone(src);
+      switch (src.type) {
+        case "about": {
+          const s = src.data as AboutData;
+          const t = tr.data as AboutData;
+          return {
+            ...src,
+            data: {
+              heading: t.heading ?? s.heading,
+              body: t.body ?? s.body,
+              features: Array.isArray(t.features) ? t.features : s.features,
+              feature_icons: s.feature_icons, // never translated
+            },
+          };
+        }
+        case "gallery":
+        case "wide_images": {
+          const s = src.data as Media[];
+          const t = tr.data as Media[];
+          return {
+            ...src,
+            data: s.map((m, i) => ({ url: m.url, alt: t[i]?.alt ?? m.alt })),
+          };
+        }
+        case "videos": {
+          const s = src.data as Video[];
+          const t = tr.data as Video[];
+          return {
+            ...src,
+            data: s.map((v, i) => ({ youtube_id: v.youtube_id, title: t[i]?.title ?? v.title })),
+          };
+        }
+        case "stats": {
+          const s = src.data as Stat[];
+          const t = tr.data as Stat[];
+          return {
+            ...src,
+            data: s.map((st, i) => ({
+              value: st.value,
+              label: t[i]?.label ?? st.label,
+              icon: st.icon, // never translated
+            })),
+          };
+        }
+        default:
+          return structuredClone(src);
+      }
+    });
+  }
+
   // Per-locale proper names are authored manually, not machine-translated.
   if (source.location?.name_i18n) {
     out.location = { ...out.location, name_i18n: source.location.name_i18n };

@@ -5,24 +5,26 @@ import { Textarea } from "@/components/ui/textarea";
 import { Field } from "@/components/admin/editor-parts";
 import { IconPicker } from "@/components/admin/IconPicker";
 import { ReorderList, ReorderToggle } from "@/components/admin/reorder";
-import { hasItems, type Stat } from "@/types/page";
+import { hasItems, type AboutData, type Stat } from "@/types/page";
 import { MoveRemove, moveItem } from "@/components/admin/editor/shared";
 import type { PageEditorState } from "@/components/admin/editor/usePageEditorState";
 
-export function AboutSection({ s }: { s: PageEditorState }) {
-  const { content, patchAbout, aboutFeatReorder, setAboutFeatReorder } = s;
+export function AboutSection({ s, id = "about" }: { s: PageEditorState; id?: string }) {
+  const { getData, setData, aboutFeatReorder, setAboutFeatReorder } = s;
+  const about = (getData(id) as AboutData | undefined) ?? {};
+  const patchAbout = (p: Partial<AboutData>) => setData(id, { ...about, ...p });
   return (
     <>
       <Field label="Heading">
         <Input
-          value={content.about?.heading ?? ""}
+          value={about?.heading ?? ""}
           onChange={(e) => patchAbout({ heading: e.target.value })}
         />
       </Field>
       <Field label="Body">
         <Textarea
           rows={4}
-          value={content.about?.body ?? ""}
+          value={about?.body ?? ""}
           onChange={(e) => patchAbout({ body: e.target.value })}
         />
       </Field>
@@ -30,9 +32,9 @@ export function AboutSection({ s }: { s: PageEditorState }) {
         <div className="space-y-2">
           {aboutFeatReorder ? (
             <ReorderList
-              items={(content.about?.features ?? []).map((f, i) => ({
+              items={(about?.features ?? []).map((f, i) => ({
                 f,
-                icon: content.about?.feature_icons?.[i],
+                icon: about?.feature_icons?.[i],
               }))}
               onReorder={(items) =>
                 patchAbout({
@@ -43,12 +45,12 @@ export function AboutSection({ s }: { s: PageEditorState }) {
               getLabel={(x) => x.f || "Feature"}
             />
           ) : (
-            (content.about?.features ?? []).map((f, i) => (
+            (about?.features ?? []).map((f, i) => (
               <div key={i} className="flex items-center gap-2">
                 <IconPicker
-                  value={content.about?.feature_icons?.[i]}
+                  value={about?.feature_icons?.[i]}
                   onChange={(icon) => {
-                    const icons = (content.about?.feature_icons ?? []).slice();
+                    const icons = (about?.feature_icons ?? []).slice();
                     while (icons.length <= i) icons.push(undefined as unknown as string);
                     icons[i] = icon as string;
                     patchAbout({ feature_icons: icons });
@@ -57,7 +59,7 @@ export function AboutSection({ s }: { s: PageEditorState }) {
                 <Input
                   value={f}
                   onChange={(e) => {
-                    const next = (content.about?.features ?? []).slice();
+                    const next = (about?.features ?? []).slice();
                     next[i] = e.target.value;
                     patchAbout({ features: next });
                   }}
@@ -68,11 +70,11 @@ export function AboutSection({ s }: { s: PageEditorState }) {
                   size="icon"
                   className="h-8 w-8 shrink-0"
                   onClick={() => {
-                    const icons = (content.about?.feature_icons ?? []).filter(
+                    const icons = (about?.feature_icons ?? []).filter(
                       (_, idx) => idx !== i,
                     );
                     patchAbout({
-                      features: (content.about?.features ?? []).filter((_, idx) => idx !== i),
+                      features: (about?.features ?? []).filter((_, idx) => idx !== i),
                       feature_icons: icons,
                     });
                   }}
@@ -87,11 +89,11 @@ export function AboutSection({ s }: { s: PageEditorState }) {
               type="button"
               variant="outline"
               size="sm"
-              onClick={() => patchAbout({ features: [...(content.about?.features ?? []), ""] })}
+              onClick={() => patchAbout({ features: [...(about?.features ?? []), ""] })}
             >
               <Plus className="h-4 w-4" /> Add feature
             </Button>
-            {(content.about?.features?.length ?? 0) > 1 && (
+            {(about?.features?.length ?? 0) > 1 && (
               <ReorderToggle
                 active={aboutFeatReorder}
                 onToggle={() => setAboutFeatReorder((v) => !v)}
@@ -104,27 +106,29 @@ export function AboutSection({ s }: { s: PageEditorState }) {
   );
 }
 
-export function StatsBody({ s }: { s: PageEditorState }) {
-  const { content, patch, statsReorder, setStatsReorder } = s;
+export function StatsBody({ s, id = "stats" }: { s: PageEditorState; id?: string }) {
+  const { getData, setData, statsReorder, setStatsReorder } = s;
+  const stats = (getData(id) as Stat[] | undefined) ?? [];
+  const set = (next: Stat[]) => setData(id, next);
   return (
     <>
       {statsReorder ? (
         <ReorderList
-          items={content.stats ?? []}
-          onReorder={(stats) => patch({ stats })}
+          items={stats}
+          onReorder={(next) => set(next)}
           getLabel={(st) => st.value || st.label || "Stat"}
         />
       ) : (
-        (content.stats ?? []).map((st, i) => (
+        stats.map((st, i) => (
           <div key={i} className="flex items-end gap-2">
             <div className="space-y-1.5">
               <span className="text-sm font-medium text-foreground">Icon</span>
               <IconPicker
                 value={st.icon}
                 onChange={(icon) => {
-                  const next = content.stats.slice();
+                  const next = stats.slice();
                   next[i] = { ...next[i], icon };
-                  patch({ stats: next });
+                  set(next);
                 }}
               />
             </div>
@@ -133,9 +137,9 @@ export function StatsBody({ s }: { s: PageEditorState }) {
                 <Input
                   value={st.value}
                   onChange={(e) => {
-                    const next = content.stats.slice();
+                    const next = stats.slice();
                     next[i] = { ...next[i], value: e.target.value };
-                    patch({ stats: next });
+                    set(next);
                   }}
                 />
               </Field>
@@ -145,17 +149,17 @@ export function StatsBody({ s }: { s: PageEditorState }) {
                 <Input
                   value={st.label}
                   onChange={(e) => {
-                    const next = content.stats.slice();
+                    const next = stats.slice();
                     next[i] = { ...next[i], label: e.target.value };
-                    patch({ stats: next });
+                    set(next);
                   }}
                 />
               </Field>
             </div>
             <MoveRemove
-              onUp={() => patch({ stats: moveItem(content.stats, i, -1) })}
-              onDown={() => patch({ stats: moveItem(content.stats, i, 1) })}
-              onRemove={() => patch({ stats: content.stats.filter((_, idx) => idx !== i) })}
+              onUp={() => set(moveItem(stats, i, -1))}
+              onDown={() => set(moveItem(stats, i, 1))}
+              onRemove={() => set(stats.filter((_, idx) => idx !== i))}
             />
           </div>
         ))
@@ -165,14 +169,15 @@ export function StatsBody({ s }: { s: PageEditorState }) {
           type="button"
           variant="outline"
           size="sm"
-          onClick={() => patch({ stats: [...content.stats, { value: "", label: "" } as Stat] })}
+          onClick={() => set([...stats, { value: "", label: "" } as Stat])}
         >
           <Plus className="h-4 w-4" /> Add stat
         </Button>
-        {hasItems(content.stats) && content.stats.length > 1 && (
+        {hasItems(stats) && stats.length > 1 && (
           <ReorderToggle active={statsReorder} onToggle={() => setStatsReorder((v) => !v)} />
         )}
       </div>
     </>
   );
 }
+

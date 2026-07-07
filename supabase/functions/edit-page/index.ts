@@ -130,7 +130,28 @@ const pageContentSchema = z.object({
       heading_i18n: langMap,
     })
     .optional(),
+  // Duplicated section instances. `data` matches the base field shape of its type.
+  extra_sections: z
+    .array(
+      z.object({
+        id: z.string(),
+        type: z.enum(["about", "gallery", "wide_images", "videos", "stats"]),
+        data: z.union([
+          z.object({
+            heading: z.string().optional(),
+            body: z.string().optional(),
+            features: z.array(z.string()).optional(),
+            feature_icons: z.array(z.string()).optional(),
+          }),
+          z.array(mediaSchema),
+          z.array(videoSchema),
+          z.array(statSchema),
+        ]),
+      }),
+    )
+    .optional(),
 });
+
 
 // ---- Patch schema (RFC 6902 ops) ----
 const patchOpSchema = z
@@ -478,12 +499,32 @@ Deno.serve(async (req) => {
       assets.length > 0 ||
       MEDIA_KEYWORDS.some((k) => instructionLower.includes(k.toLowerCase()));
     if (!mediaRequested) {
+      const extraList = Array.isArray((content as any)?.extra_sections)
+        ? ((content as any).extra_sections as { id: string; type: string }[])
+        : [];
+      // True when an op targets media inside a duplicated section instance:
+      // any /extra_sections/*/…/url path, or removing a whole gallery/wide_images entry.
+      const touchesExtraMedia = (op: { op: string; path: string; from?: string }): boolean => {
+        const paths = [op.path, ...(op.op === "move" && op.from ? [op.from] : [])];
+        for (const p of paths) {
+          if (!p.includes("/extra_sections")) continue;
+          if (p.includes("/url")) return true;
+          // Removing an entire instance entry: /extra_sections/<index>
+          const m = /^\/extra_sections\/(\d+)$/.exec(p);
+          if (m && op.op === "remove") {
+            const entry = extraList[Number(m[1])];
+            if (entry && (entry.type === "gallery" || entry.type === "wide_images")) return true;
+          }
+        }
+        return false;
+      };
       for (const op of patch) {
         const touchesProtected =
           PROTECTED_FRAGMENTS.some((f) => op.path.includes(f)) ||
           (op.op === "move" && op.from
             ? PROTECTED_FRAGMENTS.some((f) => op.from!.includes(f))
-            : false);
+            : false) ||
+          touchesExtraMedia(op);
         if (touchesProtected && (op.op === "remove" || op.op === "replace" || op.op === "move")) {
           return json(
             {
@@ -494,6 +535,7 @@ Deno.serve(async (req) => {
         }
       }
     }
+
 
     // ---- Apply the patch to a deep clone ----
     let result: unknown;

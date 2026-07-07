@@ -98,6 +98,27 @@ const pageContentSchema = z.object({
   apartment: unitSchema.optional(),
   videos: z.array(videoSchema).optional(),
   contact: z.object({ heading: z.coerce.string().optional() }).optional(),
+  // Tolerate duplicated section instances (the model is not asked to create
+  // them, but existing pages passed back through must not be rejected).
+  extra_sections: z
+    .array(
+      z.object({
+        id: z.string(),
+        type: z.enum(["about", "gallery", "wide_images", "videos", "stats"]),
+        data: z.union([
+          z.object({
+            heading: z.coerce.string().optional(),
+            body: z.coerce.string().optional(),
+            features: z.array(z.coerce.string()).optional(),
+            feature_icons: z.array(z.coerce.string()).optional(),
+          }),
+          z.array(mediaSchema),
+          z.array(videoSchema),
+          z.array(statSchema),
+        ]),
+      }),
+    )
+    .optional(),
 });
 
 const BASE_RULES = `You extract a real-estate landing page from inputs (pasted text, and optionally image/PDF assets) into a strict JSON object.
