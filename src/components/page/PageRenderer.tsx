@@ -964,9 +964,10 @@ function WideImages({
 }) {
   if (!hasItems(images)) return null;
 
-  // Absent / "stack" / unknown → the legacy edge-to-edge stack (pixel-identical).
-  const effective =
-    layout && (WIDE_LAYOUTS as readonly string[]).includes(layout) ? layout : "stack";
+  // Absent → legacy edge-to-edge stack (pixel-identical). Stored values resolve
+  // to a fitting preset; "stacked" also renders as the edge-to-edge stack.
+  const effective = layout === undefined ? "stacked" : effectiveLayout("wide_images", layout, images!.length);
+
 
   if (effective === "stack") {
     return (
