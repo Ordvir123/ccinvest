@@ -105,12 +105,12 @@ function PasteButton({
       if (event.key === "Escape") exit();
     };
 
-    window.addEventListener("paste", onPaste as EventListener);
+    window.addEventListener("paste", onPaste);
     window.addEventListener("keydown", onKeyDown);
     timeoutRef.current = setTimeout(exit, 15000);
 
     return () => {
-      window.removeEventListener("paste", onPaste as EventListener);
+      window.removeEventListener("paste", onPaste);
       window.removeEventListener("keydown", onKeyDown);
     };
   }, [capturing, onImage]);
