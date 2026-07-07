@@ -180,19 +180,23 @@ function PagesList() {
                         <>
                           <Button
                             variant="ghost"
-                            size="sm"
+                            size="icon"
+                            title="Restore"
+                            aria-label="Restore"
                             onClick={() => restoreMut.mutate(p.id)}
                             disabled={restoreMut.isPending}
                           >
-                            <ArchiveRestore className="h-4 w-4" /> Restore
+                            <ArchiveRestore className="h-4 w-4" />
                           </Button>
                           <Button
                             variant="ghost"
-                            size="sm"
+                            size="icon"
+                            title="Delete permanently"
+                            aria-label="Delete permanently"
                             className="text-destructive hover:text-destructive"
                             onClick={() => setToDelete(p)}
                           >
-                            <Trash2 className="h-4 w-4" /> Delete
+                            <Trash2 className="h-4 w-4" />
                           </Button>
                         </>
                       ) : (
