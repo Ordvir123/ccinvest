@@ -247,9 +247,28 @@ export function cleanContent(content: PageContent): PageContent {
     background: content.hero.background?.url ? content.hero.background : undefined,
   };
 
-  const stats = (content.stats ?? [])
-    .map((s) => ({ value: t(s.value), label: t(s.label), icon: keepText(s.icon) }))
-    .filter((s) => s.value || s.label);
+  // Reusable per-type data cleaners (shared by base fields and extra_sections).
+  const cleanStatsData = (arr?: import("@/types/page").Stat[]) =>
+    (arr ?? [])
+      .map((s) => ({ value: t(s.value), label: t(s.label), icon: keepText(s.icon) }))
+      .filter((s) => s.value || s.label);
+  const cleanMediaData = (arr?: Media[]) => (arr ?? []).filter((m) => t(m.url));
+  const cleanVideosData = (arr?: import("@/types/page").Video[]) =>
+    (arr ?? []).filter((v) => t(v.youtube_id));
+  const cleanAboutData = (a?: import("@/types/page").AboutData) => {
+    const features = (a?.features ?? []).map(t).filter(Boolean);
+    const icons = (a?.feature_icons ?? []).slice(0, features.length);
+    if (!a || !(keepText(a.heading) || keepText(a.body) || features.length > 0)) return undefined;
+    return {
+      heading: keepText(a.heading),
+      body: keepText(a.body),
+      features: features.length ? features : undefined,
+      feature_icons: icons.some((x) => x) ? icons : undefined,
+    };
+  };
+
+  const stats = cleanStatsData(content.stats);
+
 
   const location =
     content.location &&
@@ -263,20 +282,10 @@ export function cleanContent(content: PageContent): PageContent {
         }
       : undefined;
 
-  const aboutFeatures = (content.about?.features ?? []).map(t).filter(Boolean);
-  const aboutIcons = (content.about?.feature_icons ?? []).slice(0, aboutFeatures.length);
-  const about =
-    content.about &&
-    (keepText(content.about.heading) || keepText(content.about.body) || aboutFeatures.length > 0)
-      ? {
-          heading: keepText(content.about.heading),
-          body: keepText(content.about.body),
-          features: aboutFeatures.length ? aboutFeatures : undefined,
-          feature_icons: aboutIcons.some((x) => x) ? aboutIcons : undefined,
-        }
-      : undefined;
+  const about = cleanAboutData(content.about);
 
-  const gallery = (content.gallery ?? []).filter((m) => t(m.url));
+
+  const gallery = cleanMediaData(content.gallery);
 
   // Migrate legacy text in numeric fields to a bare number string.
   // "1er étage" -> "1", "6ème étage" -> "6", "RDC"/"rez-de-chaussée" -> "0",
@@ -370,14 +379,55 @@ export function cleanContent(content: PageContent): PageContent {
   const apartment_title = !isProject ? keepText(content.apartment_title) : undefined;
   const apartment_title_icon = !isProject ? keepText(content.apartment_title_icon) : undefined;
 
-  const videos = (content.videos ?? []).filter((v) => t(v.youtube_id));
-  const wide_images = (content.wide_images ?? []).filter((m) => t(m.url));
+  const videos = cleanVideosData(content.videos);
+  const wide_images = cleanMediaData(content.wide_images);
 
   const contactHeadingI18n = cleanI18n(content.contact?.heading_i18n);
   const contact =
     content.contact && (keepText(content.contact.heading) || contactHeadingI18n)
       ? { heading: keepText(content.contact.heading), heading_i18n: contactHeadingI18n }
       : undefined;
+
+  // Preserve media layout presets for the base sections.
+  const gallery_layout = keepText(content.gallery_layout);
+  const wide_images_layout = keepText(content.wide_images_layout);
+
+  // Clean duplicated section instances with the same per-type logic as bases.
+  const DUPLICABLE = ["about", "gallery", "wide_images", "videos", "stats"];
+  const cleanedExtras = (content.extra_sections ?? [])
+    .map((e) => {
+      if (!e || typeof e.id !== "string" || !e.id.trim()) return null;
+      if (!DUPLICABLE.includes(e.type)) return null;
+      let data: import("@/types/page").ExtraSectionData | undefined;
+      switch (e.type) {
+        case "about": {
+          data = cleanAboutData(e.data as import("@/types/page").AboutData);
+          break;
+        }
+        case "gallery":
+        case "wide_images": {
+          const media = cleanMediaData(e.data as Media[]);
+          data = media.length ? media : undefined;
+          break;
+        }
+        case "videos": {
+          const vids = cleanVideosData(e.data as import("@/types/page").Video[]);
+          data = vids.length ? vids : undefined;
+          break;
+        }
+        case "stats": {
+          const st = cleanStatsData(e.data as import("@/types/page").Stat[]);
+          data = st.length ? st : undefined;
+          break;
+        }
+      }
+      if (!data) return null;
+      const layout = keepText(e.layout);
+      return { id: e.id, type: e.type, data, ...(layout ? { layout } : {}) };
+    })
+    .filter(Boolean) as import("@/types/page").ExtraSection[];
+  const extra_sections = cleanedExtras.length ? cleanedExtras : undefined;
+
 
   return {
     category,
@@ -386,7 +436,10 @@ export function cleanContent(content: PageContent): PageContent {
     location,
     about,
     gallery,
+    gallery_layout,
     wide_images,
+    wide_images_layout,
+    extra_sections,
     units,
     apartment,
     apartment_image_side,
