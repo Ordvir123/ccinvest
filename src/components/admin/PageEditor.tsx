@@ -173,9 +173,7 @@ export function PageEditor({
         <HeroSection s={s} />
       </SectionCard>
 
-      <SectionCard title="About" defaultOpen={false}>
-        <AboutSection s={s} />
-      </SectionCard>
+
 
       {orderedKeys.map((key) => {
         const meta = sectionBodies[key];
