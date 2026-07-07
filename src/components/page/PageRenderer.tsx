@@ -969,7 +969,7 @@ function WideImages({
   const effective = layout === undefined ? "stacked" : effectiveLayout("wide_images", layout, images!.length);
 
 
-  if (effective === "stack") {
+  if (effective === "stacked") {
     return (
       <section className="w-full">
         {images!.map((img, i) => (
