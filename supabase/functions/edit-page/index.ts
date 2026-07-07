@@ -423,23 +423,43 @@ Deno.serve(async (req) => {
     }
     const assetUrls = new Set(assets.map((a) => a.url));
 
-    // ---- Call model, parse patch JSON, retry once on parse failure ----
+    // ---- Call model, read patch from forced tool use, retry once on failure ----
     let parsed: unknown = null;
     let lastRaw = "";
+    let lastBlockTypes: string[] = [];
+    let lastStopReason: string | undefined;
     for (let attempt = 0; attempt < 2; attempt++) {
       const result = await callAnthropic(apiKey, contentJson, instruction, sourceLang, history, assets);
       if (!result.ok) {
+        if ("truncated" in result && result.truncated) {
+          return json(
+            {
+              error:
+                "The requested change is too large for one instruction - please split it into smaller instructions.",
+            },
+            502,
+          );
+        }
         if (result.status === 401) return json({ error: "Invalid Anthropic API key." }, 502);
         if (result.status === 429)
           return json({ error: "Rate limited by the AI provider. Try again shortly." }, 429);
         return json({ error: `AI provider error (${result.status}).` }, 502);
       }
-      lastRaw = result.text;
-      parsed = parseModelJson(result.text);
-      if (parsed !== null) break;
+      lastRaw = result.text ?? "";
+      lastBlockTypes = result.blockTypes ?? [];
+      lastStopReason = result.stopReason;
+      parsed = result.parsed;
+      if (parsed !== null && parsed !== undefined) break;
     }
-    if (parsed === null) {
-      console.error("[edit-page] JSON parse failed. Raw:", lastRaw.slice(0, 500));
+    if (parsed === null || parsed === undefined) {
+      console.error(
+        "[edit-page] parse failed. stop_reason:",
+        lastStopReason,
+        "block types:",
+        JSON.stringify(lastBlockTypes),
+        "raw:",
+        lastRaw.slice(0, 500),
+      );
       return json({ error: "The AI response could not be parsed. Please try again." }, 502);
     }
 
