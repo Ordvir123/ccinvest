@@ -2,7 +2,7 @@ import { useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { FilePlus2, Pencil, Copy, CopyPlus, ExternalLink, Archive, ArchiveRestore, Trash2 } from "lucide-react";
+import { FilePlus2, Pencil, Copy, CopyPlus, ExternalLink, Archive, ArchiveRestore, Trash2, Loader2 } from "lucide-react";
 
 const SITE_ORIGIN = "https://ccinvest.lovable.app";
 
