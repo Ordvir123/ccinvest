@@ -151,16 +151,30 @@ function prune(value: unknown): unknown {
 }
 
 function getPath(obj: unknown, path: string): unknown {
-  return path
-    .split(".")
-    .reduce<unknown>(
-      (acc, key) => (acc == null ? acc : (acc as Record<string, unknown>)[key]),
-      obj,
-    );
+  const keys = path.split(".");
+  let base: unknown = obj;
+  if (keys[0]?.includes("#")) {
+    const id = keys.shift() as string;
+    const extras =
+      ((obj as { extra_sections?: { id: string; data: unknown }[] })?.extra_sections) ?? [];
+    base = extras.find((e) => e.id === id)?.data;
+  }
+  return keys.reduce<unknown>(
+    (acc, key) => (acc == null ? acc : (acc as Record<string, unknown>)[key]),
+    base,
+  );
 }
 function setPath(obj: Record<string, unknown>, path: string, val: unknown): void {
   const keys = path.split(".");
   let cur: Record<string, unknown> = obj;
+  if (keys[0]?.includes("#")) {
+    const id = keys.shift() as string;
+    const extras =
+      (obj.extra_sections as { id: string; data: unknown }[] | undefined) ?? [];
+    const entry = extras.find((e) => e.id === id);
+    if (!entry) return;
+    cur = entry.data as Record<string, unknown>;
+  }
   for (let i = 0; i < keys.length - 1; i++) {
     const k = keys[i];
     if (cur[k] == null || typeof cur[k] !== "object") {
@@ -170,6 +184,7 @@ function setPath(obj: Record<string, unknown>, path: string, val: unknown): void
   }
   cur[keys[keys.length - 1]] = val;
 }
+
 
 /** Verify the caller is a logged-in user of this Supabase project. */
 async function verifyUser(accessToken: string): Promise<boolean> {
