@@ -211,7 +211,7 @@ export function PageEditor({
   );
 
   return (
-    <div className="flex h-full min-h-screen flex-col">
+    <div className="flex h-full min-h-screen flex-col md:h-screen md:min-h-0 md:overflow-hidden">
       {/* Sticky action bar */}
       <div className="sticky top-0 z-20 flex items-center justify-between gap-3 border-b border-border bg-background/95 px-4 py-3 backdrop-blur md:px-6">
         <div className="flex items-center gap-3">
@@ -317,7 +317,7 @@ export function PageEditor({
       )}
 
       {/* Editor vs Translations */}
-      <Tabs defaultValue="editor" className="flex-1">
+      <Tabs defaultValue="editor" className="flex-1 md:flex md:min-h-0 md:flex-col">
         <div className="border-b border-border px-4 pt-3 md:px-6">
           <TabsList>
             <TabsTrigger value="editor">Editor</TabsTrigger>
@@ -325,7 +325,7 @@ export function PageEditor({
           </TabsList>
         </div>
 
-        <TabsContent value="editor" className="mt-0">
+        <TabsContent value="editor" className="mt-0 md:flex md:min-h-0 md:flex-1 md:flex-col">
           {/* Mobile Preview/Edit toggle (<md) */}
           <div className="flex items-center gap-1 border-b border-border p-3 md:hidden">
             <Button
@@ -346,11 +346,12 @@ export function PageEditor({
             </Button>
           </div>
 
-          <div className="md:flex md:items-start">
-            {/* LEFT: live preview */}
+          {/* md+: fixed-height row, each pane scrolls independently. */}
+          <div className="md:flex md:min-h-0 md:flex-1 md:items-stretch">
+            {/* LEFT: live preview — fills the row height, scrolls internally. */}
             <div
               className={cn(
-                "md:sticky md:top-0 md:h-[calc(100vh-3.5rem)] md:w-1/2 md:border-r md:border-border",
+                "md:h-full md:w-1/2 md:overflow-hidden md:border-r md:border-border",
                 mobileView === "preview" ? "block h-[calc(100vh-8rem)]" : "hidden md:block",
               )}
             >
@@ -362,20 +363,26 @@ export function PageEditor({
               />
             </div>
 
-            {/* RIGHT: editor panel */}
+            {/* RIGHT: editor panel — its own scroll container (anchor scrolling
+                targets this element, not the window). */}
             <div
+              id="editor-form-scroll"
               className={cn(
-                "min-w-0 flex-1 p-4 md:w-1/2 md:p-6",
+                "min-w-0 flex-1 p-4 md:h-full md:w-1/2 md:overflow-y-auto md:p-6",
                 mobileView === "preview" && "hidden md:block",
               )}
             >
               <div className="mx-auto max-w-3xl">{formPanel}</div>
             </div>
           </div>
+
         </TabsContent>
 
 
-        <TabsContent value="translations" className="mt-0 p-4 md:p-6">
+        <TabsContent
+          value="translations"
+          className="mt-0 p-4 md:min-h-0 md:flex-1 md:overflow-y-auto md:p-6"
+        >
           <TranslationsTab pageId={pageId} source={cleanContent(content)} sourceLang={sourceLang} />
         </TabsContent>
       </Tabs>
