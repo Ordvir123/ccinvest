@@ -256,3 +256,87 @@ export function deleteSection(content: PageContent, id: string): PageContent {
     hidden_sections: (content.hidden_sections ?? []).filter((x) => x !== id),
   };
 }
+
+/* ============================================================
+ * Layout presets (Gallery / Wide images).
+ * ============================================================ */
+
+/** All gallery layout presets, in picker order. */
+export const GALLERY_LAYOUTS = [
+  "grid-3",
+  "grid-2",
+  "one-wide",
+  "two-landscape",
+  "two-portrait",
+  "two-top-one-wide",
+  "one-large-three-stack",
+] as const;
+
+/** Wide-images layout presets, in picker order. */
+export const WIDE_LAYOUTS = [
+  "stack",
+  "two-landscape",
+  "two-top-one-wide",
+  "one-large-three-stack",
+] as const;
+
+export type LayoutPreset =
+  | (typeof GALLERY_LAYOUTS)[number]
+  | (typeof WIDE_LAYOUTS)[number];
+
+export const DEFAULT_GALLERY_LAYOUT = "grid-3";
+export const DEFAULT_WIDE_LAYOUT = "stack";
+
+/** Human labels for the layout picker. */
+export const LAYOUT_LABELS: Record<string, string> = {
+  "grid-3": "3 columns",
+  "grid-2": "2 columns",
+  "one-wide": "Full width",
+  "two-landscape": "Pair (landscape)",
+  "two-portrait": "Pair (portrait)",
+  "two-top-one-wide": "Two + one wide",
+  "one-large-three-stack": "One large + three",
+  stack: "Stacked",
+};
+
+/** Valid presets for a section type ("gallery" | "wide_images"). */
+export function layoutsForType(type: string): readonly string[] {
+  return type === "wide_images" ? WIDE_LAYOUTS : GALLERY_LAYOUTS;
+}
+
+/** Default layout for a section type. */
+export function defaultLayoutForType(type: string): string {
+  return type === "wide_images" ? DEFAULT_WIDE_LAYOUT : DEFAULT_GALLERY_LAYOUT;
+}
+
+/**
+ * Current layout value for a gallery / wide_images instance, or undefined when
+ * none is stored (renderer then keeps the legacy look). Non-media sections
+ * always return undefined.
+ */
+export function getSectionLayout(content: PageContent, id: string): string | undefined {
+  const type = getSectionType(id);
+  if (type !== "gallery" && type !== "wide_images") return undefined;
+  if (isBaseId(id)) {
+    return type === "gallery" ? content.gallery_layout : content.wide_images_layout;
+  }
+  return (content.extra_sections ?? []).find((e) => e.id === id)?.layout;
+}
+
+/** Return new content with a media instance's layout preset updated. */
+export function setSectionLayout(
+  content: PageContent,
+  id: string,
+  layout: string,
+): PageContent {
+  const type = getSectionType(id);
+  if (isBaseId(id)) {
+    if (type === "gallery") return { ...content, gallery_layout: layout };
+    if (type === "wide_images") return { ...content, wide_images_layout: layout };
+    return content;
+  }
+  const extras = (content.extra_sections ?? []).map((e) =>
+    e.id === id ? { ...e, layout } : e,
+  );
+  return { ...content, extra_sections: extras };
+}
