@@ -1035,10 +1035,19 @@ export function PageRenderer({
         return <Stats stats={(getSectionData(content, id) as Stat[] | undefined) ?? []} />;
       case "gallery":
         return (
-          <Gallery gallery={(getSectionData(content, id) as Media[] | undefined) ?? []} labels={labels} />
+          <Gallery
+            gallery={(getSectionData(content, id) as Media[] | undefined) ?? []}
+            labels={labels}
+            layout={getSectionLayout(content, id)}
+          />
         );
       case "wide_images":
-        return <WideImages images={getSectionData(content, id) as Media[] | undefined} />;
+        return (
+          <WideImages
+            images={getSectionData(content, id) as Media[] | undefined}
+            layout={getSectionLayout(content, id)}
+          />
+        );
       case "videos":
         return <Videos videos={getSectionData(content, id) as Video[] | undefined} labels={labels} />;
       case "location":
