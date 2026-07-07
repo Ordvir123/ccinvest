@@ -236,6 +236,7 @@ export function usePageEditorState({
       }
       return saved.id;
     } catch (err) {
+      console.error("[editor] onSave failed:", err);
       toast.error(err instanceof Error ? err.message : "Failed to save.");
     } finally {
       setSaving(false);
