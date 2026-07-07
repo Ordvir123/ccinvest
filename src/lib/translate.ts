@@ -139,20 +139,36 @@ export function listTranslatableFields(c: PageContent): TransField[] {
 
 /* ============================================================
  * dot-path get/set on plain objects (clones via structuredClone).
+ * A leading "<type>#<n>" segment resolves into the matching extra_sections
+ * entry's `data` (duplicated section instances).
  * ============================================================ */
+type ExtraEntry = { id: string; data: unknown };
+
 export function getPath<T = unknown>(obj: unknown, path: string): T | undefined {
-  return path
-    .split(".")
-    .reduce<unknown>(
-      (acc, key) => (acc == null ? acc : (acc as Record<string, unknown>)[key]),
-      obj,
-    ) as T | undefined;
+  const keys = path.split(".");
+  let base: unknown = obj;
+  if (keys[0]?.includes("#")) {
+    const id = keys.shift() as string;
+    const extras = (obj as { extra_sections?: ExtraEntry[] })?.extra_sections ?? [];
+    base = extras.find((e) => e.id === id)?.data;
+  }
+  return keys.reduce<unknown>(
+    (acc, key) => (acc == null ? acc : (acc as Record<string, unknown>)[key]),
+    base,
+  ) as T | undefined;
 }
 
 export function setPath<T extends object>(obj: T, path: string, val: unknown): T {
   const next = structuredClone(obj);
   const keys = path.split(".");
   let cur: Record<string, unknown> = next as Record<string, unknown>;
+  if (keys[0]?.includes("#")) {
+    const id = keys.shift() as string;
+    const extras = (next as { extra_sections?: ExtraEntry[] }).extra_sections ?? [];
+    const entry = extras.find((e) => e.id === id);
+    if (!entry) return next; // instance no longer exists — nothing to set.
+    cur = entry.data as Record<string, unknown>;
+  }
   for (let i = 0; i < keys.length - 1; i++) {
     const k = keys[i];
     if (cur[k] == null || typeof cur[k] !== "object") {
