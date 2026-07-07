@@ -261,45 +261,90 @@ export function deleteSection(content: PageContent, id: string): PageContent {
  * Layout presets (Gallery / Wide images).
  * ============================================================ */
 
-/** All gallery layout presets, in picker order. */
-export const GALLERY_LAYOUTS = [
-  "grid-3",
-  "grid-2",
-  "one-wide",
-  "two-landscape",
-  "two-portrait",
-  "two-top-one-wide",
-  "one-large-three-stack",
-] as const;
+/**
+ * Layout preset catalog. `flexible` presets work with any count once `minCount`
+ * is met (incomplete last row centered). Strict patterns are selectable only
+ * when count >= groupSize AND count % groupSize === 0 (the pattern repeats).
+ */
+export type LayoutPresetDef = {
+  key: string;
+  groupSize: number;
+  flexible: boolean;
+  minCount: number;
+  /** Section types that allow this preset. */
+  types: readonly ("gallery" | "wide_images")[];
+};
 
-/** Wide-images layout presets, in picker order. */
-export const WIDE_LAYOUTS = [
-  "stack",
-  "two-landscape",
-  "two-top-one-wide",
-  "one-large-three-stack",
-] as const;
+const BOTH = ["gallery", "wide_images"] as const;
+const GALLERY_ONLY = ["gallery"] as const;
 
-export type LayoutPreset =
-  | (typeof GALLERY_LAYOUTS)[number]
-  | (typeof WIDE_LAYOUTS)[number];
+export const LAYOUT_PRESETS: readonly LayoutPresetDef[] = [
+  // Flexible
+  { key: "stacked", groupSize: 1, flexible: true, minCount: 1, types: BOTH },
+  { key: "grid-2", groupSize: 2, flexible: true, minCount: 2, types: GALLERY_ONLY },
+  { key: "grid-3", groupSize: 3, flexible: true, minCount: 3, types: GALLERY_ONLY },
+  { key: "masonry", groupSize: 3, flexible: true, minCount: 3, types: GALLERY_ONLY },
+  // Strict patterns
+  { key: "two-landscape", groupSize: 2, flexible: false, minCount: 2, types: BOTH },
+  { key: "two-portrait", groupSize: 2, flexible: false, minCount: 2, types: BOTH },
+  { key: "asym-pair", groupSize: 2, flexible: false, minCount: 2, types: BOTH },
+  { key: "one-large-two-stack", groupSize: 3, flexible: false, minCount: 3, types: BOTH },
+  { key: "two-top-one-wide", groupSize: 3, flexible: false, minCount: 3, types: BOTH },
+  { key: "one-wide-two-bottom", groupSize: 3, flexible: false, minCount: 3, types: BOTH },
+  { key: "one-large-three-stack", groupSize: 4, flexible: false, minCount: 4, types: BOTH },
+  { key: "one-wide-three-cols", groupSize: 4, flexible: false, minCount: 4, types: BOTH },
+  { key: "two-over-three", groupSize: 5, flexible: false, minCount: 5, types: BOTH },
+  { key: "one-wide-2x2", groupSize: 5, flexible: false, minCount: 5, types: BOTH },
+];
+
+export const LAYOUT_PRESET_MAP: Record<string, LayoutPresetDef> = Object.fromEntries(
+  LAYOUT_PRESETS.map((p) => [p.key, p]),
+);
+
+/** Legacy → current key migration so saved pages keep their look. */
+const LAYOUT_MIGRATION: Record<string, string> = {
+  "one-wide": "stacked",
+  stack: "stacked",
+};
+
+/** Normalize any stored/legacy layout value to a current preset key. */
+export function migrateLayout(layout?: string): string | undefined {
+  if (!layout) return layout;
+  return LAYOUT_MIGRATION[layout] ?? layout;
+}
+
+/** All gallery layout preset keys, in picker order. */
+export const GALLERY_LAYOUTS = LAYOUT_PRESETS.filter((p) => p.types.includes("gallery")).map(
+  (p) => p.key,
+) as readonly string[];
+
+/** Wide-images layout preset keys, in picker order. */
+export const WIDE_LAYOUTS = LAYOUT_PRESETS.filter((p) => p.types.includes("wide_images")).map(
+  (p) => p.key,
+) as readonly string[];
 
 export const DEFAULT_GALLERY_LAYOUT = "grid-3";
-export const DEFAULT_WIDE_LAYOUT = "stack";
+export const DEFAULT_WIDE_LAYOUT = "stacked";
 
 /** Human labels for the layout picker. */
 export const LAYOUT_LABELS: Record<string, string> = {
-  "grid-3": "3 columns",
+  stacked: "Stacked",
   "grid-2": "2 columns",
-  "one-wide": "Full width",
+  "grid-3": "3 columns",
+  masonry: "Masonry",
   "two-landscape": "Pair (landscape)",
   "two-portrait": "Pair (portrait)",
+  "asym-pair": "Asymmetric pair",
+  "one-large-two-stack": "One large + two",
   "two-top-one-wide": "Two + one wide",
+  "one-wide-two-bottom": "One wide + two",
   "one-large-three-stack": "One large + three",
-  stack: "Stacked",
+  "one-wide-three-cols": "One wide + three",
+  "two-over-three": "Two over three",
+  "one-wide-2x2": "One wide + 2×2",
 };
 
-/** Valid presets for a section type ("gallery" | "wide_images"). */
+/** Valid preset keys for a section type ("gallery" | "wide_images"). */
 export function layoutsForType(type: string): readonly string[] {
   return type === "wide_images" ? WIDE_LAYOUTS : GALLERY_LAYOUTS;
 }
@@ -308,6 +353,33 @@ export function layoutsForType(type: string): readonly string[] {
 export function defaultLayoutForType(type: string): string {
   return type === "wide_images" ? DEFAULT_WIDE_LAYOUT : DEFAULT_GALLERY_LAYOUT;
 }
+
+/** Group size for a preset (1 when unknown). */
+export function layoutGroupSize(key: string): number {
+  return LAYOUT_PRESET_MAP[key]?.groupSize ?? 1;
+}
+
+/** Whether a preset fits a given image count. */
+export function layoutFits(key: string, count: number): boolean {
+  const def = LAYOUT_PRESET_MAP[migrateLayout(key) ?? ""];
+  if (!def) return false;
+  if (def.flexible) return count >= def.minCount;
+  return count >= def.groupSize && count % def.groupSize === 0;
+}
+
+/**
+ * Resolve the concrete preset the renderer should use for a stored value and
+ * image count. Migrates legacy keys; if the value is unknown or does not fit,
+ * falls back to the type default, then to "stacked" (which always fits).
+ */
+export function effectiveLayout(type: string, layout: string | undefined, count: number): string {
+  const migrated = migrateLayout(layout);
+  if (migrated && LAYOUT_PRESET_MAP[migrated] && layoutFits(migrated, count)) return migrated;
+  const def = defaultLayoutForType(type);
+  if (layoutFits(def, count)) return def;
+  return "stacked";
+}
+
 
 /**
  * Current layout value for a gallery / wide_images instance, or undefined when
