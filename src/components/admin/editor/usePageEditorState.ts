@@ -10,6 +10,8 @@ import {
   SECTION_LABELS,
   getSectionData,
   setSectionData,
+  getSectionLayout,
+  setSectionLayout,
   duplicateSection,
   deleteSection,
   type SectionKey,
