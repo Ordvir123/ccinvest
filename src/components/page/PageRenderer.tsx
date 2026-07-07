@@ -701,6 +701,61 @@ function WideImages({ images }: { images?: PageContent["wide_images"] }) {
 }
 
 /**
+ * Public "About" section: heading, multi-paragraph body (split on blank lines),
+ * and a features grid with per-feature icons. RTL is inherited from the page
+ * `dir`, so no per-element direction handling is needed.
+ */
+function About({ about }: { about?: PageContent["about"] }) {
+  if (!about) return null;
+  const features = (about.features ?? []).filter((f) => hasText(f));
+  const paragraphs = hasText(about.body)
+    ? about.body!.split(/\n\s*\n/).map((p) => p.trim()).filter(Boolean)
+    : [];
+  if (!hasText(about.heading) && paragraphs.length === 0 && features.length === 0) {
+    return null;
+  }
+  return (
+    <Section>
+      <div className="mx-auto max-w-3xl text-center">
+        {hasText(about.heading) && (
+          <h2 className="text-3xl text-ink md:text-4xl">{about.heading}</h2>
+        )}
+        {paragraphs.length > 0 && (
+          <div className="mt-6 space-y-4">
+            {paragraphs.map((p, i) => (
+              <p key={i} className="text-lg leading-relaxed text-muted-foreground">
+                {p}
+              </p>
+            ))}
+          </div>
+        )}
+      </div>
+      {features.length > 0 && (
+        <ul className="mx-auto mt-10 grid max-w-4xl gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {features.map((f, i) => {
+            const FIcon =
+              getIcon(about.feature_icons?.[i]) ?? getIcon(guessIcon(f, "sparkles"));
+            return (
+              <li
+                key={i}
+                className="flex items-center gap-3 rounded-lg border border-border bg-card p-4 text-start"
+              >
+                {FIcon && (
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+                    <FIcon className="h-4 w-4" aria-hidden />
+                  </span>
+                )}
+                <span className="text-sm font-medium text-foreground">{f}</span>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </Section>
+  );
+}
+
+/**
  * Preview-only wrapper: tags a rendered section with data-section-key, shows a
  * hover outline + name badge, dims hidden sections, and forwards clicks. Only
  * used inside the admin editor preview — never in the public page output.
@@ -781,6 +836,7 @@ export function PageRenderer({
     : undefined;
 
   const nodes: Record<SectionKey, React.ReactNode> = {
+    about: <About about={content.about} />,
     stats: <Stats stats={content.stats} />,
     location:
       content.location &&
@@ -836,6 +892,8 @@ export function PageRenderer({
 
   return (
     <main className="bg-background" style={brandStyle}>
+      {/* Hero always renders first and is intentionally NOT part of the
+          reorderable/hideable section list (absent from SectionKey/SectionManager). */}
       <Hero hero={content.hero} settings={settings} lang={lang} />
       {orderedSectionKeys(content).map((key) => {
         const hidden = isSectionHidden(content, key);

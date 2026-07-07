@@ -12,6 +12,9 @@ import type { PageContent } from "@/types/page";
  * Compact, pinned list of the page's sections: drag to reorder
  * (writes section_order), eye toggle per section (writes hidden_sections),
  * click a name to scroll the editor to that section's card.
+ *
+ * Hero is intentionally excluded — it always renders first on the public page
+ * and must never be hideable or reorderable, so it is not in `orderedKeys`.
  */
 export function SectionManager({
   orderedKeys,
