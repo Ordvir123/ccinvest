@@ -345,8 +345,23 @@ export function usePageEditorState({
 
   // Per-instance data access (base field or extra_sections entry).
   const getData = (id: string) => getSectionData(content, id);
-  const setData = (id: string, data: ReturnType<typeof getSectionData>) =>
+  const setData = (id: string, data: ReturnType<typeof getSectionData>) => {
+    const type = getSectionType(id);
+    // When a media section's image count changes and the chosen layout preset
+    // no longer fits, revert that instance to its default and inform the user.
+    if (type === "gallery" || type === "wide_images") {
+      const layout = getSectionLayout(content, id);
+      const count = Array.isArray(data) ? data.length : 0;
+      if (layout && !layoutFits(layout, count)) {
+        const def = defaultLayoutForType(type);
+        toast(`Layout reset — ${count} images no longer fit ${LAYOUT_LABELS[layout] ?? layout}`);
+        setContent((c) => setSectionLayout(setSectionData(c, id, data!), id, def));
+        return;
+      }
+    }
     setContent((c) => setSectionData(c, id, data!));
+  };
+
 
   // Per-instance layout preset (gallery / wide_images only).
   const getLayout = (id: string) => getSectionLayout(content, id);
