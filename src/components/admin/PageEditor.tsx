@@ -105,6 +105,11 @@ export function PageEditor({
     SectionKey,
     { title: string; description?: string; defaultOpen?: boolean; body: React.ReactNode }
   > = {
+    about: {
+      title: SECTION_LABELS.about,
+      defaultOpen: false,
+      body: <AboutSection s={s} />,
+    },
     stats: {
       title: SECTION_LABELS.stats,
       description: "Repeatable value + label rows. Icons auto-match the label; override per row.",
