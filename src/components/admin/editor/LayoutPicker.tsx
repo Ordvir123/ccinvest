@@ -23,7 +23,50 @@ function LayoutSchematic({ preset }: { preset: string }) {
   );
 
   let shapes: React.ReactNode = null;
+  const chevron = (x: number, dir: 1 | -1) => (
+    <path
+      key={`chev-${x}`}
+      d={dir === 1 ? `M${x} 8 L${x + 3} 12 L${x} 16` : `M${x} 8 L${x - 3} 12 L${x} 16`}
+      className="stroke-muted-foreground/60"
+      strokeWidth={1.5}
+      fill="none"
+    />
+  );
+  const dots = (
+    <>
+      {[16, 20, 24].map((cx) => (
+        <circle key={cx} cx={cx} cy={21} r={1.2} className="fill-muted-foreground/50" />
+      ))}
+    </>
+  );
   switch (preset) {
+    case "carousel-arrows":
+      shapes = (
+        <>
+          {R(7, 4, 26, 15)}
+          {chevron(4, -1)}
+          {chevron(36, 1)}
+        </>
+      );
+      break;
+    case "carousel-dots":
+      shapes = (
+        <>
+          {R(4, 2, 32, 15)}
+          {dots}
+        </>
+      );
+      break;
+    case "carousel-both":
+      shapes = (
+        <>
+          {R(7, 2, 26, 15)}
+          {chevron(4, -1)}
+          {chevron(36, 1)}
+          {dots}
+        </>
+      );
+      break;
     case "stacked":
       shapes = (
         <>
