@@ -332,6 +332,7 @@ export function UnitBlock({
   onUp,
   onDown,
   onRemove,
+  onDuplicate,
   titleOverride,
   forceOpen = false,
   specPresets,
@@ -346,6 +347,7 @@ export function UnitBlock({
   onUp?: () => void;
   onDown?: () => void;
   onRemove?: () => void;
+  onDuplicate?: () => void;
   /** When set, shows this title instead of the derived unit title. */
   titleOverride?: string;
   /** When true, the block renders expanded and without a collapse toggle. */
