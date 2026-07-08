@@ -1,4 +1,4 @@
-import { ArrowUp, ArrowDown, Trash2, Link2, Link2Off } from "lucide-react";
+import { ArrowUp, ArrowDown, Trash2, Link2, Link2Off, CopyPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { ReadingLang } from "@/types/page";
@@ -34,10 +34,12 @@ export function MoveRemove({
   onUp,
   onDown,
   onRemove,
+  onDuplicate,
 }: {
   onUp: () => void;
   onDown: () => void;
   onRemove: () => void;
+  onDuplicate?: () => void;
 }) {
   return (
     <div className="flex gap-1">
@@ -47,6 +49,19 @@ export function MoveRemove({
       <Button type="button" variant="ghost" size="icon" className="h-8 w-8" onClick={onDown}>
         <ArrowDown className="h-4 w-4" />
       </Button>
+      {onDuplicate && (
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8"
+          title="Duplicate"
+          aria-label="Duplicate"
+          onClick={onDuplicate}
+        >
+          <CopyPlus className="h-4 w-4" />
+        </Button>
+      )}
       <Button type="button" variant="ghost" size="icon" className="h-8 w-8" onClick={onRemove}>
         <Trash2 className="h-4 w-4" />
       </Button>
