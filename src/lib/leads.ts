@@ -1,4 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
+import { submitLeadFn } from "@/lib/submit-lead.functions";
+
 
 export type LeadStatus = "new" | "contacted" | "closed";
 
