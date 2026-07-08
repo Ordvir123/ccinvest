@@ -388,7 +388,14 @@ export function UnitBlock({
             {title}
           </button>
         )}
-        {showControls && <MoveRemove onUp={onUp!} onDown={onDown!} onRemove={onRemove!} />}
+        {showControls && (
+          <MoveRemove
+            onUp={onUp!}
+            onDown={onDown!}
+            onRemove={onRemove!}
+            onDuplicate={onDuplicate}
+          />
+        )}
       </div>
       {isOpen && (
         <div className="mt-3 space-y-3">
