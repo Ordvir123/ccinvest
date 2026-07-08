@@ -347,6 +347,9 @@ export const DEFAULT_WIDE_LAYOUT = "stacked";
 
 /** Human labels for the layout picker. */
 export const LAYOUT_LABELS: Record<string, string> = {
+  "carousel-arrows": "Carousel (arrows)",
+  "carousel-dots": "Carousel (dots)",
+  "carousel-both": "Carousel (arrows + dots)",
   stacked: "Stacked",
   "grid-2": "2 columns",
   "grid-3": "3 columns",
