@@ -533,6 +533,12 @@ export function ListingBody({ s }: { s: PageEditorState }) {
             onRemove={() =>
               patch({ units: (content.units ?? []).filter((_, idx) => idx !== i) })
             }
+            onDuplicate={() => {
+              const list = content.units ?? [];
+              const copy = structuredClone(list[i]);
+              const next = [...list.slice(0, i + 1), copy, ...list.slice(i + 1)];
+              patch({ units: next });
+            }}
             specPresets={specPresets}
             featurePresets={featurePresets}
           />
