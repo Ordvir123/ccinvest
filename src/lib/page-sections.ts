@@ -279,6 +279,10 @@ const BOTH = ["gallery", "wide_images"] as const;
 const GALLERY_ONLY = ["gallery"] as const;
 
 export const LAYOUT_PRESETS: readonly LayoutPresetDef[] = [
+  // Carousel (single slider; arrows / dots / both)
+  { key: "carousel-arrows", groupSize: 1, flexible: true, minCount: 1, types: GALLERY_ONLY },
+  { key: "carousel-dots", groupSize: 1, flexible: true, minCount: 1, types: GALLERY_ONLY },
+  { key: "carousel-both", groupSize: 1, flexible: true, minCount: 1, types: GALLERY_ONLY },
   // Flexible
   { key: "stacked", groupSize: 1, flexible: true, minCount: 1, types: BOTH },
   { key: "grid-2", groupSize: 2, flexible: true, minCount: 2, types: GALLERY_ONLY },
@@ -296,6 +300,21 @@ export const LAYOUT_PRESETS: readonly LayoutPresetDef[] = [
   { key: "two-over-three", groupSize: 5, flexible: false, minCount: 5, types: BOTH },
   { key: "one-wide-2x2", groupSize: 5, flexible: false, minCount: 5, types: BOTH },
 ];
+
+/** True for the single-slider carousel layout variants. */
+export function isCarouselLayout(key?: string): boolean {
+  return !!key && key.startsWith("carousel");
+}
+
+/** Whether a carousel layout shows navigation arrows. */
+export function carouselShowsArrows(key: string): boolean {
+  return key === "carousel-arrows" || key === "carousel-both";
+}
+
+/** Whether a carousel layout shows the bottom dots. */
+export function carouselShowsDots(key: string): boolean {
+  return key === "carousel-dots" || key === "carousel-both";
+}
 
 export const LAYOUT_PRESET_MAP: Record<string, LayoutPresetDef> = Object.fromEntries(
   LAYOUT_PRESETS.map((p) => [p.key, p]),
