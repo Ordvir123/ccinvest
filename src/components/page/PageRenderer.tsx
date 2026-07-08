@@ -1,4 +1,4 @@
-import { Fragment, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import { ChevronRight, FileText, EyeOff } from "lucide-react";
 import {
   orderedSectionIds,
@@ -9,6 +9,9 @@ import {
   getSectionType,
   effectiveLayout,
   layoutGroupSize,
+  isCarouselLayout,
+  carouselShowsArrows,
+  carouselShowsDots,
   type SectionKey,
 } from "@/lib/page-sections";
 
