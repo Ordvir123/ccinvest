@@ -332,6 +332,7 @@ export function UnitBlock({
   onUp,
   onDown,
   onRemove,
+  onDuplicate,
   titleOverride,
   forceOpen = false,
   specPresets,
@@ -346,6 +347,7 @@ export function UnitBlock({
   onUp?: () => void;
   onDown?: () => void;
   onRemove?: () => void;
+  onDuplicate?: () => void;
   /** When set, shows this title instead of the derived unit title. */
   titleOverride?: string;
   /** When true, the block renders expanded and without a collapse toggle. */
@@ -386,7 +388,14 @@ export function UnitBlock({
             {title}
           </button>
         )}
-        {showControls && <MoveRemove onUp={onUp!} onDown={onDown!} onRemove={onRemove!} />}
+        {showControls && (
+          <MoveRemove
+            onUp={onUp!}
+            onDown={onDown!}
+            onRemove={onRemove!}
+            onDuplicate={onDuplicate}
+          />
+        )}
       </div>
       {isOpen && (
         <div className="mt-3 space-y-3">
@@ -524,6 +533,12 @@ export function ListingBody({ s }: { s: PageEditorState }) {
             onRemove={() =>
               patch({ units: (content.units ?? []).filter((_, idx) => idx !== i) })
             }
+            onDuplicate={() => {
+              const list = content.units ?? [];
+              const copy = structuredClone(list[i]);
+              const next = [...list.slice(0, i + 1), copy, ...list.slice(i + 1)];
+              patch({ units: next });
+            }}
             specPresets={specPresets}
             featurePresets={featurePresets}
           />

@@ -1,4 +1,4 @@
-import { Fragment, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import { ChevronRight, FileText, EyeOff } from "lucide-react";
 import {
   orderedSectionIds,
@@ -9,6 +9,9 @@ import {
   getSectionType,
   effectiveLayout,
   layoutGroupSize,
+  isCarouselLayout,
+  carouselShowsArrows,
+  carouselShowsDots,
   type SectionKey,
 } from "@/lib/page-sections";
 
@@ -35,6 +38,7 @@ import {
   CarouselItem,
   CarouselNext,
   CarouselPrevious,
+  type CarouselApi,
 } from "@/components/ui/carousel";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import {
@@ -522,11 +526,15 @@ function Gallery({
   const [active, setActive] = useState(0);
   if (!hasItems(gallery)) return null;
 
-  // No stored layout → keep the legacy carousel (pixel-identical). Any stored
-  // value renders as a CSS grid; unknown / non-fitting values fall back safely.
-  const useGrid = layout !== undefined;
-  const effective = effectiveLayout("gallery", layout, gallery.length);
-
+  // No stored layout → keep the legacy carousel (pixel-identical). A stored
+  // "carousel-*" value renders a configurable slider; any other stored value
+  // renders as a CSS grid; unknown / non-fitting values fall back safely.
+  const effective = layout === undefined ? undefined : effectiveLayout("gallery", layout, gallery.length);
+  const useGrid = effective !== undefined && !isCarouselLayout(effective);
+  const openLightbox = (i: number) => {
+    setActive(i);
+    setOpen(true);
+  };
 
   return (
     <Section>
@@ -535,14 +543,18 @@ function Gallery({
         <div className="mx-auto w-full max-w-5xl">
           <MediaLayout
             images={gallery}
-            layout={effective}
+            layout={effective!}
             framed
-            onImageClick={(i) => {
-              setActive(i);
-              setOpen(true);
-            }}
+            onImageClick={openLightbox}
           />
         </div>
+      ) : isCarouselLayout(effective) ? (
+        <GalleryCarousel
+          gallery={gallery}
+          showArrows={carouselShowsArrows(effective!)}
+          showDots={carouselShowsDots(effective!)}
+          onImageClick={openLightbox}
+        />
       ) : (
         <Carousel opts={{ loop: true }} className="mx-auto w-full max-w-4xl">
           <CarouselContent>
@@ -550,10 +562,7 @@ function Gallery({
               <CarouselItem key={i} className="md:basis-2/3">
                 <button
                   type="button"
-                  onClick={() => {
-                    setActive(i);
-                    setOpen(true);
-                  }}
+                  onClick={() => openLightbox(i)}
                   className="block w-full overflow-hidden rounded-lg border border-border"
                 >
                   <img
@@ -582,6 +591,80 @@ function Gallery({
         </DialogContent>
       </Dialog>
     </Section>
+  );
+}
+
+/** Configurable single-slide gallery carousel (arrows / dots / both). */
+function GalleryCarousel({
+  gallery,
+  showArrows,
+  showDots,
+  onImageClick,
+}: {
+  gallery: PageContent["gallery"];
+  showArrows: boolean;
+  showDots: boolean;
+  onImageClick: (i: number) => void;
+}) {
+  const [api, setApi] = useState<CarouselApi>();
+  const [selected, setSelected] = useState(0);
+
+  useEffect(() => {
+    if (!api) return;
+    const onSelect = () => setSelected(api.selectedScrollSnap());
+    onSelect();
+    api.on("select", onSelect);
+    api.on("reInit", onSelect);
+    return () => {
+      api.off("select", onSelect);
+    };
+  }, [api]);
+
+  return (
+    <div className="mx-auto w-full max-w-4xl">
+      <Carousel opts={{ loop: true }} setApi={setApi} className="w-full">
+        <CarouselContent>
+          {gallery.map((img, i) => (
+            <CarouselItem key={i}>
+              <button
+                type="button"
+                onClick={() => onImageClick(i)}
+                className="block w-full overflow-hidden rounded-lg border border-border"
+              >
+                <img
+                  src={img.url}
+                  alt={img.alt ?? `Image ${i + 1}`}
+                  loading="lazy"
+                  className="aspect-[4/3] w-full object-cover transition-transform duration-300 hover:scale-[1.03]"
+                />
+              </button>
+            </CarouselItem>
+          ))}
+        </CarouselContent>
+        {showArrows && (
+          <>
+            <CarouselPrevious />
+            <CarouselNext />
+          </>
+        )}
+      </Carousel>
+      {showDots && (
+        <div className="mt-4 flex items-center justify-center gap-2">
+          {gallery.map((_, i) => (
+            <button
+              key={i}
+              type="button"
+              aria-label={`Go to image ${i + 1}`}
+              onClick={() => api?.scrollTo(i)}
+              className={cn(
+                "h-2 w-2 rounded-full transition-colors",
+                i === selected ? "bg-ink" : "bg-muted-foreground/40 hover:bg-muted-foreground/70",
+              )}
+            />
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
 
