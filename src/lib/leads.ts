@@ -42,15 +42,11 @@ export function validateLead(input: SubmitLeadInput): string | null {
   return null;
 }
 
-/** Submit a lead via the submit-lead edge function (server-side insert + email). */
+/** Submit a lead via the submit-lead server function (service-role insert + email). */
 export async function submitLead(
   input: SubmitLeadInput,
-): Promise<{ ok: boolean; emailWarning?: string | null }> {
-  const { data, error } = await supabase.functions.invoke("submit-lead", {
-    body: input,
-  });
-  if (error) throw new Error(error.message ?? "Submission failed.");
-  return data as { ok: boolean; emailWarning?: string | null };
+): Promise<{ ok: boolean; emailSent?: boolean }> {
+  return submitLeadFn({ data: input });
 }
 
 /** Admin: list all leads, newest first (authenticated RLS). */
