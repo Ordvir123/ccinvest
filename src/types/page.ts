@@ -97,6 +97,8 @@ export type DetailRow = {
 export type SpecPreset = {
   key: string;
   icon: string;
+  /** Optional CSS color for the preset's icon. */
+  color?: string;
   /** Per-locale label so nothing leaks untranslated. */
   labels: Record<ReadingLang, string>;
   valueKind: SpecValueKind;
