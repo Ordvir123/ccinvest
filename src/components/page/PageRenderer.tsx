@@ -18,6 +18,7 @@ import {
 import { cn } from "@/lib/utils";
 
 import { getIcon, guessIcon } from "@/lib/page-icons";
+import { heroOverlayStyle } from "@/lib/hero-overlay";
 import {
   unitTitle,
   ABOUT_APARTMENT_HEADING,
