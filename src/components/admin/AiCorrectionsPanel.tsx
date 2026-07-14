@@ -360,6 +360,16 @@ export function AiCorrectionsPanel({
         )}
       </div>
 
+      {/* Pending change preview — confirm before anything is applied */}
+      {pending && (
+        <EditPreview
+          result={pending.result}
+          onConfirm={confirmPending}
+          onCancel={cancelPending}
+        />
+      )}
+
+
       {/* Attachment chips / thumbnails */}
       {assets.length > 0 && (
         <div className="flex flex-wrap gap-2">
