@@ -207,7 +207,8 @@ const inputSchema = z.object({
   targetLang: z.enum(["fr", "he", "en"]),
   pageId: z.string().optional(),
   force: z.boolean().optional(),
-  accessToken: z.string().min(1),
+  // Empty string = anonymous visitor on a published page.
+  accessToken: z.string().default(""),
 });
 
 type PageContent = import("@/types/page").PageContent;
@@ -215,10 +216,9 @@ type PageContent = import("@/types/page").PageContent;
 export const translatePageContent = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => inputSchema.parse(input))
   .handler(async ({ data }) => {
-    const authed = await verifyUser(data.accessToken);
-    if (!authed) throw new Error("Unauthorized.");
-
     const { content, sourceLang, targetLang, pageId, force } = data;
+    const accessToken = data.accessToken?.trim() ?? "";
+    const isAuthed = accessToken.length > 0 ? await verifyUser(accessToken) : false;
 
     if (JSON.stringify(content).length > 50_000) {
       throw new Error("Content exceeds the maximum allowed size.");
@@ -227,20 +227,57 @@ export const translatePageContent = createServerFn({ method: "POST" })
       return { content: content as PageContent };
     }
 
-    const hash = await sha256Hex(canonicalJson(content));
-
-    // Cache reads/writes as the authenticated caller (RLS allows admins).
-    const { createClient } = await import("@supabase/supabase-js");
     const supaUrl = import.meta.env.VITE_SUPABASE_URL as string | undefined;
     const supaKey =
       (import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string | undefined) ??
       (import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined);
+    const serviceKey =
+      process.env.EXTERNAL_SUPABASE_SERVICE_ROLE_KEY ??
+      process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+    if (!supaUrl || (!isAuthed && !serviceKey)) {
+      // Anonymous callers require a service-role key to reach the cache and
+      // to gate cost abuse to actually-published pages.
+      throw new Error("Server is not configured for public translation.");
+    }
+
+    // Cost gate for anonymous callers: only translate content that belongs to
+    // a PUBLISHED page. Signed-in admins can translate drafts freely.
+    if (!isAuthed) {
+      if (!pageId) throw new Error("Unauthorized.");
+      const check = await fetch(
+        `${supaUrl}/rest/v1/pages?id=eq.${encodeURIComponent(pageId)}&select=status`,
+        {
+          headers: {
+            apikey: serviceKey!,
+            Authorization: `Bearer ${serviceKey!}`,
+          },
+        },
+      );
+      if (!check.ok) throw new Error("Unauthorized.");
+      const rows = (await check.json().catch(() => [])) as { status?: string }[];
+      if (!Array.isArray(rows) || rows.length === 0 || rows[0]?.status !== "published") {
+        throw new Error("Unauthorized.");
+      }
+    }
+
+    const hash = await sha256Hex(canonicalJson(content));
+
+    const { createClient } = await import("@supabase/supabase-js");
+    // For cache access: signed-in admin uses their own bearer (respects RLS);
+    // anon uses the service role client (bypasses RLS, gated above).
     const admin =
-      pageId && supaUrl && supaKey
-        ? createClient(supaUrl, supaKey, {
-            auth: { persistSession: false, autoRefreshToken: false },
-            global: { headers: { Authorization: `Bearer ${data.accessToken}` } },
-          })
+      pageId && supaUrl
+        ? isAuthed && supaKey
+          ? createClient(supaUrl, supaKey, {
+              auth: { persistSession: false, autoRefreshToken: false },
+              global: { headers: { Authorization: `Bearer ${accessToken}` } },
+            })
+          : serviceKey
+            ? createClient(supaUrl, serviceKey, {
+                auth: { persistSession: false, autoRefreshToken: false },
+              })
+            : null
         : null;
 
     let existing: {
@@ -263,6 +300,7 @@ export const translatePageContent = createServerFn({ method: "POST" })
         };
       }
     }
+
 
     // Cache hit: fresh hash and not forced.
     if (existing && existing.source_hash === hash && !force) {
