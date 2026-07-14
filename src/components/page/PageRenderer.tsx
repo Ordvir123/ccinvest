@@ -129,6 +129,7 @@ function Hero({
   const kicker = pickI18n(hero.kicker_i18n, hero.kicker, lang);
   const ctaResolved = pickI18n(hero.cta_label_i18n, hero.cta_label, lang);
   const ctaLabel = hasText(ctaResolved) ? ctaResolved : settings.defaultCtaLabel;
+  const overlay = heroOverlayStyle(hero.overlay);
   return (
     <section className="relative overflow-hidden bg-gradient-brand text-primary-foreground">
       {bg && (
@@ -140,9 +141,15 @@ function Hero({
             fetchPriority="high"
             className="absolute inset-0 h-full w-full object-cover"
           />
-          {/* Dark overlay keeps hero text readable over any image. */}
-          <div className="absolute inset-0 bg-gradient-overlay" />
-          <div className="absolute inset-0 bg-[oklch(0.18_0.04_265/0.55)]" />
+          {overlay ? (
+            <div className="absolute inset-0" style={overlay} />
+          ) : (
+            <>
+              {/* Dark overlay keeps hero text readable over any image. */}
+              <div className="absolute inset-0 bg-gradient-overlay" />
+              <div className="absolute inset-0 bg-[oklch(0.18_0.04_265/0.55)]" />
+            </>
+          )}
         </>
       )}
       <Section className="relative z-10 flex min-h-[80vh] flex-col justify-center py-20 text-center md:py-24">
