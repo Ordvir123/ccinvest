@@ -210,6 +210,10 @@ export function AiCorrectionsPanel({
       return;
     }
     if (running) return;
+    if (pending) {
+      toast.error("Confirm or cancel the pending change first.");
+      return;
+    }
     if (assets.some((a) => a.status === "uploading")) {
       toast.error("Wait for uploads to finish.");
       return;
