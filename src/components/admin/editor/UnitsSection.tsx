@@ -624,7 +624,7 @@ export function ListingBody({ s }: { s: PageEditorState }) {
                     onValueChange={(v) => {
                       if (v === DEFAULT_TITLE) {
                         setAptTitleCustom(false);
-                        patch({ apartment_title: "", apartment_title_icon: "" });
+                        patch({ apartment_title: "", apartment_title_icon: "", apartment_title_color: undefined });
                       } else if (v === CUSTOM_TITLE) {
                         setAptTitleCustom(true);
                       } else {
@@ -633,6 +633,7 @@ export function ListingBody({ s }: { s: PageEditorState }) {
                         patch({
                           apartment_title: v,
                           apartment_title_icon: opt?.icon ?? content.apartment_title_icon ?? "",
+                          apartment_title_color: opt?.color ?? content.apartment_title_color,
                         });
                       }
                     }}
