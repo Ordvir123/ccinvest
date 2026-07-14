@@ -77,7 +77,11 @@ function normalizeTitleOptions(raw: unknown): ApartmentTitleOption[] {
   const cleaned = raw
     .map((o) => {
       const opt = (o ?? {}) as Partial<ApartmentTitleOption>;
-      return { label: (opt.label ?? "").trim(), icon: (opt.icon ?? "").trim() };
+      return {
+        label: (opt.label ?? "").trim(),
+        icon: (opt.icon ?? "").trim(),
+        color: (opt.color ?? "").trim() || undefined,
+      };
     })
     .filter((o) => o.label.length > 0);
   return cleaned.length ? cleaned : [...DEFAULT_APARTMENT_TITLE_OPTIONS];
