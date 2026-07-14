@@ -973,7 +973,11 @@ function ApartmentSection({
                       >
                         <dt className="flex items-center gap-1.5 text-xs uppercase tracking-wide text-muted-foreground">
                           {RowIcon && (
-                            <RowIcon className="h-4 w-4 shrink-0 text-primary" aria-hidden />
+                            <RowIcon
+                              className="h-4 w-4 shrink-0 text-primary"
+                              style={r.color ? { color: r.color } : undefined}
+                              aria-hidden
+                            />
                           )}
                           {r.label}
                         </dt>
