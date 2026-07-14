@@ -728,12 +728,14 @@ function UnitCard({
       label: rowLabel(r, lang, specPresets),
       value: rowValue(r, lang, specPresets),
       icon: rowIcon(r, specPresets),
+      color: rowColor(r, specPresets),
     }))
     .filter((r) => hasText(r.value));
   const featureItems = (unit.featureRows ?? migrateUnitFeatures(unit))
     .map((r) => ({
       text: featureRowText(r, lang, featurePresets),
       icon: rowIcon(r, featurePresets),
+      color: rowColor(r, featurePresets),
     }))
     .filter((r) => hasText(r.text));
   const plan = unit.attachment;
