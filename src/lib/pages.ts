@@ -300,6 +300,7 @@ export function cleanContent(content: PageContent): PageContent {
         linked: r.linked === false ? false : undefined,
         label: r.linked === false ? keepText(r.label) : undefined,
         icon: r.linked === false ? keepText(r.icon) : undefined,
+        color: keepText(r.color),
         value: keepText(r.value),
       }))
       .filter((r) => r.value || (r.presetKey && r.linked !== false));
@@ -314,6 +315,7 @@ export function cleanContent(content: PageContent): PageContent {
         presetKey: keepText(r.presetKey),
         linked: r.linked === false ? false : undefined,
         icon: keepText(r.icon),
+        color: keepText(r.color),
         value: keepText(r.value),
       }))
       .filter((r) => r.value || (r.presetKey && r.linked !== false));
