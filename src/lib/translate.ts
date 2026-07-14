@@ -387,9 +387,12 @@ export function preserveStableFields(source: PageContent, translated: PageConten
 }
 
 /**
- * Visitor-facing resolve: translate (and cache via the edge function) when
- * needed, otherwise return the cached translation. Caching/writes happen inside
- * the edge function with service privileges.
+ * Visitor-facing resolve: fast-path reads the cached page_translations row
+ * directly from the client (RLS allows anon read on published pages) and
+ * returns it when source_hash matches the current source. Falls back to the
+ * server function on a cache miss / stale hash / force refresh — the server
+ * function handles the AI gateway call and cache write with service
+ * privileges (and is itself gated to published pages for anon callers).
  */
 export async function resolveTranslation(
   pageId: string,
@@ -398,11 +401,22 @@ export async function resolveTranslation(
   targetLang: ReadingLang,
   opts?: { force?: boolean },
 ): Promise<PageContent> {
-  // Public visitors on a PUBLISHED page must be able to switch reading
-  // language. Attach the caller's access token when signed in (so admins get
-  // fresh cache reads/writes under their own RLS), but don't require one —
-  // anon visitors are served by the server function using service-role cache
-  // access, gated to published pages only.
+  if (sourceLang === targetLang) return content;
+
+  if (!opts?.force) {
+    try {
+      const [cached, hash] = await Promise.all([
+        fetchTranslationRow(pageId, targetLang),
+        sourceHash(content),
+      ]);
+      if (cached && cached.source_hash && cached.source_hash === hash) {
+        return preserveStableFields(content, cached.content);
+      }
+    } catch {
+      // RLS refusal / network hiccup — fall through to the server function.
+    }
+  }
+
   const { data: sessionData } = await supabase.auth.getSession();
   const accessToken = sessionData.session?.access_token;
 
