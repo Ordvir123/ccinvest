@@ -456,15 +456,19 @@ export function AiCorrectionsPanel({
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={onKeyDown}
-          placeholder="Describe a correction, or drop files here… (Enter to send, Shift+Enter for a new line)"
-          disabled={running}
+          placeholder={
+            pending
+              ? "Confirm or cancel the pending change above first…"
+              : "Describe a correction, or drop files here… (Enter to send, Shift+Enter for a new line)"
+          }
+          disabled={running || !!pending}
           className="flex-1"
         />
         <Button
           type="button"
           size="sm"
           onClick={() => void send()}
-          disabled={running || !input.trim()}
+          disabled={running || !!pending || !input.trim()}
         >
           {running ? (
             <Loader2 className="h-4 w-4 animate-spin" />
