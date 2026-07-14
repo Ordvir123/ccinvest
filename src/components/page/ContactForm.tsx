@@ -4,9 +4,11 @@ import { Check, Loader2 } from "lucide-react";
 import { Section } from "@/components/ui/section";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { submitLead, validateLead } from "@/lib/leads";
 import { isRtlReading, type ReadingLang } from "@/types/page";
 import contactBg from "@/assets/contact-bg.jpg.asset.json";
+
 
 type Labels = {
   name: string;
