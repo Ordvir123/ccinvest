@@ -979,16 +979,17 @@ function ApartmentSection({
                 </ul>
               )}
 
-              {plan?.url && plan.type === "image" && (
+              {plan?.url && plan.type === "image" && !planFailed && (
                 <button
                   type="button"
                   onClick={() => setPlanOpen(true)}
                   className="mt-6 block overflow-hidden rounded-md border border-border"
                 >
-                  <img
+                  <SafeImg
                     src={plan.url}
                     alt={labels.floorPlan}
                     loading="lazy"
+                    onFail={() => setPlanFailed(true)}
                     className="aspect-video w-full object-cover transition-transform duration-300 hover:scale-[1.03]"
                   />
                   <span className="block bg-secondary px-3 py-1.5 text-xs font-medium text-muted-foreground">
@@ -1010,7 +1011,7 @@ function ApartmentSection({
             </div>
             {apartment.image?.url && (
               <div className={`md:w-1/2 ${imageOrder}`}>
-                <img
+                <SafeImg
                   src={apartment.image.url}
                   alt={apartment.image.alt ?? title}
                   loading="lazy"
