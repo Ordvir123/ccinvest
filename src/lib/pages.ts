@@ -226,7 +226,12 @@ export function cleanContent(content: PageContent): PageContent {
   // Reusable per-type data cleaners (shared by base fields and extra_sections).
   const cleanStatsData = (arr?: import("@/types/page").Stat[]) =>
     (arr ?? [])
-      .map((s) => ({ value: t(s.value), label: t(s.label), icon: keepText(s.icon) }))
+      .map((s) => ({
+        value: t(s.value),
+        label: t(s.label),
+        icon: keepText(s.icon),
+        color: keepText(s.color),
+      }))
       .filter((s) => s.value || s.label);
   const cleanMediaData = (arr?: Media[]) => (arr ?? []).filter((m) => t(m.url));
   const cleanVideosData = (arr?: import("@/types/page").Video[]) =>
@@ -234,12 +239,14 @@ export function cleanContent(content: PageContent): PageContent {
   const cleanAboutData = (a?: import("@/types/page").AboutData) => {
     const features = (a?.features ?? []).map(t).filter(Boolean);
     const icons = (a?.feature_icons ?? []).slice(0, features.length);
+    const colors = (a?.feature_colors ?? []).slice(0, features.length);
     if (!a || !(keepText(a.heading) || keepText(a.body) || features.length > 0)) return undefined;
     return {
       heading: keepText(a.heading),
       body: keepText(a.body),
       features: features.length ? features : undefined,
       feature_icons: icons.some((x) => x) ? icons : undefined,
+      feature_colors: colors.some((x) => x) ? colors : undefined,
     };
   };
 
