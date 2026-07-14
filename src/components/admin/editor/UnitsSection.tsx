@@ -254,6 +254,8 @@ function FeatureRowsEditor({
                 <IconPicker
                   value={effIcon}
                   onChange={(icon) => update(i, { icon: (icon as string) ?? "" })}
+                  color={row.color ?? (linked ? preset?.color : undefined)}
+                  onColorChange={(color) => update(i, { color })}
                 />
                 <LinkToggle
                   linked={linked}
