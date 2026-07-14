@@ -89,5 +89,7 @@ export async function applyAiEdit(
     content: merged,
     summary: typeof data?.summary === "string" ? data.summary : "",
     changedPaths: Array.isArray(data?.changedPaths) ? data.changedPaths : [],
+    changes: Array.isArray(data?.changes) ? (data.changes as AiEditChange[]) : [],
+    skipped: Array.isArray(data?.skipped) ? (data.skipped as AiEditSkip[]) : [],
   };
 }
