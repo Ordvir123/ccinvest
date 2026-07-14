@@ -336,6 +336,8 @@ function PresetsCard({
               <IconPicker
                 value={p.icon}
                 onChange={(icon) => update(i, { icon: (icon as string) || "check" })}
+                color={p.color}
+                onColorChange={(color) => update(i, { color })}
               />
               {withValueKind && (
                 <Select
