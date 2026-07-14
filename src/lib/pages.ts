@@ -60,22 +60,6 @@ export async function fetchTranslation(
   }
 }
 
-/** Resolve the content to display for a given reading language. */
-export async function resolvePage(slug: string, lang: ReadingLang): Promise<ResolvedPage | null> {
-  const page = await fetchPublishedPage(slug);
-  if (!page) return null;
-
-  if (lang === page.source_lang) {
-    return { page, content: page.content, lang, isFallback: false };
-  }
-
-  const translated = await fetchTranslation(page.id, lang);
-  if (translated) {
-    return { page, content: translated, lang, isFallback: false };
-  }
-  // Graceful fallback to source content until Slice 4 populates translations.
-  return { page, content: page.content, lang, isFallback: true };
-}
 
 /* ============================================================
  * SLICE 2 — admin editor data layer
