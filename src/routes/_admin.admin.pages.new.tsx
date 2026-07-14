@@ -80,6 +80,9 @@ function NewPage() {
   const [dragOver, setDragOver] = useState(false);
   const [unplaced, setUnplaced] = useState<string[]>([]);
   const [unplacedDismissed, setUnplacedDismissed] = useState(false);
+  const [emptyFields, setEmptyFields] = useState<string[]>([]);
+  const [emptyFieldsDismissed, setEmptyFieldsDismissed] = useState(false);
+  const [detectedCategory, setDetectedCategory] = useState<ExtractCategory>("project");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const setAsset = (id: string, patch: Partial<DraftAsset>) =>
@@ -171,15 +174,29 @@ function NewPage() {
 
     setProcessing(true);
     try {
-      const { content, unplaced: unplacedUrls } = await extractPageFromText(text, {
+      const {
+        content,
+        unplaced: unplacedUrls,
+        emptyFields: empties,
+        detectedCategory: detected,
+      } = await extractPageFromText(text, {
         category,
         copyMode,
         assets: readyAssets,
       });
-      setPrefill(mergeAiContent(content, category));
+      setPrefill(mergeAiContent(content, detected));
       setUnplaced(unplacedUrls);
       setUnplacedDismissed(false);
-      toast.success("AI built the page in French. Review, then translate to HE/EN.");
+      setEmptyFields(empties);
+      setEmptyFieldsDismissed(false);
+      setDetectedCategory(detected);
+      const note =
+        detected !== category
+          ? ` Detected this as a ${detected === "project" ? "multi-unit project" : "single apartment"}.`
+          : "";
+      toast.success(
+        `AI built the page in French.${note} Review the empty-fields list, then translate to HE/EN.`,
+      );
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "AI extraction failed.");
     } finally {
@@ -223,6 +240,34 @@ function NewPage() {
               <button
                 type="button"
                 onClick={() => setUnplacedDismissed(true)}
+                className="shrink-0 rounded p-1 text-muted-foreground hover:text-foreground"
+                aria-label="Dismiss"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+        )}
+        {emptyFields.length > 0 && !emptyFieldsDismissed && (
+          <div className="mx-auto mt-4 max-w-5xl px-4 md:px-8">
+            <div className="flex items-start gap-3 rounded-lg border border-sky-500/40 bg-sky-500/10 p-4">
+              <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-sky-600" />
+              <div className="flex-1 space-y-1">
+                <p className="text-sm font-medium text-foreground">
+                  The source didn't state these fields — complete them manually (
+                  {detectedCategory === "project" ? "project" : "apartment"}):
+                </p>
+                <ul className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground">
+                  {emptyFields.map((f) => (
+                    <li key={f} className="rounded bg-sky-500/10 px-2 py-0.5">
+                      {f}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <button
+                type="button"
+                onClick={() => setEmptyFieldsDismissed(true)}
                 className="shrink-0 rounded p-1 text-muted-foreground hover:text-foreground"
                 aria-label="Dismiss"
               >

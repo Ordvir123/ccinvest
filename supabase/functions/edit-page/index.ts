@@ -315,6 +315,60 @@ function isSchemaValidPath(path: string): boolean {
   return true;
 }
 
+/** Human-friendly name for a schema node's "type". */
+function nodeLabel(node: SchemaNode): string {
+  switch (node.kind) {
+    case "array":
+      return "list";
+    case "object":
+      return "object";
+    case "record":
+      return "map";
+    default:
+      return "field";
+  }
+}
+
+/**
+ * Describe why a JSON-Pointer path is not valid against the schema, in plain
+ * language (e.g. `'attachment' isn't a valid field on Unit`). Returns null when
+ * the path IS valid.
+ */
+function describeInvalidPath(path: string): string | null {
+  const segments = path.split("/").slice(1).map(decodeToken);
+  let node: SchemaNode = SCHEMA_ROOT;
+  let parentName = "the page";
+  for (const seg of segments) {
+    if (node.kind === "any") return null;
+    if (node.kind === "leaf") {
+      return `'${seg}' can't be set — ${parentName} is a plain value, not an object`;
+    }
+    if (node.kind === "record") {
+      node = LEAF;
+      parentName = seg;
+      continue;
+    }
+    if (node.kind === "array") {
+      if (!/^(\d+|-)$/.test(seg)) {
+        return `'${seg}' isn't a valid index in the ${parentName} list`;
+      }
+      node = node.item;
+      parentName = `${parentName} item`;
+      continue;
+    }
+    // object
+    const next = node.fields[seg];
+    if (!next) {
+      const valid = Object.keys(node.fields).slice(0, 8).join(", ");
+      return `'${seg}' isn't a valid field on ${parentName} (allowed: ${valid})`;
+    }
+    node = next;
+    parentName = seg;
+  }
+  return null;
+}
+
+
 /** Resolve a JSON-Pointer path against a document; returns whether it exists. */
 function pointerExists(doc: unknown, path: string): boolean {
   const segments = path.split("/").slice(1).map(decodeToken);
@@ -655,65 +709,72 @@ Deno.serve(async (req) => {
     }
     const { patch: rawPatch, summary } = validatedOutput.data;
 
-    // ---- Schema-path validation (atomic: reject the whole patch) ----------
+    // A rejected op is SKIPPED with a human-readable reason (never silently
+    // dropped) — the valid ops still apply. Safety guards are unchanged; only
+    // the feedback improves.
+    type RawOp = (typeof rawPatch)[number];
+    const skipped: { op: string; path: string; reason: string }[] = [];
+    const skip = (op: RawOp, reason: string) =>
+      skipped.push({ op: op.op, path: op.path, reason });
+
+    // ---- Schema-path validation (per-op skip) ----------------------------
     // Every op path (and move/copy `from`) must target a field that exists in
-    // the PageContent schema. This blocks hallucinated fields (the root cause
-    // of OPERATION_PATH_UNRESOLVABLE) before anything is applied.
-    const invalidPaths: string[] = [];
+    // the PageContent schema. Ops targeting hallucinated fields are skipped
+    // with a clear reason instead of failing the whole request.
+    const schemaValid: RawOp[] = [];
     for (const op of rawPatch) {
-      if (!isSchemaValidPath(op.path)) invalidPaths.push(op.path);
-      if ((op.op === "move" || op.op === "copy") && op.from && !isSchemaValidPath(op.from)) {
-        invalidPaths.push(op.from);
+      const pathReason = describeInvalidPath(op.path);
+      if (pathReason) {
+        skip(op, `Skipped: ${pathReason}.`);
+        continue;
       }
-    }
-    if (invalidPaths.length) {
-      return json(
-        {
-          error: `The AI tried to edit fields that do not exist in the page schema (${[...new Set(invalidPaths)].join(", ")}). No changes were applied.`,
-        },
-        422,
-      );
+      if ((op.op === "move" || op.op === "copy") && op.from) {
+        const fromReason = describeInvalidPath(op.from);
+        if (fromReason) {
+          skip(op, `Skipped: source ${fromReason}.`);
+          continue;
+        }
+      }
+      schemaValid.push(op);
     }
 
     // ---- Auto-convert replace -> add for schema-valid but currently-absent
     // paths. Replacing an unset optional field (e.g. an unset unit image) must
     // succeed rather than fail with OPERATION_PATH_UNRESOLVABLE.
-    const patch = rawPatch.map((op) => {
+    const converted = schemaValid.map((op) => {
       if (op.op === "replace" && !pointerExists(content, op.path)) {
         return { ...op, op: "add" as const };
       }
       return op;
     });
 
-
-    // ---- Protected-path guard ----
-    // Reject remove/replace/move ops that target protected media paths, UNLESS
+    // ---- Protected-path guard (per-op skip) ----
+    // Skip remove/replace/move ops that target protected media paths, UNLESS
     // the instruction explicitly mentions media (keyword check, case-insensitive).
     const instructionLower = instruction.toLowerCase();
     const mediaRequested =
       assets.length > 0 ||
       MEDIA_KEYWORDS.some((k) => instructionLower.includes(k.toLowerCase()));
-    if (!mediaRequested) {
-      const extraList = Array.isArray((content as any)?.extra_sections)
-        ? ((content as any).extra_sections as { id: string; type: string }[])
-        : [];
-      // True when an op targets media inside a duplicated section instance:
-      // any /extra_sections/*/…/url path, or removing a whole gallery/wide_images entry.
-      const touchesExtraMedia = (op: { op: string; path: string; from?: string }): boolean => {
-        const paths = [op.path, ...(op.op === "move" && op.from ? [op.from] : [])];
-        for (const p of paths) {
-          if (!p.includes("/extra_sections")) continue;
-          if (p.includes("/url")) return true;
-          // Removing an entire instance entry: /extra_sections/<index>
-          const m = /^\/extra_sections\/(\d+)$/.exec(p);
-          if (m && op.op === "remove") {
-            const entry = extraList[Number(m[1])];
-            if (entry && (entry.type === "gallery" || entry.type === "wide_images")) return true;
-          }
+    const extraList = Array.isArray((content as any)?.extra_sections)
+      ? ((content as any).extra_sections as { id: string; type: string }[])
+      : [];
+    const touchesExtraMedia = (op: { op: string; path: string; from?: string }): boolean => {
+      const paths = [op.path, ...(op.op === "move" && op.from ? [op.from] : [])];
+      for (const p of paths) {
+        if (!p.includes("/extra_sections")) continue;
+        if (p.includes("/url")) return true;
+        const m = /^\/extra_sections\/(\d+)$/.exec(p);
+        if (m && op.op === "remove") {
+          const entry = extraList[Number(m[1])];
+          if (entry && (entry.type === "gallery" || entry.type === "wide_images")) return true;
         }
-        return false;
-      };
-      for (const op of patch) {
+      }
+      return false;
+    };
+
+    const patch: RawOp[] = [];
+    for (const op of converted) {
+      if (!mediaRequested) {
         const touchesProtected =
           PROTECTED_FRAGMENTS.some((f) => op.path.includes(f)) ||
           (op.op === "move" && op.from
@@ -721,18 +782,29 @@ Deno.serve(async (req) => {
             : false) ||
           touchesExtraMedia(op);
         if (touchesProtected && (op.op === "remove" || op.op === "replace" || op.op === "move")) {
-          return json(
-            {
-              error: `The change was blocked because it edits protected media (${op.path}). Mention the image/photo/gallery/video explicitly to allow it.`,
-            },
-            422,
+          skip(
+            op,
+            "Skipped: image/media changes require your instruction to mention the image, photo, gallery, or video.",
           );
+          continue;
         }
       }
+      patch.push(op);
     }
 
+    // Nothing to apply: return the unchanged content plus the skip reasons so
+    // the UI can explain why. No preview/confirm needed.
+    if (patch.length === 0) {
+      return json({
+        content,
+        summary: summary || "No applicable changes.",
+        changedPaths: [],
+        changes: [],
+        skipped,
+      });
+    }
 
-    // ---- Apply the patch to a deep clone ----
+    // ---- Apply the (valid) patch to a deep clone atomically ----
     let result: unknown;
     try {
       const clone = deepClone(content);
@@ -777,8 +849,38 @@ Deno.serve(async (req) => {
       }
     }
 
+    // ---- Field-by-field before -> after diff for the preview ----
+    const getByPointer = (doc: unknown, path: string): unknown => {
+      const segments = path.split("/").slice(1).map(decodeToken);
+      let cur: unknown = doc;
+      for (const seg of segments) {
+        if (cur === null || typeof cur !== "object") return undefined;
+        if (Array.isArray(cur)) {
+          if (seg === "-") return undefined;
+          const idx = Number(seg);
+          if (!Number.isInteger(idx)) return undefined;
+          cur = cur[idx];
+        } else {
+          cur = (cur as Record<string, unknown>)[seg];
+        }
+      }
+      return cur;
+    };
+    const changes = patch.map((op) => ({
+      op: op.op,
+      path: op.path,
+      before: op.op === "add" ? undefined : getByPointer(content, op.path),
+      after: op.op === "remove" ? undefined : getByPointer(validatedResult.data, op.path),
+    }));
+
     const changedPaths = patch.map((op) => op.path);
-    return json({ content: validatedResult.data, summary, changedPaths });
+    return json({
+      content: validatedResult.data,
+      summary,
+      changedPaths,
+      changes,
+      skipped,
+    });
   } catch (err) {
     console.error("[edit-page] unexpected error:", err);
     return json({ error: "Unexpected server error." }, 500);
