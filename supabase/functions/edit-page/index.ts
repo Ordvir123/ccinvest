@@ -188,6 +188,152 @@ const modelOutputSchema = z.object({
   summary: z.string(),
 });
 
+// ---- Schema-path validation for JSON Patch ops -----------------------------
+// A structural descriptor of PageContent, used to accept/reject patch paths
+// WITHOUT having to apply them first. This is how we reject ops targeting
+// fields that do not exist in the schema (e.g. a hallucinated /units/0/foo)
+// instead of letting fast-json-patch silently add junk keys.
+type SchemaNode =
+  | { kind: "leaf" }
+  | { kind: "any" }
+  | { kind: "record" } // arbitrary string keys -> leaf (i18n maps)
+  | { kind: "array"; item: SchemaNode }
+  | { kind: "object"; fields: Record<string, SchemaNode> };
+
+const LEAF: SchemaNode = { kind: "leaf" };
+const RECORD: SchemaNode = { kind: "record" };
+const MEDIA_NODE: SchemaNode = { kind: "object", fields: { url: LEAF, alt: LEAF } };
+const DETAIL_ROW: SchemaNode = {
+  kind: "object",
+  fields: { presetKey: LEAF, linked: LEAF, label: LEAF, icon: LEAF, value: LEAF },
+};
+const STAT_NODE: SchemaNode = { kind: "object", fields: { value: LEAF, label: LEAF, icon: LEAF } };
+const VIDEO_NODE: SchemaNode = { kind: "object", fields: { title: LEAF, youtube_id: LEAF } };
+const UNIT_ATTACHMENT: SchemaNode = { kind: "object", fields: { url: LEAF, type: LEAF } };
+const UNIT_NODE: SchemaNode = {
+  kind: "object",
+  fields: {
+    name: LEAF,
+    unit_type: LEAF,
+    unit_number: LEAF,
+    floor: LEAF,
+    orientation: LEAF,
+    rooms: LEAF,
+    area_m2: LEAF,
+    balcony_m2: LEAF,
+    parking: LEAF,
+    description: LEAF,
+    price: LEAF,
+    image: MEDIA_NODE,
+    attachment: UNIT_ATTACHMENT,
+    features: { kind: "array", item: LEAF },
+    specs: { kind: "array", item: DETAIL_ROW },
+    featureRows: { kind: "array", item: DETAIL_ROW },
+  },
+};
+const SCHEMA_ROOT: SchemaNode = {
+  kind: "object",
+  fields: {
+    category: LEAF,
+    hero: {
+      kind: "object",
+      fields: {
+        kicker: LEAF,
+        kicker_i18n: RECORD,
+        title: LEAF,
+        subtitle: LEAF,
+        price: LEAF,
+        cta_label: LEAF,
+        cta_label_i18n: RECORD,
+        background: MEDIA_NODE,
+        overlay: {
+          kind: "object",
+          fields: { opacity: LEAF, color: LEAF, direction: LEAF },
+        },
+      },
+    },
+    stats: { kind: "array", item: STAT_NODE },
+    location: {
+      kind: "object",
+      fields: { heading: LEAF, text: LEAF, map_query: LEAF, name_i18n: RECORD },
+    },
+    about: {
+      kind: "object",
+      fields: {
+        heading: LEAF,
+        body: LEAF,
+        features: { kind: "array", item: LEAF },
+        feature_icons: { kind: "array", item: LEAF },
+      },
+    },
+    gallery: { kind: "array", item: MEDIA_NODE },
+    gallery_layout: LEAF,
+    wide_images: { kind: "array", item: MEDIA_NODE },
+    wide_images_layout: LEAF,
+    section_order: { kind: "array", item: LEAF },
+    hidden_sections: { kind: "array", item: LEAF },
+    units: { kind: "array", item: UNIT_NODE },
+    apartment: UNIT_NODE,
+    apartment_image_side: LEAF,
+    apartment_title: LEAF,
+    apartment_title_icon: LEAF,
+    videos: { kind: "array", item: VIDEO_NODE },
+    contact: { kind: "object", fields: { heading: LEAF, heading_i18n: RECORD } },
+    extra_sections: {
+      kind: "array",
+      item: { kind: "object", fields: { id: LEAF, type: LEAF, layout: LEAF, data: { kind: "any" } } },
+    },
+  },
+};
+
+/** Decode a single JSON-Pointer reference token (RFC 6901). */
+function decodeToken(t: string): string {
+  return t.replace(/~1/g, "/").replace(/~0/g, "~");
+}
+
+/** True when a JSON-Pointer path corresponds to a real field in the schema. */
+function isSchemaValidPath(path: string): boolean {
+  const segments = path.split("/").slice(1).map(decodeToken);
+  let node: SchemaNode = SCHEMA_ROOT;
+  for (const seg of segments) {
+    if (node.kind === "any") return true;
+    if (node.kind === "leaf") return false; // cannot descend past a scalar
+    if (node.kind === "record") {
+      node = LEAF; // one arbitrary key -> scalar value
+      continue;
+    }
+    if (node.kind === "array") {
+      if (!/^(\d+|-)$/.test(seg)) return false;
+      node = node.item;
+      continue;
+    }
+    // object
+    const next = node.fields[seg];
+    if (!next) return false;
+    node = next;
+  }
+  return true;
+}
+
+/** Resolve a JSON-Pointer path against a document; returns whether it exists. */
+function pointerExists(doc: unknown, path: string): boolean {
+  const segments = path.split("/").slice(1).map(decodeToken);
+  let cur: unknown = doc;
+  for (const seg of segments) {
+    if (cur === null || typeof cur !== "object") return false;
+    if (Array.isArray(cur)) {
+      if (seg === "-") return false; // append token never "exists"
+      const idx = Number(seg);
+      if (!Number.isInteger(idx) || idx < 0 || idx >= cur.length) return false;
+      cur = cur[idx];
+    } else {
+      if (!(seg in (cur as Record<string, unknown>))) return false;
+      cur = (cur as Record<string, unknown>)[seg];
+    }
+  }
+  return true;
+}
+
 const historyTurnSchema = z.object({
   role: z.enum(["user", "assistant"]),
   text: z.string(),
