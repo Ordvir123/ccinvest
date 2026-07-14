@@ -219,6 +219,12 @@ function SettingsPage() {
                       next[i] = { ...next[i], icon: (icon as string) ?? "" };
                       update({ apartmentTitleOptions: next });
                     }}
+                    color={opt.color}
+                    onColorChange={(color) => {
+                      const next = (form.apartmentTitleOptions ?? []).slice();
+                      next[i] = { ...next[i], color };
+                      update({ apartmentTitleOptions: next });
+                    }}
                   />
                   <Input
                     value={opt.label}
@@ -330,6 +336,8 @@ function PresetsCard({
               <IconPicker
                 value={p.icon}
                 onChange={(icon) => update(i, { icon: (icon as string) || "check" })}
+                color={p.color}
+                onColorChange={(color) => update(i, { color })}
               />
               {withValueKind && (
                 <Select

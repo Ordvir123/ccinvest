@@ -15,7 +15,7 @@ export type HeroOverlay = {
   direction?: "none" | "top" | "bottom" | "both";
 };
 
-export type Stat = { value: string; label: string; icon?: string };
+export type Stat = { value: string; label: string; icon?: string; color?: string };
 
 /** Closed dictionaries so admin-picked values translate reliably per locale. */
 export type UnitType = "apartment" | "penthouse" | "studio" | "duplex" | "other";
@@ -88,6 +88,8 @@ export type DetailRow = {
   linked?: boolean;
   label?: string;
   icon?: string;
+  /** Optional CSS color for the row icon (overrides preset color). */
+  color?: string;
   value?: string;
 };
 
@@ -95,6 +97,8 @@ export type DetailRow = {
 export type SpecPreset = {
   key: string;
   icon: string;
+  /** Optional CSS color for the preset's icon. */
+  color?: string;
   /** Per-locale label so nothing leaks untranslated. */
   labels: Record<ReadingLang, string>;
   valueKind: SpecValueKind;
@@ -108,6 +112,8 @@ export type AboutData = {
   body?: string;
   features?: string[];
   feature_icons?: string[];
+  /** Per-feature CSS color for the icon (aligned by index with `features`). */
+  feature_colors?: string[];
 };
 
 /** Section types that can appear multiple times per page. */
@@ -157,7 +163,7 @@ export type PageContent = {
     /** Per-locale proper names (streets etc.) — never machine-translated. */
     name_i18n?: Partial<Record<ReadingLang, string>>;
   };
-  about?: { heading?: string; body?: string; features?: string[]; feature_icons?: string[] };
+  about?: AboutData;
   gallery: Media[];
   /** Layout preset for the base gallery section (see page-sections). Absent = legacy carousel. */
   gallery_layout?: string;
@@ -185,6 +191,8 @@ export type PageContent = {
   apartment_title?: string;
   /** Icon shown beside the apartment section heading. */
   apartment_title_icon?: string;
+  /** Optional CSS color for the apartment section heading icon. */
+  apartment_title_color?: string;
   videos?: Video[];
   contact?: {
     heading?: string;

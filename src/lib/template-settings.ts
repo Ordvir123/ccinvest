@@ -16,6 +16,8 @@ export type ApartmentTitleOption = {
   label: string;
   /** Icon name (from the shared icon set) shown beside the heading. */
   icon: string;
+  /** Optional CSS color applied to the heading icon. */
+  color?: string;
 };
 
 export type TemplateSettings = {
@@ -75,7 +77,11 @@ function normalizeTitleOptions(raw: unknown): ApartmentTitleOption[] {
   const cleaned = raw
     .map((o) => {
       const opt = (o ?? {}) as Partial<ApartmentTitleOption>;
-      return { label: (opt.label ?? "").trim(), icon: (opt.icon ?? "").trim() };
+      return {
+        label: (opt.label ?? "").trim(),
+        icon: (opt.icon ?? "").trim(),
+        color: (opt.color ?? "").trim() || undefined,
+      };
     })
     .filter((o) => o.label.length > 0);
   return cleaned.length ? cleaned : [...DEFAULT_APARTMENT_TITLE_OPTIONS];
@@ -105,6 +111,7 @@ function normalizePresets(raw: unknown, fallback: SpecPreset[]): SpecPreset[] {
           anyLabel.toLowerCase().replace(/\s+/g, "_") ||
           `preset_${Math.random().toString(36).slice(2, 8)}`,
         icon: (p.icon ?? "").trim() || "check",
+        color: (p.color ?? "").trim() || undefined,
         valueKind: VALUE_KINDS.includes(p.valueKind as SpecValueKind)
           ? (p.valueKind as SpecValueKind)
           : "text",

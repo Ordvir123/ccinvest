@@ -24,6 +24,7 @@ import {
   ABOUT_APARTMENT_HEADING,
   rowLabel,
   rowIcon,
+  rowColor,
   rowValue,
   featureRowText,
   migrateUnitSpecs,
@@ -212,7 +213,10 @@ function Stats({ stats }: { stats: PageContent["stats"] }) {
               className="flex flex-col items-center px-3 py-8 text-center md:px-4 md:py-10"
             >
               {Icon && (
-                <span className="mb-3 flex h-11 w-11 items-center justify-center rounded-full bg-primary/10 text-primary">
+                <span
+                  className="mb-3 flex h-11 w-11 items-center justify-center rounded-full bg-primary/10 text-primary"
+                  style={s.color ? { color: s.color } : undefined}
+                >
                   <Icon className="h-5 w-5" aria-hidden />
                 </span>
               )}
@@ -724,12 +728,14 @@ function UnitCard({
       label: rowLabel(r, lang, specPresets),
       value: rowValue(r, lang, specPresets),
       icon: rowIcon(r, specPresets),
+      color: rowColor(r, specPresets),
     }))
     .filter((r) => hasText(r.value));
   const featureItems = (unit.featureRows ?? migrateUnitFeatures(unit))
     .map((r) => ({
       text: featureRowText(r, lang, featurePresets),
       icon: rowIcon(r, featurePresets),
+      color: rowColor(r, featurePresets),
     }))
     .filter((r) => hasText(r.text));
   const plan = unit.attachment;
@@ -756,7 +762,13 @@ function UnitCard({
               return (
                 <div key={ri} className="flex justify-between gap-2 border-b border-border/60 pb-1">
                   <dt className="flex items-center gap-1.5 text-muted-foreground">
-                    {RowIcon && <RowIcon className="h-4 w-4 shrink-0 text-primary" aria-hidden />}
+                    {RowIcon && (
+                      <RowIcon
+                        className="h-4 w-4 shrink-0 text-primary"
+                        style={r.color ? { color: r.color } : undefined}
+                        aria-hidden
+                      />
+                    )}
                     {r.label}
                   </dt>
                   <dd className="font-medium text-foreground">{r.value}</dd>
@@ -775,7 +787,11 @@ function UnitCard({
               return (
                 <li key={i} className="flex items-center gap-2 text-sm text-foreground">
                   {FIcon ? (
-                    <FIcon className="h-4 w-4 shrink-0 text-primary" aria-hidden />
+                    <FIcon
+                      className="h-4 w-4 shrink-0 text-primary"
+                      style={f.color ? { color: f.color } : undefined}
+                      aria-hidden
+                    />
                   ) : (
                     <ChevronRight className="h-4 w-4 text-primary rtl:rotate-180" aria-hidden />
                   )}
@@ -874,6 +890,7 @@ function ApartmentSection({
   imageSide,
   heading,
   headingIcon,
+  headingColor,
   labels,
   lang,
   specPresets,
@@ -883,6 +900,7 @@ function ApartmentSection({
   imageSide: "left" | "right";
   heading?: string;
   headingIcon?: string;
+  headingColor?: string;
   labels: Record<string, string>;
   lang: ReadingLang;
   specPresets: SpecPreset[];
@@ -896,12 +914,14 @@ function ApartmentSection({
       label: rowLabel(r, lang, specPresets),
       value: rowValue(r, lang, specPresets),
       icon: rowIcon(r, specPresets),
+      color: rowColor(r, specPresets),
     }))
     .filter((r) => hasText(r.value));
   const featureItems = (apartment.featureRows ?? migrateUnitFeatures(apartment))
     .map((r) => ({
       text: featureRowText(r, lang, featurePresets),
       icon: rowIcon(r, featurePresets),
+      color: rowColor(r, featurePresets),
     }))
     .filter((r) => hasText(r.text));
   const plan = apartment.attachment;
@@ -924,7 +944,13 @@ function ApartmentSection({
             : (ABOUT_APARTMENT_HEADING[lang] ?? ABOUT_APARTMENT_HEADING.fr);
           return (
             <h2 className="mb-10 flex items-center justify-center gap-3 text-center text-3xl text-ink md:text-4xl">
-              {HeadingIcon && <HeadingIcon className="h-7 w-7 shrink-0 text-primary" aria-hidden />}
+              {HeadingIcon && (
+                <HeadingIcon
+                  className="h-7 w-7 shrink-0 text-primary"
+                  style={headingColor ? { color: headingColor } : undefined}
+                  aria-hidden
+                />
+              )}
               {text}
             </h2>
           );
@@ -947,7 +973,11 @@ function ApartmentSection({
                       >
                         <dt className="flex items-center gap-1.5 text-xs uppercase tracking-wide text-muted-foreground">
                           {RowIcon && (
-                            <RowIcon className="h-4 w-4 shrink-0 text-primary" aria-hidden />
+                            <RowIcon
+                              className="h-4 w-4 shrink-0 text-primary"
+                              style={r.color ? { color: r.color } : undefined}
+                              aria-hidden
+                            />
                           )}
                           {r.label}
                         </dt>
@@ -969,7 +999,11 @@ function ApartmentSection({
                     return (
                       <li key={i} className="flex items-center gap-2 text-foreground">
                         {FIcon ? (
-                          <FIcon className="h-4 w-4 shrink-0 text-primary" aria-hidden />
+                          <FIcon
+                            className="h-4 w-4 shrink-0 text-primary"
+                            style={f.color ? { color: f.color } : undefined}
+                            aria-hidden
+                          />
                         ) : (
                           <ChevronRight
                             className="h-4 w-4 text-primary rtl:rotate-180"
@@ -1152,13 +1186,17 @@ function About({ about }: { about?: PageContent["about"] }) {
           {features.map((f, i) => {
             const FIcon =
               getIcon(about.feature_icons?.[i]) ?? getIcon(guessIcon(f, "sparkles"));
+            const fColor = about.feature_colors?.[i];
             return (
               <li
                 key={i}
                 className="flex items-center gap-3 rounded-lg border border-border bg-card p-4 text-start"
               >
                 {FIcon && (
-                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+                  <span
+                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary"
+                    style={fColor ? { color: fColor } : undefined}
+                  >
                     <FIcon className="h-4 w-4" aria-hidden />
                   </span>
                 )}
@@ -1308,6 +1346,7 @@ export function PageRenderer({
             imageSide={content.apartment_image_side === "left" ? "left" : "right"}
             heading={content.apartment_title}
             headingIcon={content.apartment_title_icon}
+            headingColor={content.apartment_title_color}
             labels={labels}
             lang={lang}
             specPresets={settings.specPresets}

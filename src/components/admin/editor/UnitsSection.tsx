@@ -83,6 +83,8 @@ function SpecRowsEditor({
                 <IconPicker
                   value={effIcon}
                   onChange={(icon) => update(i, { icon: (icon as string) ?? "" })}
+                  color={row.color ?? (linked ? preset?.color : undefined)}
+                  onColorChange={(color) => update(i, { color })}
                 />
                 <LinkToggle
                   linked={linked}
@@ -252,6 +254,8 @@ function FeatureRowsEditor({
                 <IconPicker
                   value={effIcon}
                   onChange={(icon) => update(i, { icon: (icon as string) ?? "" })}
+                  color={row.color ?? (linked ? preset?.color : undefined)}
+                  onColorChange={(color) => update(i, { color })}
                 />
                 <LinkToggle
                   linked={linked}
@@ -611,6 +615,8 @@ export function ListingBody({ s }: { s: PageEditorState }) {
                   <IconPicker
                     value={content.apartment_title_icon}
                     onChange={(icon) => patch({ apartment_title_icon: (icon as string) ?? "" })}
+                    color={content.apartment_title_color}
+                    onColorChange={(color) => patch({ apartment_title_color: color })}
                   />
                   <LinkToggle linked={linked} onToggle={() => setAptTitleCustom((v) => !v)} />
                   <Select
@@ -618,7 +624,7 @@ export function ListingBody({ s }: { s: PageEditorState }) {
                     onValueChange={(v) => {
                       if (v === DEFAULT_TITLE) {
                         setAptTitleCustom(false);
-                        patch({ apartment_title: "", apartment_title_icon: "" });
+                        patch({ apartment_title: "", apartment_title_icon: "", apartment_title_color: undefined });
                       } else if (v === CUSTOM_TITLE) {
                         setAptTitleCustom(true);
                       } else {
@@ -627,6 +633,7 @@ export function ListingBody({ s }: { s: PageEditorState }) {
                         patch({
                           apartment_title: v,
                           apartment_title_icon: opt?.icon ?? content.apartment_title_icon ?? "",
+                          apartment_title_color: opt?.color ?? content.apartment_title_color,
                         });
                       }
                     }}

@@ -35,11 +35,13 @@ export function AboutSection({ s, id = "about" }: { s: PageEditorState; id?: str
               items={(about?.features ?? []).map((f, i) => ({
                 f,
                 icon: about?.feature_icons?.[i],
+                color: about?.feature_colors?.[i],
               }))}
               onReorder={(items) =>
                 patchAbout({
                   features: items.map((x) => x.f),
                   feature_icons: items.map((x) => x.icon as string),
+                  feature_colors: items.map((x) => x.color as string),
                 })
               }
               getLabel={(x) => x.f || "Feature"}
@@ -54,6 +56,13 @@ export function AboutSection({ s, id = "about" }: { s: PageEditorState; id?: str
                     while (icons.length <= i) icons.push(undefined as unknown as string);
                     icons[i] = icon as string;
                     patchAbout({ feature_icons: icons });
+                  }}
+                  color={about?.feature_colors?.[i]}
+                  onColorChange={(color) => {
+                    const colors = (about?.feature_colors ?? []).slice();
+                    while (colors.length <= i) colors.push(undefined as unknown as string);
+                    colors[i] = color as string;
+                    patchAbout({ feature_colors: colors });
                   }}
                 />
                 <Input
@@ -73,9 +82,13 @@ export function AboutSection({ s, id = "about" }: { s: PageEditorState; id?: str
                     const icons = (about?.feature_icons ?? []).filter(
                       (_, idx) => idx !== i,
                     );
+                    const colors = (about?.feature_colors ?? []).filter(
+                      (_, idx) => idx !== i,
+                    );
                     patchAbout({
                       features: (about?.features ?? []).filter((_, idx) => idx !== i),
                       feature_icons: icons,
+                      feature_colors: colors,
                     });
                   }}
                 >
@@ -128,6 +141,12 @@ export function StatsBody({ s, id = "stats" }: { s: PageEditorState; id?: string
                 onChange={(icon) => {
                   const next = stats.slice();
                   next[i] = { ...next[i], icon };
+                  set(next);
+                }}
+                color={st.color}
+                onColorChange={(color) => {
+                  const next = stats.slice();
+                  next[i] = { ...next[i], color };
                   set(next);
                 }}
               />
