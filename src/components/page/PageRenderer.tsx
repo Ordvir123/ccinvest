@@ -1342,6 +1342,7 @@ export function PageRenderer({
             imageSide={content.apartment_image_side === "left" ? "left" : "right"}
             heading={content.apartment_title}
             headingIcon={content.apartment_title_icon}
+            headingColor={content.apartment_title_color}
             labels={labels}
             lang={lang}
             specPresets={settings.specPresets}
