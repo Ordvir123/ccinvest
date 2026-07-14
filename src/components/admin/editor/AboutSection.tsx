@@ -91,7 +91,9 @@ export function AboutSection({ s, id = "about" }: { s: PageEditorState; id?: str
                       feature_colors: colors,
                     });
                   }}
-                />
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
               </div>
             ))
           )}
