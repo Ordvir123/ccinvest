@@ -96,6 +96,13 @@ const pageContentSchema = z.object({
     cta_label: z.string().optional(),
     cta_label_i18n: langMap,
     background: mediaSchema.optional(),
+    overlay: z
+      .object({
+        opacity: z.number().min(0).max(1).optional(),
+        color: z.enum(["navy", "deep_navy", "black"]).optional(),
+        direction: z.enum(["none", "top", "bottom", "both"]).optional(),
+      })
+      .optional(),
   }),
   stats: z.array(statSchema),
   location: z
@@ -181,6 +188,152 @@ const modelOutputSchema = z.object({
   summary: z.string(),
 });
 
+// ---- Schema-path validation for JSON Patch ops -----------------------------
+// A structural descriptor of PageContent, used to accept/reject patch paths
+// WITHOUT having to apply them first. This is how we reject ops targeting
+// fields that do not exist in the schema (e.g. a hallucinated /units/0/foo)
+// instead of letting fast-json-patch silently add junk keys.
+type SchemaNode =
+  | { kind: "leaf" }
+  | { kind: "any" }
+  | { kind: "record" } // arbitrary string keys -> leaf (i18n maps)
+  | { kind: "array"; item: SchemaNode }
+  | { kind: "object"; fields: Record<string, SchemaNode> };
+
+const LEAF: SchemaNode = { kind: "leaf" };
+const RECORD: SchemaNode = { kind: "record" };
+const MEDIA_NODE: SchemaNode = { kind: "object", fields: { url: LEAF, alt: LEAF } };
+const DETAIL_ROW: SchemaNode = {
+  kind: "object",
+  fields: { presetKey: LEAF, linked: LEAF, label: LEAF, icon: LEAF, value: LEAF },
+};
+const STAT_NODE: SchemaNode = { kind: "object", fields: { value: LEAF, label: LEAF, icon: LEAF } };
+const VIDEO_NODE: SchemaNode = { kind: "object", fields: { title: LEAF, youtube_id: LEAF } };
+const UNIT_ATTACHMENT: SchemaNode = { kind: "object", fields: { url: LEAF, type: LEAF } };
+const UNIT_NODE: SchemaNode = {
+  kind: "object",
+  fields: {
+    name: LEAF,
+    unit_type: LEAF,
+    unit_number: LEAF,
+    floor: LEAF,
+    orientation: LEAF,
+    rooms: LEAF,
+    area_m2: LEAF,
+    balcony_m2: LEAF,
+    parking: LEAF,
+    description: LEAF,
+    price: LEAF,
+    image: MEDIA_NODE,
+    attachment: UNIT_ATTACHMENT,
+    features: { kind: "array", item: LEAF },
+    specs: { kind: "array", item: DETAIL_ROW },
+    featureRows: { kind: "array", item: DETAIL_ROW },
+  },
+};
+const SCHEMA_ROOT: SchemaNode = {
+  kind: "object",
+  fields: {
+    category: LEAF,
+    hero: {
+      kind: "object",
+      fields: {
+        kicker: LEAF,
+        kicker_i18n: RECORD,
+        title: LEAF,
+        subtitle: LEAF,
+        price: LEAF,
+        cta_label: LEAF,
+        cta_label_i18n: RECORD,
+        background: MEDIA_NODE,
+        overlay: {
+          kind: "object",
+          fields: { opacity: LEAF, color: LEAF, direction: LEAF },
+        },
+      },
+    },
+    stats: { kind: "array", item: STAT_NODE },
+    location: {
+      kind: "object",
+      fields: { heading: LEAF, text: LEAF, map_query: LEAF, name_i18n: RECORD },
+    },
+    about: {
+      kind: "object",
+      fields: {
+        heading: LEAF,
+        body: LEAF,
+        features: { kind: "array", item: LEAF },
+        feature_icons: { kind: "array", item: LEAF },
+      },
+    },
+    gallery: { kind: "array", item: MEDIA_NODE },
+    gallery_layout: LEAF,
+    wide_images: { kind: "array", item: MEDIA_NODE },
+    wide_images_layout: LEAF,
+    section_order: { kind: "array", item: LEAF },
+    hidden_sections: { kind: "array", item: LEAF },
+    units: { kind: "array", item: UNIT_NODE },
+    apartment: UNIT_NODE,
+    apartment_image_side: LEAF,
+    apartment_title: LEAF,
+    apartment_title_icon: LEAF,
+    videos: { kind: "array", item: VIDEO_NODE },
+    contact: { kind: "object", fields: { heading: LEAF, heading_i18n: RECORD } },
+    extra_sections: {
+      kind: "array",
+      item: { kind: "object", fields: { id: LEAF, type: LEAF, layout: LEAF, data: { kind: "any" } } },
+    },
+  },
+};
+
+/** Decode a single JSON-Pointer reference token (RFC 6901). */
+function decodeToken(t: string): string {
+  return t.replace(/~1/g, "/").replace(/~0/g, "~");
+}
+
+/** True when a JSON-Pointer path corresponds to a real field in the schema. */
+function isSchemaValidPath(path: string): boolean {
+  const segments = path.split("/").slice(1).map(decodeToken);
+  let node: SchemaNode = SCHEMA_ROOT;
+  for (const seg of segments) {
+    if (node.kind === "any") return true;
+    if (node.kind === "leaf") return false; // cannot descend past a scalar
+    if (node.kind === "record") {
+      node = LEAF; // one arbitrary key -> scalar value
+      continue;
+    }
+    if (node.kind === "array") {
+      if (!/^(\d+|-)$/.test(seg)) return false;
+      node = node.item;
+      continue;
+    }
+    // object
+    const next = node.fields[seg];
+    if (!next) return false;
+    node = next;
+  }
+  return true;
+}
+
+/** Resolve a JSON-Pointer path against a document; returns whether it exists. */
+function pointerExists(doc: unknown, path: string): boolean {
+  const segments = path.split("/").slice(1).map(decodeToken);
+  let cur: unknown = doc;
+  for (const seg of segments) {
+    if (cur === null || typeof cur !== "object") return false;
+    if (Array.isArray(cur)) {
+      if (seg === "-") return false; // append token never "exists"
+      const idx = Number(seg);
+      if (!Number.isInteger(idx) || idx < 0 || idx >= cur.length) return false;
+      cur = cur[idx];
+    } else {
+      if (!(seg in (cur as Record<string, unknown>))) return false;
+      cur = (cur as Record<string, unknown>)[seg];
+    }
+  }
+  return true;
+}
+
 const historyTurnSchema = z.object({
   role: z.enum(["user", "assistant"]),
   text: z.string(),
@@ -232,9 +385,17 @@ PATCH RULES — follow exactly:
 * "replace"/"add" require "value". "move"/"copy" require "from".
 * Do NOT translate. Keep the existing source language unless the instruction explicitly asks to rewrite copy.
 * Do NOT touch media (images, gallery, wide_images, backgrounds, attachments, youtube_id) unless the instruction explicitly asks about media.
-* If ATTACHED ASSETS are provided (listed below), you MAY place them into the content with "add"/"replace" ops. Use ONLY the EXACT asset URLs given — NEVER invent, guess, modify or shorten a URL. Each asset URL may be used AT MOST ONCE. Media objects use the shape { "url": "...", "alt"?: "..." }; unit attachments use { "url": "...", "type": "image"|"pdf" }. Place gallery photos into /gallery, panoramic shots into /wide_images, a hero photo into /hero/background, and floor plans into the matching /units/N/attachment (or /apartment/attachment).
+* If ATTACHED ASSETS are provided (listed below), you MAY place them into the content with "add"/"replace" ops. Use ONLY the EXACT asset URLs given — NEVER invent, guess, modify or shorten a URL. Each asset URL may be used AT MOST ONCE. Media objects use the shape { "url": "...", "alt"?: "..." }. Place gallery photos into /gallery, panoramic shots into /wide_images, a hero photo into /hero/background, and a UNIT PHOTO into /units/N/image (or /apartment/image). A unit floor-plan file goes into /units/N/attachment as { "url": "...", "type": "image"|"pdf" }.
+* NEVER invent fields or data. Use ONLY the exact field paths that exist in the schema below. Do NOT create new keys. If a value is unknown, leave it out — do not fabricate.
 * If the instruction is ambiguous or cannot be applied, return an empty patch array and explain in the summary.
-* Use plain hyphens "-" only. Do NOT introduce em dashes or en dashes.`;
+* Use plain hyphens "-" only. Do NOT introduce em dashes or en dashes.
+
+VALID FIELD PATHS (JSON Pointer). N = array index or "-" to append:
+/category, /hero/kicker, /hero/kicker_i18n/<lang>, /hero/title, /hero/subtitle, /hero/price, /hero/cta_label, /hero/cta_label_i18n/<lang>, /hero/background(/url,/alt), /hero/overlay(/opacity,/color,/direction),
+/stats/N(/value,/label,/icon), /location(/heading,/text,/map_query,/name_i18n/<lang>), /about(/heading,/body,/features/N,/feature_icons/N),
+/gallery/N(/url,/alt), /gallery_layout, /wide_images/N(/url,/alt), /wide_images_layout, /section_order/N, /hidden_sections/N,
+/units/N(/name,/unit_type,/unit_number,/floor,/orientation,/rooms,/area_m2,/balcony_m2,/parking,/description,/price,/image(/url,/alt),/attachment(/url,/type),/features/N,/specs/N,/featureRows/N),
+/apartment(same fields as a unit), /apartment_image_side, /apartment_title, /apartment_title_icon, /videos/N(/title,/youtube_id), /contact(/heading,/heading_i18n/<lang>), /extra_sections/N.`;
 
 function stripFences(s: string): string {
   return s
@@ -492,7 +653,38 @@ Deno.serve(async (req) => {
       console.error("[edit-page] model output invalid:", validatedOutput.error.message);
       return json({ error: "The AI returned an invalid patch." }, 502);
     }
-    const { patch, summary } = validatedOutput.data;
+    const { patch: rawPatch, summary } = validatedOutput.data;
+
+    // ---- Schema-path validation (atomic: reject the whole patch) ----------
+    // Every op path (and move/copy `from`) must target a field that exists in
+    // the PageContent schema. This blocks hallucinated fields (the root cause
+    // of OPERATION_PATH_UNRESOLVABLE) before anything is applied.
+    const invalidPaths: string[] = [];
+    for (const op of rawPatch) {
+      if (!isSchemaValidPath(op.path)) invalidPaths.push(op.path);
+      if ((op.op === "move" || op.op === "copy") && op.from && !isSchemaValidPath(op.from)) {
+        invalidPaths.push(op.from);
+      }
+    }
+    if (invalidPaths.length) {
+      return json(
+        {
+          error: `The AI tried to edit fields that do not exist in the page schema (${[...new Set(invalidPaths)].join(", ")}). No changes were applied.`,
+        },
+        422,
+      );
+    }
+
+    // ---- Auto-convert replace -> add for schema-valid but currently-absent
+    // paths. Replacing an unset optional field (e.g. an unset unit image) must
+    // succeed rather than fail with OPERATION_PATH_UNRESOLVABLE.
+    const patch = rawPatch.map((op) => {
+      if (op.op === "replace" && !pointerExists(content, op.path)) {
+        return { ...op, op: "add" as const };
+      }
+      return op;
+    });
+
 
     // ---- Protected-path guard ----
     // Reject remove/replace/move ops that target protected media paths, UNLESS

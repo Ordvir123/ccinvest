@@ -30,6 +30,7 @@ const unitSchema = z.object({
   parking: z.string().optional(),
   description: z.string().optional(),
   price: z.string().optional(),
+  image: z.object({ url: z.string(), alt: z.string().optional() }).optional(),
   features: z.array(z.string()).optional(),
   specs: z.array(detailRowSchema).optional(),
   featureRows: z.array(detailRowSchema).optional(),
