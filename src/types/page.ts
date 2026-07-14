@@ -15,7 +15,7 @@ export type HeroOverlay = {
   direction?: "none" | "top" | "bottom" | "both";
 };
 
-export type Stat = { value: string; label: string; icon?: string };
+export type Stat = { value: string; label: string; icon?: string; color?: string };
 
 /** Closed dictionaries so admin-picked values translate reliably per locale. */
 export type UnitType = "apartment" | "penthouse" | "studio" | "duplex" | "other";
