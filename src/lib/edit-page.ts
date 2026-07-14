@@ -7,10 +7,30 @@ export type EditLang = "fr" | "he" | "en";
 /** A media asset (already uploaded to page-media) sent to the AI for placement. */
 export type EditAsset = { url: string; kind: "image" | "pdf"; filename: string };
 
+/** A single field-level change proposed by the AI edit. */
+export type AiEditChange = {
+  op: string;
+  path: string;
+  before: unknown;
+  after: unknown;
+};
+
+/** An op the server refused to apply, with a human-readable reason. */
+export type AiEditSkip = {
+  op: string;
+  path: string;
+  reason: string;
+};
+
 export type AiEditResult = {
+  /** The PROPOSED content (not yet committed — preview then confirm). */
   content: PageContent;
   summary: string;
   changedPaths: string[];
+  /** Field-by-field before -> after for the confirmation preview. */
+  changes: AiEditChange[];
+  /** Ops the server skipped, with reasons to show the user. */
+  skipped: AiEditSkip[];
 };
 
 /**
