@@ -120,6 +120,7 @@ export function AiCorrectionsPanel({
   const [input, setInput] = useState("");
   const [running, setRunning] = useState(false);
   const [undoStack, setUndoStack] = useState<PageContent[]>([]);
+  const [pending, setPending] = useState<PendingEdit | null>(null);
   const [assets, setAssets] = useState<DraftAsset[]>([]);
   const [dragOver, setDragOver] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
