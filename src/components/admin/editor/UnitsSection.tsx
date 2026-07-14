@@ -615,6 +615,8 @@ export function ListingBody({ s }: { s: PageEditorState }) {
                   <IconPicker
                     value={content.apartment_title_icon}
                     onChange={(icon) => patch({ apartment_title_icon: (icon as string) ?? "" })}
+                    color={content.apartment_title_color}
+                    onColorChange={(color) => patch({ apartment_title_color: color })}
                   />
                   <LinkToggle linked={linked} onToggle={() => setAptTitleCustom((v) => !v)} />
                   <Select
