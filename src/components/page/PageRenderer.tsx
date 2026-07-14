@@ -716,6 +716,7 @@ function UnitCard({
   featurePresets: SpecPreset[];
 }) {
   const [planOpen, setPlanOpen] = useState(false);
+  const [planFailed, setPlanFailed] = useState(false);
   const title = unitTitle(unit, lang);
   const visibleRows = (unit.specs ?? migrateUnitSpecs(unit))
     .map((r) => ({
@@ -735,7 +736,7 @@ function UnitCard({
   return (
     <Card className="flex flex-col overflow-hidden">
       {unit.image?.url && (
-        <img
+        <SafeImg
           src={unit.image.url}
           alt={unit.image.alt ?? title}
           loading="lazy"
