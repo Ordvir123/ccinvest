@@ -15,7 +15,13 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { SectionCard } from "@/components/admin/editor-parts";
 import { cn } from "@/lib/utils";
-import { applyAiEdit, type EditAsset, type EditLang } from "@/lib/edit-page";
+import {
+  applyAiEdit,
+  type AiEditResult,
+  type AiEditSkip,
+  type EditAsset,
+  type EditLang,
+} from "@/lib/edit-page";
 import { supabase } from "@/integrations/supabase/client";
 import { PAGE_MEDIA_BUCKET, removePageMedia } from "@/lib/pages";
 import { compressImage } from "@/lib/image-compress";
