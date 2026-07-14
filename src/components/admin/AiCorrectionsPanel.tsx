@@ -24,8 +24,20 @@ import type { PageContent } from "@/types/page";
 /** A single message shown in the AI corrections chat. */
 type ChatMessage =
   | { role: "user"; text: string; attachments?: string[] }
-  | { role: "assistant"; text: string; changedPaths: string[] }
+  | {
+      role: "assistant";
+      text: string;
+      changedPaths: string[];
+      skipped?: AiEditSkip[];
+    }
   | { role: "error"; text: string };
+
+/** A proposed edit awaiting the user's Confirm/Cancel decision. */
+type PendingEdit = {
+  instruction: string;
+  before: PageContent;
+  result: AiEditResult;
+};
 
 const MAX_HISTORY_TURNS = 10;
 const MAX_UNDO_SNAPSHOTS = 15;
