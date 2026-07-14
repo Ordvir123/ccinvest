@@ -288,6 +288,29 @@ function chunk<T>(arr: T[], size: number): T[][] {
   return out;
 }
 
+/**
+ * <img> that hides itself when the source fails to load (404, network error,
+ * moved storage object, …). Prevents "broken image" placeholders from leaking
+ * into published pages when a storage object goes missing.
+ */
+function SafeImg({
+  onFail,
+  ...rest
+}: React.ImgHTMLAttributes<HTMLImageElement> & { onFail?: () => void }) {
+  const [failed, setFailed] = useState(false);
+  if (failed) return null;
+  return (
+    <img
+      {...rest}
+      onError={(e) => {
+        setFailed(true);
+        onFail?.();
+        rest.onError?.(e);
+      }}
+    />
+  );
+}
+
 /** Single image cell, optionally clickable (gallery lightbox) and framed. */
 function MediaCell({
   img,
@@ -302,11 +325,14 @@ function MediaCell({
   framed: boolean;
   aspect?: string;
 }) {
+  const [failed, setFailed] = useState(false);
+  if (failed) return null;
   const image = (
-    <img
+    <SafeImg
       src={img.url}
       alt={img.alt ?? `Image ${index + 1}`}
       loading="lazy"
+      onFail={() => setFailed(true)}
       className={cn(
         "block h-full w-full object-cover transition-transform duration-300",
         onClick && "hover:scale-[1.03]",
