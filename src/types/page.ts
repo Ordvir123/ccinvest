@@ -112,6 +112,8 @@ export type AboutData = {
   body?: string;
   features?: string[];
   feature_icons?: string[];
+  /** Per-feature CSS color for the icon (aligned by index with `features`). */
+  feature_colors?: string[];
 };
 
 /** Section types that can appear multiple times per page. */
