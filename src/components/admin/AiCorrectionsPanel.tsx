@@ -1,5 +1,6 @@
 import { useRef, useState } from "react";
 import {
+  Check,
   FileText,
   Loader2,
   Paperclip,
@@ -15,7 +16,13 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { SectionCard } from "@/components/admin/editor-parts";
 import { cn } from "@/lib/utils";
-import { applyAiEdit, type EditAsset, type EditLang } from "@/lib/edit-page";
+import {
+  applyAiEdit,
+  type AiEditResult,
+  type AiEditSkip,
+  type EditAsset,
+  type EditLang,
+} from "@/lib/edit-page";
 import { supabase } from "@/integrations/supabase/client";
 import { PAGE_MEDIA_BUCKET, removePageMedia } from "@/lib/pages";
 import { compressImage } from "@/lib/image-compress";
@@ -24,8 +31,20 @@ import type { PageContent } from "@/types/page";
 /** A single message shown in the AI corrections chat. */
 type ChatMessage =
   | { role: "user"; text: string; attachments?: string[] }
-  | { role: "assistant"; text: string; changedPaths: string[] }
+  | {
+      role: "assistant";
+      text: string;
+      changedPaths: string[];
+      skipped?: AiEditSkip[];
+    }
   | { role: "error"; text: string };
+
+/** A proposed edit awaiting the user's Confirm/Cancel decision. */
+type PendingEdit = {
+  instruction: string;
+  before: PageContent;
+  result: AiEditResult;
+};
 
 const MAX_HISTORY_TURNS = 10;
 const MAX_UNDO_SNAPSHOTS = 15;
@@ -101,6 +120,7 @@ export function AiCorrectionsPanel({
   const [input, setInput] = useState("");
   const [running, setRunning] = useState(false);
   const [undoStack, setUndoStack] = useState<PageContent[]>([]);
+  const [pending, setPending] = useState<PendingEdit | null>(null);
   const [assets, setAssets] = useState<DraftAsset[]>([]);
   const [dragOver, setDragOver] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -190,6 +210,10 @@ export function AiCorrectionsPanel({
       return;
     }
     if (running) return;
+    if (pending) {
+      toast.error("Confirm or cancel the pending change first.");
+      return;
+    }
     if (assets.some((a) => a.status === "uploading")) {
       toast.error("Wait for uploads to finish.");
       return;
@@ -232,21 +256,24 @@ export function AiCorrectionsPanel({
         history,
         readyAssets,
       );
-      setContent(() => result.content);
-      setUndoStack((prev) => [...prev, before].slice(-MAX_UNDO_SNAPSHOTS));
-      // Clear attachments once they've been applied to the page.
-      setAssets((prev) => {
-        prev.forEach((a) => a.previewUrl && URL.revokeObjectURL(a.previewUrl));
-        return [];
-      });
-      setMessages((prev) => [
-        ...prev,
-        {
-          role: "assistant",
-          text: result.summary || "Applied your change.",
-          changedPaths: result.changedPaths ?? [],
-        },
-      ]);
+
+      // Nothing applicable: no preview to confirm — just report what happened
+      // and why any ops were skipped. Content is untouched.
+      if (result.changes.length === 0) {
+        setMessages((prev) => [
+          ...prev,
+          {
+            role: "assistant",
+            text: result.summary || "No changes were applied.",
+            changedPaths: [],
+            skipped: result.skipped ?? [],
+          },
+        ]);
+        return;
+      }
+
+      // Otherwise stage a preview and wait for Confirm/Cancel.
+      setPending({ instruction, before, result });
     } catch (err) {
       const text = err instanceof Error ? err.message : "AI edit failed.";
       setMessages((prev) => [...prev, { role: "error", text }]);
@@ -254,6 +281,39 @@ export function AiCorrectionsPanel({
       setRunning(false);
       scrollToBottom();
     }
+  };
+
+  const confirmPending = () => {
+    if (!pending) return;
+    const { before, result } = pending;
+    setContent(() => result.content);
+    setUndoStack((prev) => [...prev, before].slice(-MAX_UNDO_SNAPSHOTS));
+    // Clear attachments once they've been applied to the page.
+    setAssets((prev) => {
+      prev.forEach((a) => a.previewUrl && URL.revokeObjectURL(a.previewUrl));
+      return [];
+    });
+    setMessages((prev) => [
+      ...prev,
+      {
+        role: "assistant",
+        text: result.summary || "Applied your change.",
+        changedPaths: result.changedPaths ?? [],
+        skipped: result.skipped ?? [],
+      },
+    ]);
+    setPending(null);
+    scrollToBottom();
+  };
+
+  const cancelPending = () => {
+    if (!pending) return;
+    setMessages((prev) => [
+      ...prev,
+      { role: "error", text: "Change cancelled — nothing was applied." },
+    ]);
+    setPending(null);
+    scrollToBottom();
   };
 
   const undo = () => {
@@ -299,6 +359,16 @@ export function AiCorrectionsPanel({
           </div>
         )}
       </div>
+
+      {/* Pending change preview — confirm before anything is applied */}
+      {pending && (
+        <EditPreview
+          result={pending.result}
+          onConfirm={confirmPending}
+          onCancel={cancelPending}
+        />
+      )}
+
 
       {/* Attachment chips / thumbnails */}
       {assets.length > 0 && (
@@ -386,15 +456,19 @@ export function AiCorrectionsPanel({
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={onKeyDown}
-          placeholder="Describe a correction, or drop files here… (Enter to send, Shift+Enter for a new line)"
-          disabled={running}
+          placeholder={
+            pending
+              ? "Confirm or cancel the pending change above first…"
+              : "Describe a correction, or drop files here… (Enter to send, Shift+Enter for a new line)"
+          }
+          disabled={running || !!pending}
           className="flex-1"
         />
         <Button
           type="button"
           size="sm"
           onClick={() => void send()}
-          disabled={running || !input.trim()}
+          disabled={running || !!pending || !input.trim()}
         >
           {running ? (
             <Loader2 className="h-4 w-4 animate-spin" />
@@ -459,6 +533,7 @@ function ChatBubble({ message }: { message: ChatMessage }) {
   }
 
   const changed = message.changedPaths.filter(Boolean).map(prettyPath);
+  const skipped = message.skipped ?? [];
   return (
     <div className="flex justify-start">
       <div className="max-w-[85%] space-y-1">
@@ -471,6 +546,97 @@ function ChatBubble({ message }: { message: ChatMessage }) {
             Changed: {changed.join(", ")}
           </p>
         )}
+        {skipped.length > 0 && (
+          <ul className="space-y-0.5 px-1">
+            {skipped.map((s, i) => (
+              <li key={i} className="text-[11px] text-amber-600">
+                {s.reason}
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/** Render a value compactly for the before -> after diff. */
+function formatValue(v: unknown): string {
+  if (v === undefined || v === null) return "∅ (empty)";
+  if (typeof v === "string") return v.length ? `"${v}"` : '"" (empty)';
+  if (typeof v === "number" || typeof v === "boolean") return String(v);
+  try {
+    const s = JSON.stringify(v);
+    return s.length > 160 ? `${s.slice(0, 157)}…` : s;
+  } catch {
+    return String(v);
+  }
+}
+
+/**
+ * Field-by-field preview of a staged edit. Shows before -> after for each
+ * change plus any skipped ops with their reasons, and Confirm / Cancel.
+ */
+function EditPreview({
+  result,
+  onConfirm,
+  onCancel,
+}: {
+  result: AiEditResult;
+  onConfirm: () => void;
+  onCancel: () => void;
+}) {
+  return (
+    <div className="space-y-3 rounded-md border border-primary/40 bg-primary/5 p-3">
+      <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+        <Sparkles className="h-4 w-4 text-primary" />
+        Review this change before applying
+      </div>
+      {result.summary && (
+        <p className="text-xs text-muted-foreground">{result.summary}</p>
+      )}
+
+      <ul className="space-y-2">
+        {result.changes.map((c, i) => (
+          <li key={i} className="rounded border border-border bg-card p-2 text-xs">
+            <p className="font-medium text-foreground">
+              {prettyPath(c.path)}{" "}
+              <span className="font-normal text-muted-foreground">({c.op})</span>
+            </p>
+            <div className="mt-1 space-y-0.5">
+              <p className="text-muted-foreground">
+                <span className="text-destructive">before:</span> {formatValue(c.before)}
+              </p>
+              <p className="text-muted-foreground">
+                <span className="text-emerald-600">after:</span> {formatValue(c.after)}
+              </p>
+            </div>
+          </li>
+        ))}
+      </ul>
+
+      {result.skipped.length > 0 && (
+        <div className="space-y-1">
+          <p className="text-[11px] font-medium text-amber-700">
+            Some operations were skipped (safety guards):
+          </p>
+          <ul className="space-y-0.5">
+            {result.skipped.map((s, i) => (
+              <li key={i} className="text-[11px] text-amber-600">
+                {s.reason}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      <div className="flex items-center gap-2">
+        <Button type="button" size="sm" onClick={onConfirm}>
+          <Check className="h-4 w-4" /> Confirm
+        </Button>
+        <Button type="button" size="sm" variant="outline" onClick={onCancel}>
+          <X className="h-4 w-4" /> Cancel
+        </Button>
       </div>
     </div>
   );

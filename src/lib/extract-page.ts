@@ -13,6 +13,10 @@ export type ExtractResult = {
   content: Partial<PageContent>;
   /** Asset URLs the AI could not confidently place — surfaced for manual use. */
   unplaced: string[];
+  /** Human-readable list of fields the source didn't state — complete manually. */
+  emptyFields: string[];
+  /** Category the server detected from the raw material (may differ from hint). */
+  detectedCategory: ExtractCategory;
 };
 
 /**
@@ -60,6 +64,11 @@ export async function extractPageFromText(
   return {
     content: (data?.content ?? {}) as Partial<PageContent>,
     unplaced: Array.isArray(data?.unplaced) ? (data.unplaced as string[]) : [],
+    emptyFields: Array.isArray(data?.emptyFields) ? (data.emptyFields as string[]) : [],
+    detectedCategory:
+      data?.category === "apartment" || data?.category === "project"
+        ? (data.category as ExtractCategory)
+        : opts?.category ?? "project",
   };
 }
 

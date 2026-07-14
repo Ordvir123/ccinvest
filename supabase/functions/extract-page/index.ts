@@ -30,7 +30,12 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
-const ANTHROPIC_MODEL = "claude-sonnet-4-6";
+// Strong model for extraction (our own Anthropic key, not the Lovable default).
+const ANTHROPIC_MODEL = "claude-opus-4-8";
+// Cheap, fast model used only to classify project vs. apartment.
+const DETECT_MODEL = "claude-sonnet-4-6";
+// How many few-shot house-style examples to pull from style_examples.
+const MAX_STYLE_EXAMPLES = 3;
 
 // ---- Input asset schema ----
 const assetSchema = z.object({
@@ -165,12 +170,24 @@ const STRICT_COPY_RULE = `COPY MODE: strict — extraction only. Do NOT rewrite,
 
 const ENHANCED_COPY_RULE = `COPY MODE: enhanced — you MAY polish and expand MARKETING copy (hero.subtitle, about.body, unit descriptions) in an elegant, understated luxury real-estate tone, in French. This applies to descriptive prose ONLY. Factual data (prices, areas, floors, addresses, room counts, unit counts, dates, names) must come ONLY from the inputs and must NEVER be invented or altered.`;
 
-function buildSystemPrompt(copyMode: "strict" | "enhanced"): string {
+const FEW_SHOT_RULE = `HOUSE-STYLE FEW-SHOT EXAMPLES:
+* You are given a few of OUR OWN existing pages as examples, each shown as raw_source -> content (the exact PageContent JSON we expect).
+* Study them ONLY for STYLE: French phrasing, tone, level of detail, sentence length, which sections are used, and how features/specs are worded and ordered.
+* NEVER carry any FACT across from an example into your output. Prices, sizes, floors, room counts, unit names, streets, dates and any other data must come ONLY from the NEW source material below.
+* If the new source doesn't state something an example page happened to include, OMIT it. Matching the style never means copying the example's data.`;
+
+function buildSystemPrompt(
+  copyMode: "strict" | "enhanced",
+  hasExamples: boolean,
+): string {
   return [
     BASE_RULES,
     MEDIA_RULES,
     copyMode === "enhanced" ? ENHANCED_COPY_RULE : STRICT_COPY_RULE,
-  ].join("\n\n");
+    hasExamples ? FEW_SHOT_RULE : "",
+  ]
+    .filter(Boolean)
+    .join("\n\n");
 }
 
 function stripFences(s: string): string {
@@ -187,6 +204,7 @@ async function callAnthropic(
   sourceLang: string | undefined,
   assets: Asset[],
   copyMode: "strict" | "enhanced",
+  opts: { category: "apartment" | "project"; examplesBlock: string },
 ) {
   // Content blocks: image blocks first, then PDF (document) blocks, then text.
   const images = assets.filter((a) => a.kind === "image");
@@ -206,14 +224,21 @@ async function callAnthropic(
     .map((a, i) => `Asset ${i + 1}: ${a.filename} - ${a.url}`)
     .join("\n");
 
+  const categoryHint =
+    opts.category === "apartment"
+      ? `This source describes a SINGLE apartment. Output AT MOST ONE entry in "units" capturing that apartment.`
+      : `This source describes a PROJECT (multi-unit building). Output one entry in "units" per distinct apartment/unit you find, each with its own details.`;
+
   const textParts: string[] = [];
   if (sourceLang) textParts.push(`Source language: ${sourceLang}`);
+  textParts.push(`Detected property type: ${opts.category}. ${categoryHint}`);
+  if (opts.examplesBlock) textParts.push(opts.examplesBlock);
   if (ordered.length) {
     textParts.push(
       `Assets (use these EXACT URLs, each at most once):\n${assetLines}`,
     );
   }
-  if (text) textParts.push(`Property text:\n"""\n${text}\n"""`);
+  if (text) textParts.push(`NEW property source material (extract facts ONLY from here):\n"""\n${text}\n"""`);
   blocks.push({ type: "text", text: textParts.join("\n\n") });
 
   const res = await fetch("https://api.anthropic.com/v1/messages", {
@@ -226,7 +251,7 @@ async function callAnthropic(
     body: JSON.stringify({
       model: ANTHROPIC_MODEL,
       max_tokens: 4000,
-      system: buildSystemPrompt(copyMode),
+      system: buildSystemPrompt(copyMode, Boolean(opts.examplesBlock)),
       messages: [{ role: "user", content: blocks }],
     }),
   });
@@ -241,6 +266,157 @@ async function callAnthropic(
     .map((b: any) => b.text)
     .join("");
   return { ok: true as const, text: out as string };
+}
+
+/**
+ * Classify the raw material as a multi-unit "project" or a single "apartment".
+ * Uses a cheap model. Falls back to the caller-provided hint on any failure.
+ * Signal: multiple named units with prices/sizes => project.
+ */
+async function detectCategory(
+  apiKey: string,
+  text: string,
+  assets: Asset[],
+  fallback: "apartment" | "project",
+): Promise<"apartment" | "project"> {
+  if (!text.trim() && assets.length === 0) return fallback;
+  try {
+    const images = assets.filter((a) => a.kind === "image");
+    const pdfs = assets.filter((a) => a.kind === "pdf");
+    const blocks: unknown[] = [];
+    for (const pdf of pdfs) {
+      blocks.push({ type: "document", source: { type: "url", url: pdf.url } });
+    }
+    // Images rarely help classification; skip them to keep this call cheap.
+    void images;
+    blocks.push({
+      type: "text",
+      text:
+        `Classify this real-estate material as either a multi-unit PROJECT or a single APARTMENT.\n` +
+        `Rule: if it lists MULTIPLE distinct units/apartments (each with its own name/number and its own price or size), answer "project". If it describes ONE property throughout, answer "apartment".\n` +
+        `Answer with ONLY one word: project OR apartment.\n\n` +
+        (text ? `Material:\n"""\n${text.slice(0, 8000)}\n"""` : `(see attached document)`),
+    });
+
+    const res = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        "x-api-key": apiKey,
+        "anthropic-version": "2023-06-01",
+      },
+      body: JSON.stringify({
+        model: DETECT_MODEL,
+        max_tokens: 8,
+        messages: [{ role: "user", content: blocks }],
+      }),
+    });
+    if (!res.ok) return fallback;
+    const data = await res.json();
+    const answer = ((data?.content ?? [])
+      .filter((b: any) => b?.type === "text")
+      .map((b: any) => b.text)
+      .join("") as string)
+      .toLowerCase();
+    if (answer.includes("project")) return "project";
+    if (answer.includes("apartment")) return "apartment";
+    return fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+/**
+ * Pull a few of OUR OWN pages from the style_examples table for the given
+ * category and render them as raw_source -> content few-shot examples.
+ * Best-effort: returns "" on any failure or when the table/rows are absent.
+ */
+async function fetchStyleExamples(
+  authClient: ReturnType<typeof createClient>,
+  category: "apartment" | "project",
+): Promise<string> {
+  try {
+    const { data, error } = await authClient
+      .from("style_examples")
+      .select("slug, raw_source, content")
+      .eq("category", category)
+      .limit(MAX_STYLE_EXAMPLES);
+    if (error || !Array.isArray(data) || data.length === 0) return "";
+
+    const rendered = data
+      .map((row: any, i: number) => {
+        const raw = typeof row.raw_source === "string" ? row.raw_source.slice(0, 6000) : "";
+        const content = JSON.stringify(row.content ?? {});
+        return (
+          `Example ${i + 1} (slug: ${row.slug}):\n` +
+          `--- raw_source ---\n${raw}\n` +
+          `--- expected content (PageContent JSON) ---\n${content}`
+        );
+      })
+      .join("\n\n");
+
+    return (
+      `HOUSE-STYLE EXAMPLES (${data.length}) — mirror their STYLE only, never their facts:\n\n` +
+      rendered
+    );
+  } catch {
+    return "";
+  }
+}
+
+// Human-readable fields we expect a complete page to have, per category.
+// After extraction we report which of these the source did NOT fill so the
+// editor can flag exactly what to complete manually.
+function computeEmptyFields(
+  content: Record<string, unknown>,
+  category: "apartment" | "project",
+): string[] {
+  const empty: string[] = [];
+  const obj = (v: unknown) => (v && typeof v === "object" ? (v as Record<string, unknown>) : undefined);
+  const has = (v: unknown) =>
+    v !== undefined &&
+    v !== null &&
+    !(typeof v === "string" && v.trim() === "") &&
+    !(Array.isArray(v) && v.length === 0);
+
+  const hero = obj(content.hero) ?? {};
+  if (!has(hero.title)) empty.push("Hero title");
+  if (!has(hero.subtitle)) empty.push("Hero subtitle");
+  if (!has(hero.price)) empty.push("Hero price");
+  if (!has(content.stats)) empty.push("Stats");
+  const location = obj(content.location) ?? {};
+  if (!has(location.text)) empty.push("Location description");
+  if (!has(location.map_query)) empty.push("Location / map address");
+  const about = obj(content.about) ?? {};
+  if (!has(about.body)) empty.push("About description");
+  if (!has(about.features)) empty.push("About features / highlights");
+  if (!has(content.videos)) empty.push("Video");
+
+  const checkUnit = (u: Record<string, unknown>, prefix: string) => {
+    if (!has(u.price)) empty.push(`${prefix}: price`);
+    if (!has(u.rooms)) empty.push(`${prefix}: rooms`);
+    if (!has(u.area_m2)) empty.push(`${prefix}: area (m²)`);
+    if (!has(u.floor)) empty.push(`${prefix}: floor`);
+    if (!has(u.description)) empty.push(`${prefix}: description`);
+  };
+
+  if (category === "project") {
+    const units = Array.isArray(content.units) ? content.units : [];
+    if (units.length === 0) {
+      empty.push("Units (none detected)");
+    } else {
+      units.forEach((u, i) => {
+        const uo = obj(u);
+        if (uo) checkUnit(uo, `Unit ${i + 1} (${(uo.name as string) ?? "unnamed"})`);
+      });
+    }
+  } else {
+    const apt = obj(content.apartment) ?? obj(Array.isArray(content.units) ? content.units[0] : undefined);
+    if (!apt) empty.push("Apartment details (none detected)");
+    else checkUnit(apt, "Apartment");
+  }
+
+  return empty;
 }
 
 // Recursively drop empty strings, empty arrays, and empty objects.
@@ -347,6 +523,9 @@ Deno.serve(async (req) => {
       : undefined;
     const copyMode: "strict" | "enhanced" =
       input?.copyMode === "enhanced" ? "enhanced" : "strict";
+    // Caller hint (from the UI toggle); the model-based detector may override it.
+    const categoryHint: "apartment" | "project" =
+      input?.category === "apartment" ? "apartment" : "project";
 
     // Validate assets.
     let assets: Asset[] = [];
@@ -377,11 +556,20 @@ Deno.serve(async (req) => {
       return json({ error: "Text exceeds the maximum allowed length." }, 400);
     }
 
-    // Call model, parse JSON, retry once on parse failure.
+    // 1) Detect project vs. apartment from the raw material (may override hint).
+    const category = await detectCategory(apiKey, text, assets, categoryHint);
+
+    // 2) Pull a few of our own pages (matching category) as house-style examples.
+    const examplesBlock = await fetchStyleExamples(authClient, category);
+
+    // 3) Call model, parse JSON, retry once on parse failure.
     let parsed: unknown = null;
     let lastRaw = "";
     for (let attempt = 0; attempt < 2; attempt++) {
-      const result = await callAnthropic(apiKey, text, sourceLang, assets, copyMode);
+      const result = await callAnthropic(apiKey, text, sourceLang, assets, copyMode, {
+        category,
+        examplesBlock,
+      });
       if (!result.ok) {
         if (result.status === 401) return json({ error: "Invalid Anthropic API key." }, 502);
         if (result.status === 429) return json({ error: "Rate limited by the AI provider. Try again shortly." }, 429);
@@ -429,7 +617,16 @@ Deno.serve(async (req) => {
       if (list.length) unplaced = Array.from(new Set(list));
     }
 
-    return json(unplaced ? { content: pruned, unplaced } : { content: pruned });
+    // Report which expected fields the source did NOT fill, so the editor can
+    // flag exactly what to complete manually.
+    const emptyFields = computeEmptyFields(pruned, category);
+
+    return json({
+      content: pruned,
+      category,
+      emptyFields,
+      ...(unplaced ? { unplaced } : {}),
+    });
   } catch (err) {
     console.error("[extract-page] unexpected error:", err);
     return json({ error: "Unexpected server error." }, 500);
