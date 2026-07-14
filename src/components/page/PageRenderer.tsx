@@ -890,6 +890,7 @@ function ApartmentSection({
   imageSide,
   heading,
   headingIcon,
+  headingColor,
   labels,
   lang,
   specPresets,
@@ -899,6 +900,7 @@ function ApartmentSection({
   imageSide: "left" | "right";
   heading?: string;
   headingIcon?: string;
+  headingColor?: string;
   labels: Record<string, string>;
   lang: ReadingLang;
   specPresets: SpecPreset[];
@@ -912,12 +914,14 @@ function ApartmentSection({
       label: rowLabel(r, lang, specPresets),
       value: rowValue(r, lang, specPresets),
       icon: rowIcon(r, specPresets),
+      color: rowColor(r, specPresets),
     }))
     .filter((r) => hasText(r.value));
   const featureItems = (apartment.featureRows ?? migrateUnitFeatures(apartment))
     .map((r) => ({
       text: featureRowText(r, lang, featurePresets),
       icon: rowIcon(r, featurePresets),
+      color: rowColor(r, featurePresets),
     }))
     .filter((r) => hasText(r.text));
   const plan = apartment.attachment;
