@@ -1,19 +1,36 @@
 import { createServerFn } from "@tanstack/react-start";
+import { getRequestIP } from "@tanstack/start-server-core";
 import { z } from "zod";
+
 
 /**
  * Public lead-capture endpoint (contact form on landing pages).
  *
- * Replaces the old `submit-lead` Supabase edge function, which is not deployed
- * on the external project (calls 404'd) — and anon direct inserts are blocked
- * by RLS. This server function inserts the lead with the service role key
- * (bypassing RLS) and then best-effort sends a notification email via Resend.
- * The lead is ALWAYS saved even if the email fails — we never lose a lead.
+ * Inserts the lead with the service-role key (RLS-bypass), then best-effort
+ * sends a notification email via Resend. The lead is ALWAYS saved even if the
+ * email fails — we never lose a lead.
  */
 
 const LEAD_RECIPIENTS = ["sarah@ccinvest.co.il", "corinne@ccinvest.co.il"];
 const FROM = "CC Invest <no-reply@ccinvest.co.il>";
 const SITE_ORIGIN = "https://ccinvest.lovable.app";
+
+// Best-effort in-memory per-IP rate limiter. State lives inside a single
+// Cloudflare Worker isolate, so this is not distributed — but combined with
+// the honeypot it blocks the easy burst-abuse case without new infra.
+const RATE: Map<string, { count: number; ts: number }> = new Map();
+const RATE_WINDOW_MS = 60_000;
+const RATE_MAX_PER_WINDOW = 5;
+function rateLimited(ip: string): boolean {
+  const now = Date.now();
+  const entry = RATE.get(ip);
+  if (!entry || now - entry.ts > RATE_WINDOW_MS) {
+    RATE.set(ip, { count: 1, ts: now });
+    return false;
+  }
+  entry.count += 1;
+  return entry.count > RATE_MAX_PER_WINDOW;
+}
 
 const leadSchema = z.object({
   name: z.string().trim().min(1).max(120),
@@ -39,12 +56,28 @@ export const submitLeadFn = createServerFn({ method: "POST" })
       return { ok: true, emailSent: false };
     }
 
+    // Best-effort per-IP rate limit.
+    try {
+      const ip = getRequestIP({ xForwardedFor: true }) ?? "unknown";
+      if (rateLimited(ip)) throw new Error("Too many requests. Please try again in a minute.");
+    } catch (err) {
+      if (err instanceof Error && err.message.startsWith("Too many")) throw err;
+      // Request context unavailable — skip rate limit rather than block legitimate leads.
+    }
+
+
     const url = import.meta.env.VITE_SUPABASE_URL as string | undefined;
-    const serviceKey = process.env.EXTERNAL_SUPABASE_SERVICE_ROLE_KEY;
+    // Canonical name is SUPABASE_SERVICE_ROLE_KEY (matches edge functions'
+    // auto-injected name). Keep EXTERNAL_SUPABASE_SERVICE_ROLE_KEY as a
+    // transition-period fallback until the workspace secret is renamed.
+    const serviceKey =
+      process.env.SUPABASE_SERVICE_ROLE_KEY ??
+      process.env.EXTERNAL_SUPABASE_SERVICE_ROLE_KEY;
     if (!url || !serviceKey) {
       console.error("[submit-lead] Missing Supabase URL or service role key.");
       throw new Error("Could not save lead.");
     }
+
 
     // 1) Insert the lead (service role bypasses RLS).
     const insertRes = await fetch(`${url}/rest/v1/leads`, {

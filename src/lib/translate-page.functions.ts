@@ -231,9 +231,13 @@ export const translatePageContent = createServerFn({ method: "POST" })
     const supaKey =
       (import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string | undefined) ??
       (import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined);
+    // Canonical name is SUPABASE_SERVICE_ROLE_KEY (matches edge functions'
+    // auto-injected name). Keep EXTERNAL_SUPABASE_SERVICE_ROLE_KEY as a
+    // transition-period fallback until the workspace secret is renamed.
     const serviceKey =
-      process.env.EXTERNAL_SUPABASE_SERVICE_ROLE_KEY ??
-      process.env.SUPABASE_SERVICE_ROLE_KEY;
+      process.env.SUPABASE_SERVICE_ROLE_KEY ??
+      process.env.EXTERNAL_SUPABASE_SERVICE_ROLE_KEY;
+
 
     if (!supaUrl || (!isAuthed && !serviceKey)) {
       // Anonymous callers require a service-role key to reach the cache and
