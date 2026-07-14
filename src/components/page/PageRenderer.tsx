@@ -762,7 +762,13 @@ function UnitCard({
               return (
                 <div key={ri} className="flex justify-between gap-2 border-b border-border/60 pb-1">
                   <dt className="flex items-center gap-1.5 text-muted-foreground">
-                    {RowIcon && <RowIcon className="h-4 w-4 shrink-0 text-primary" aria-hidden />}
+                    {RowIcon && (
+                      <RowIcon
+                        className="h-4 w-4 shrink-0 text-primary"
+                        style={r.color ? { color: r.color } : undefined}
+                        aria-hidden
+                      />
+                    )}
                     {r.label}
                   </dt>
                   <dd className="font-medium text-foreground">{r.value}</dd>
