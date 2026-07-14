@@ -787,7 +787,11 @@ function UnitCard({
               return (
                 <li key={i} className="flex items-center gap-2 text-sm text-foreground">
                   {FIcon ? (
-                    <FIcon className="h-4 w-4 shrink-0 text-primary" aria-hidden />
+                    <FIcon
+                      className="h-4 w-4 shrink-0 text-primary"
+                      style={f.color ? { color: f.color } : undefined}
+                      aria-hidden
+                    />
                   ) : (
                     <ChevronRight className="h-4 w-4 text-primary rtl:rotate-180" aria-hidden />
                   )}
