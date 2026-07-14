@@ -16,14 +16,6 @@ import {
   type SeoFields,
 } from "@/types/page";
 
-export type ResolvedPage = {
-  page: Page;
-  /** Content for the chosen reading language. */
-  content: PageContent;
-  lang: ReadingLang;
-  /** True when we showed source content because no translation exists yet. */
-  isFallback: boolean;
-};
 
 /** Fetch a published page by slug (anon-readable). Falls back to local seed. */
 export async function fetchPublishedPage(slug: string): Promise<Page | null> {
