@@ -288,6 +288,29 @@ function chunk<T>(arr: T[], size: number): T[][] {
   return out;
 }
 
+/**
+ * <img> that hides itself when the source fails to load (404, network error,
+ * moved storage object, …). Prevents "broken image" placeholders from leaking
+ * into published pages when a storage object goes missing.
+ */
+function SafeImg({
+  onFail,
+  ...rest
+}: React.ImgHTMLAttributes<HTMLImageElement> & { onFail?: () => void }) {
+  const [failed, setFailed] = useState(false);
+  if (failed) return null;
+  return (
+    <img
+      {...rest}
+      onError={(e) => {
+        setFailed(true);
+        onFail?.();
+        rest.onError?.(e);
+      }}
+    />
+  );
+}
+
 /** Single image cell, optionally clickable (gallery lightbox) and framed. */
 function MediaCell({
   img,
@@ -302,11 +325,14 @@ function MediaCell({
   framed: boolean;
   aspect?: string;
 }) {
+  const [failed, setFailed] = useState(false);
+  if (failed) return null;
   const image = (
-    <img
+    <SafeImg
       src={img.url}
       alt={img.alt ?? `Image ${index + 1}`}
       loading="lazy"
+      onFail={() => setFailed(true)}
       className={cn(
         "block h-full w-full object-cover transition-transform duration-300",
         onClick && "hover:scale-[1.03]",
@@ -690,6 +716,7 @@ function UnitCard({
   featurePresets: SpecPreset[];
 }) {
   const [planOpen, setPlanOpen] = useState(false);
+  const [planFailed, setPlanFailed] = useState(false);
   const title = unitTitle(unit, lang);
   const visibleRows = (unit.specs ?? migrateUnitSpecs(unit))
     .map((r) => ({
@@ -709,7 +736,7 @@ function UnitCard({
   return (
     <Card className="flex flex-col overflow-hidden">
       {unit.image?.url && (
-        <img
+        <SafeImg
           src={unit.image.url}
           alt={unit.image.alt ?? title}
           loading="lazy"
@@ -758,16 +785,17 @@ function UnitCard({
           </ul>
         )}
 
-        {plan?.url && plan.type === "image" && (
+        {plan?.url && plan.type === "image" && !planFailed && (
           <button
             type="button"
             onClick={() => setPlanOpen(true)}
             className="mt-4 block overflow-hidden rounded-md border border-border"
           >
-            <img
+            <SafeImg
               src={plan.url}
               alt={labels.floorPlan}
               loading="lazy"
+              onFail={() => setPlanFailed(true)}
               className="aspect-video w-full object-cover transition-transform duration-300 hover:scale-[1.03]"
             />
             <span className="block bg-secondary px-3 py-1.5 text-xs font-medium text-muted-foreground">
@@ -860,6 +888,7 @@ function ApartmentSection({
   featurePresets: SpecPreset[];
 }) {
   const [planOpen, setPlanOpen] = useState(false);
+  const [planFailed, setPlanFailed] = useState(false);
   const title = unitTitle(apartment, lang);
   const visibleRows = (apartment.specs ?? migrateUnitSpecs(apartment))
     .map((r) => ({
@@ -950,16 +979,17 @@ function ApartmentSection({
                 </ul>
               )}
 
-              {plan?.url && plan.type === "image" && (
+              {plan?.url && plan.type === "image" && !planFailed && (
                 <button
                   type="button"
                   onClick={() => setPlanOpen(true)}
                   className="mt-6 block overflow-hidden rounded-md border border-border"
                 >
-                  <img
+                  <SafeImg
                     src={plan.url}
                     alt={labels.floorPlan}
                     loading="lazy"
+                    onFail={() => setPlanFailed(true)}
                     className="aspect-video w-full object-cover transition-transform duration-300 hover:scale-[1.03]"
                   />
                   <span className="block bg-secondary px-3 py-1.5 text-xs font-medium text-muted-foreground">
@@ -981,7 +1011,7 @@ function ApartmentSection({
             </div>
             {apartment.image?.url && (
               <div className={`md:w-1/2 ${imageOrder}`}>
-                <img
+                <SafeImg
                   src={apartment.image.url}
                   alt={apartment.image.alt ?? title}
                   loading="lazy"
