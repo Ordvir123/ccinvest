@@ -363,6 +363,7 @@ export function cleanContent(content: PageContent): PageContent {
   const apartment_image_side = content.apartment_image_side === "left" ? "left" : "right";
   const apartment_title = !isProject ? keepText(content.apartment_title) : undefined;
   const apartment_title_icon = !isProject ? keepText(content.apartment_title_icon) : undefined;
+  const apartment_title_color = !isProject ? keepText(content.apartment_title_color) : undefined;
 
   const videos = cleanVideosData(content.videos);
   const wide_images = cleanMediaData(content.wide_images);
