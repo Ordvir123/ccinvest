@@ -566,7 +566,7 @@ export function ListingBody({ s }: { s: PageEditorState }) {
     <div className="space-y-4">
       <Field
         label="Image side (desktop)"
-        hint="Which side the main image sits on. Mirrored automatically in Hebrew (RTL)."
+        hint="Which physical side the main image sits on. Stays on the same side in every language (fr / en / he)."
       >
         <Select
           value={content.apartment_image_side ?? "right"}

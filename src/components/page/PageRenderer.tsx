@@ -45,6 +45,7 @@ import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import {
   hasItems,
   hasText,
+  isRtlReading,
   type AboutData,
   type Media,
   type PageContent,
@@ -905,10 +906,13 @@ function ApartmentSection({
     .filter((r) => hasText(r.text));
   const plan = apartment.attachment;
 
-  // DOM order is details → image (mobile stacks details first, image below).
-  // On desktop, "left" puts the image first; RTL mirrors via flex-row + dir.
-  const imageOrder = imageSide === "left" ? "md:order-1" : "md:order-2";
-  const detailsOrder = imageSide === "left" ? "md:order-2" : "md:order-1";
+  // "Image side" is VISUAL: the image sits on the chosen physical side in every
+  // language. DOM order is details → image; on mobile that stacks details first.
+  // On desktop we flip flex-direction to place the image on the requested side,
+  // taking RTL into account so the setting behaves the same in fr / en / he.
+  const rtl = isRtlReading(lang);
+  const reverse = imageSide === "right" ? rtl : !rtl;
+  const rowDir = reverse ? "md:flex-row-reverse" : "md:flex-row";
 
   return (
     <section className="bg-secondary">
@@ -926,8 +930,8 @@ function ApartmentSection({
           );
         })()}
         <Card className="overflow-hidden">
-          <div className="flex flex-col gap-0 md:flex-row md:items-stretch">
-            <div className={`flex flex-col p-6 md:w-1/2 md:p-10 ${detailsOrder}`}>
+          <div className={`flex flex-col gap-0 ${rowDir} md:items-stretch`}>
+            <div className="flex flex-col p-6 md:w-1/2 md:p-10">
               <h3 className="font-serif text-3xl text-ink md:text-4xl">{title}</h3>
               {hasText(apartment.price) && (
                 <p className="mt-2 text-xl font-semibold text-primary">{apartment.price}</p>
@@ -1010,7 +1014,7 @@ function ApartmentSection({
               )}
             </div>
             {apartment.image?.url && (
-              <div className={`md:w-1/2 ${imageOrder}`}>
+              <div className="md:w-1/2">
                 <SafeImg
                   src={apartment.image.url}
                   alt={apartment.image.alt ?? title}

@@ -156,7 +156,7 @@ export function PageEditor({
 
   const formPanel = (
     <div className="space-y-4">
-      <AiCorrectionsPanel content={content} setContent={setContent} sourceLang={sourceLang} />
+      <AiCorrectionsPanel content={content} setContent={setContent} sourceLang={sourceLang} pageId={pageId} />
 
       <SectionManager
         orderedIds={orderedIds}
