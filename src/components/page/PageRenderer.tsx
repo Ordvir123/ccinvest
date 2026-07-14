@@ -944,7 +944,13 @@ function ApartmentSection({
             : (ABOUT_APARTMENT_HEADING[lang] ?? ABOUT_APARTMENT_HEADING.fr);
           return (
             <h2 className="mb-10 flex items-center justify-center gap-3 text-center text-3xl text-ink md:text-4xl">
-              {HeadingIcon && <HeadingIcon className="h-7 w-7 shrink-0 text-primary" aria-hidden />}
+              {HeadingIcon && (
+                <HeadingIcon
+                  className="h-7 w-7 shrink-0 text-primary"
+                  style={headingColor ? { color: headingColor } : undefined}
+                  aria-hidden
+                />
+              )}
               {text}
             </h2>
           );
