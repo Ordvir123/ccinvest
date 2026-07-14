@@ -431,6 +431,7 @@ export function cleanContent(content: PageContent): PageContent {
     apartment_image_side,
     apartment_title,
     apartment_title_icon,
+    apartment_title_color,
     videos,
     contact,
     section_order: content.section_order?.length ? content.section_order : undefined,
