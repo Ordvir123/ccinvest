@@ -2,6 +2,19 @@
 
 export type Media = { url: string; alt?: string };
 
+/** Brand-token colors allowed for the hero overlay. */
+export type HeroOverlayColor = "navy" | "deep_navy" | "black";
+
+/** Optional hero overlay/fade over the background image. */
+export type HeroOverlay = {
+  /** 0–1 opacity of the overlay. */
+  opacity?: number;
+  /** Brand token color. Defaults to brand navy gradient. */
+  color?: HeroOverlayColor;
+  /** Gradient direction; "none" = flat fill, absent = default. */
+  direction?: "none" | "top" | "bottom" | "both";
+};
+
 export type Stat = { value: string; label: string; icon?: string };
 
 /** Closed dictionaries so admin-picked values translate reliably per locale. */
