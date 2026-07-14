@@ -191,6 +191,8 @@ export type PageContent = {
   apartment_title?: string;
   /** Icon shown beside the apartment section heading. */
   apartment_title_icon?: string;
+  /** Optional CSS color for the apartment section heading icon. */
+  apartment_title_color?: string;
   videos?: Video[];
   contact?: {
     heading?: string;
