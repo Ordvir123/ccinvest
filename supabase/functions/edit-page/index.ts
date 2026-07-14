@@ -96,6 +96,13 @@ const pageContentSchema = z.object({
     cta_label: z.string().optional(),
     cta_label_i18n: langMap,
     background: mediaSchema.optional(),
+    overlay: z
+      .object({
+        opacity: z.number().min(0).max(1).optional(),
+        color: z.enum(["navy", "deep_navy", "black"]).optional(),
+        direction: z.enum(["none", "top", "bottom", "both"]).optional(),
+      })
+      .optional(),
   }),
   stats: z.array(statSchema),
   location: z
