@@ -533,6 +533,7 @@ function ChatBubble({ message }: { message: ChatMessage }) {
   }
 
   const changed = message.changedPaths.filter(Boolean).map(prettyPath);
+  const skipped = message.skipped ?? [];
   return (
     <div className="flex justify-start">
       <div className="max-w-[85%] space-y-1">
@@ -545,6 +546,97 @@ function ChatBubble({ message }: { message: ChatMessage }) {
             Changed: {changed.join(", ")}
           </p>
         )}
+        {skipped.length > 0 && (
+          <ul className="space-y-0.5 px-1">
+            {skipped.map((s, i) => (
+              <li key={i} className="text-[11px] text-amber-600">
+                {s.reason}
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/** Render a value compactly for the before -> after diff. */
+function formatValue(v: unknown): string {
+  if (v === undefined || v === null) return "∅ (empty)";
+  if (typeof v === "string") return v.length ? `"${v}"` : '"" (empty)';
+  if (typeof v === "number" || typeof v === "boolean") return String(v);
+  try {
+    const s = JSON.stringify(v);
+    return s.length > 160 ? `${s.slice(0, 157)}…` : s;
+  } catch {
+    return String(v);
+  }
+}
+
+/**
+ * Field-by-field preview of a staged edit. Shows before -> after for each
+ * change plus any skipped ops with their reasons, and Confirm / Cancel.
+ */
+function EditPreview({
+  result,
+  onConfirm,
+  onCancel,
+}: {
+  result: AiEditResult;
+  onConfirm: () => void;
+  onCancel: () => void;
+}) {
+  return (
+    <div className="space-y-3 rounded-md border border-primary/40 bg-primary/5 p-3">
+      <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+        <Sparkles className="h-4 w-4 text-primary" />
+        Review this change before applying
+      </div>
+      {result.summary && (
+        <p className="text-xs text-muted-foreground">{result.summary}</p>
+      )}
+
+      <ul className="space-y-2">
+        {result.changes.map((c, i) => (
+          <li key={i} className="rounded border border-border bg-card p-2 text-xs">
+            <p className="font-medium text-foreground">
+              {prettyPath(c.path)}{" "}
+              <span className="font-normal text-muted-foreground">({c.op})</span>
+            </p>
+            <div className="mt-1 space-y-0.5">
+              <p className="text-muted-foreground">
+                <span className="text-destructive">before:</span> {formatValue(c.before)}
+              </p>
+              <p className="text-muted-foreground">
+                <span className="text-emerald-600">after:</span> {formatValue(c.after)}
+              </p>
+            </div>
+          </li>
+        ))}
+      </ul>
+
+      {result.skipped.length > 0 && (
+        <div className="space-y-1">
+          <p className="text-[11px] font-medium text-amber-700">
+            Some operations were skipped (safety guards):
+          </p>
+          <ul className="space-y-0.5">
+            {result.skipped.map((s, i) => (
+              <li key={i} className="text-[11px] text-amber-600">
+                {s.reason}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      <div className="flex items-center gap-2">
+        <Button type="button" size="sm" onClick={onConfirm}>
+          <Check className="h-4 w-4" /> Confirm
+        </Button>
+        <Button type="button" size="sm" variant="outline" onClick={onCancel}>
+          <X className="h-4 w-4" /> Cancel
+        </Button>
       </div>
     </div>
   );
