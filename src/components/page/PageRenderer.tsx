@@ -1186,13 +1186,17 @@ function About({ about }: { about?: PageContent["about"] }) {
           {features.map((f, i) => {
             const FIcon =
               getIcon(about.feature_icons?.[i]) ?? getIcon(guessIcon(f, "sparkles"));
+            const fColor = about.feature_colors?.[i];
             return (
               <li
                 key={i}
                 className="flex items-center gap-3 rounded-lg border border-border bg-card p-4 text-start"
               >
                 {FIcon && (
-                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+                  <span
+                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary"
+                    style={fColor ? { color: fColor } : undefined}
+                  >
                     <FIcon className="h-4 w-4" aria-hidden />
                   </span>
                 )}
