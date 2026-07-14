@@ -111,6 +111,7 @@ function normalizePresets(raw: unknown, fallback: SpecPreset[]): SpecPreset[] {
           anyLabel.toLowerCase().replace(/\s+/g, "_") ||
           `preset_${Math.random().toString(36).slice(2, 8)}`,
         icon: (p.icon ?? "").trim() || "check",
+        color: (p.color ?? "").trim() || undefined,
         valueKind: VALUE_KINDS.includes(p.valueKind as SpecValueKind)
           ? (p.valueKind as SpecValueKind)
           : "text",
