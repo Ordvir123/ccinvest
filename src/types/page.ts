@@ -133,6 +133,8 @@ export type PageContent = {
     cta_label_i18n?: Partial<Record<ReadingLang, string>>;
     /** Optional hero background image. */
     background?: Media;
+    /** Optional overlay/fade over the background image. Absent = current default. */
+    overlay?: HeroOverlay;
   };
   stats: Stat[];
   location?: {
