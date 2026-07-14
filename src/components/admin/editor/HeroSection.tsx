@@ -1,7 +1,16 @@
 import { Input } from "@/components/ui/input";
 import { Field } from "@/components/admin/editor-parts";
 import { SingleImageUpload } from "@/components/admin/MediaUpload";
-import { READING_LANGS, isRtlReading } from "@/types/page";
+import { Slider } from "@/components/ui/slider";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { READING_LANGS, isRtlReading, type HeroOverlay, type HeroOverlayColor } from "@/types/page";
+import { DEFAULT_HERO_OVERLAY, HERO_OVERLAY_COLORS } from "@/lib/hero-overlay";
 import {
   KICKER_PLACEHOLDERS,
   CTA_PLACEHOLDERS,
