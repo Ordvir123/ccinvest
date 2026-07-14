@@ -930,8 +930,8 @@ function ApartmentSection({
           );
         })()}
         <Card className="overflow-hidden">
-          <div className="flex flex-col gap-0 md:flex-row md:items-stretch">
-            <div className={`flex flex-col p-6 md:w-1/2 md:p-10 ${detailsOrder}`}>
+          <div className={`flex flex-col gap-0 ${rowDir} md:items-stretch`}>
+            <div className="flex flex-col p-6 md:w-1/2 md:p-10">
               <h3 className="font-serif text-3xl text-ink md:text-4xl">{title}</h3>
               {hasText(apartment.price) && (
                 <p className="mt-2 text-xl font-semibold text-primary">{apartment.price}</p>
