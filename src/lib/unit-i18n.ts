@@ -308,6 +308,13 @@ export function rowIcon(row: DetailRow, presets: SpecPreset[]): string | undefin
   return row.icon || preset?.icon;
 }
 
+/** Effective icon color of a row (linked → preset color; else row override). */
+export function rowColor(row: DetailRow, presets: SpecPreset[]): string | undefined {
+  const preset = resolvePreset(row.presetKey, presets, BUILTIN_SPEC_PRESETS);
+  if (row.linked !== false && preset) return preset.color || row.color;
+  return row.color || preset?.color;
+}
+
 /** Effective, locale-formatted value of a spec row. */
 export function rowValue(row: DetailRow, lang: ReadingLang, presets: SpecPreset[]): string {
   const preset = resolvePreset(row.presetKey, presets, BUILTIN_SPEC_PRESETS);
