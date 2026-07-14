@@ -645,7 +645,38 @@ Deno.serve(async (req) => {
       console.error("[edit-page] model output invalid:", validatedOutput.error.message);
       return json({ error: "The AI returned an invalid patch." }, 502);
     }
-    const { patch, summary } = validatedOutput.data;
+    const { patch: rawPatch, summary } = validatedOutput.data;
+
+    // ---- Schema-path validation (atomic: reject the whole patch) ----------
+    // Every op path (and move/copy `from`) must target a field that exists in
+    // the PageContent schema. This blocks hallucinated fields (the root cause
+    // of OPERATION_PATH_UNRESOLVABLE) before anything is applied.
+    const invalidPaths: string[] = [];
+    for (const op of rawPatch) {
+      if (!isSchemaValidPath(op.path)) invalidPaths.push(op.path);
+      if ((op.op === "move" || op.op === "copy") && op.from && !isSchemaValidPath(op.from)) {
+        invalidPaths.push(op.from);
+      }
+    }
+    if (invalidPaths.length) {
+      return json(
+        {
+          error: `The AI tried to edit fields that do not exist in the page schema (${[...new Set(invalidPaths)].join(", ")}). No changes were applied.`,
+        },
+        422,
+      );
+    }
+
+    // ---- Auto-convert replace -> add for schema-valid but currently-absent
+    // paths. Replacing an unset optional field (e.g. an unset unit image) must
+    // succeed rather than fail with OPERATION_PATH_UNRESOLVABLE.
+    const patch = rawPatch.map((op) => {
+      if (op.op === "replace" && !pointerExists(content, op.path)) {
+        return { ...op, op: "add" as const };
+      }
+      return op;
+    });
+
 
     // ---- Protected-path guard ----
     // Reject remove/replace/move ops that target protected media paths, UNLESS
