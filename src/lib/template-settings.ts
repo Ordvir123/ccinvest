@@ -16,6 +16,8 @@ export type ApartmentTitleOption = {
   label: string;
   /** Icon name (from the shared icon set) shown beside the heading. */
   icon: string;
+  /** Optional CSS color applied to the heading icon. */
+  color?: string;
 };
 
 export type TemplateSettings = {
