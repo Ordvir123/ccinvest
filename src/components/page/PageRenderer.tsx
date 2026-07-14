@@ -24,6 +24,7 @@ import {
   ABOUT_APARTMENT_HEADING,
   rowLabel,
   rowIcon,
+  rowColor,
   rowValue,
   featureRowText,
   migrateUnitSpecs,
