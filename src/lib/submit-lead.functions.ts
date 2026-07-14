@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
-import { getRequest } from "@tanstack/react-start/server";
+import { getRequestIP } from "@tanstack/start-server-core";
 import { z } from "zod";
+
 
 /**
  * Public lead-capture endpoint (contact form on landing pages).
