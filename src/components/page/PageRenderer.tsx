@@ -213,7 +213,10 @@ function Stats({ stats }: { stats: PageContent["stats"] }) {
               className="flex flex-col items-center px-3 py-8 text-center md:px-4 md:py-10"
             >
               {Icon && (
-                <span className="mb-3 flex h-11 w-11 items-center justify-center rounded-full bg-primary/10 text-primary">
+                <span
+                  className="mb-3 flex h-11 w-11 items-center justify-center rounded-full bg-primary/10 text-primary"
+                  style={s.color ? { color: s.color } : undefined}
+                >
                   <Icon className="h-5 w-5" aria-hidden />
                 </span>
               )}
