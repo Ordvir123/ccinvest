@@ -81,7 +81,8 @@ export function ContactForm({
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
-  
+  const [message, setMessage] = useState("");
+
   const [company, setCompany] = useState(""); // honeypot
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -95,6 +96,7 @@ export function ContactForm({
       name,
       phone,
       email,
+      message,
       lang,
       page_id: pageId ?? null,
       page_slug: slug,
@@ -113,6 +115,8 @@ export function ContactForm({
       setName("");
       setPhone("");
       setEmail("");
+      setMessage("");
+
     } catch (err) {
       setError(err instanceof Error ? err.message : t.error);
     } finally {
