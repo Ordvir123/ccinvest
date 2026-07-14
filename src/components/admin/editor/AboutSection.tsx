@@ -143,6 +143,12 @@ export function StatsBody({ s, id = "stats" }: { s: PageEditorState; id?: string
                   next[i] = { ...next[i], icon };
                   set(next);
                 }}
+                color={st.color}
+                onColorChange={(color) => {
+                  const next = stats.slice();
+                  next[i] = { ...next[i], color };
+                  set(next);
+                }}
               />
             </div>
             <div className="flex-1">
