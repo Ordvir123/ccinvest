@@ -256,21 +256,24 @@ export function AiCorrectionsPanel({
         history,
         readyAssets,
       );
-      setContent(() => result.content);
-      setUndoStack((prev) => [...prev, before].slice(-MAX_UNDO_SNAPSHOTS));
-      // Clear attachments once they've been applied to the page.
-      setAssets((prev) => {
-        prev.forEach((a) => a.previewUrl && URL.revokeObjectURL(a.previewUrl));
-        return [];
-      });
-      setMessages((prev) => [
-        ...prev,
-        {
-          role: "assistant",
-          text: result.summary || "Applied your change.",
-          changedPaths: result.changedPaths ?? [],
-        },
-      ]);
+
+      // Nothing applicable: no preview to confirm — just report what happened
+      // and why any ops were skipped. Content is untouched.
+      if (result.changes.length === 0) {
+        setMessages((prev) => [
+          ...prev,
+          {
+            role: "assistant",
+            text: result.summary || "No changes were applied.",
+            changedPaths: [],
+            skipped: result.skipped ?? [],
+          },
+        ]);
+        return;
+      }
+
+      // Otherwise stage a preview and wait for Confirm/Cancel.
+      setPending({ instruction, before, result });
     } catch (err) {
       const text = err instanceof Error ? err.message : "AI edit failed.";
       setMessages((prev) => [...prev, { role: "error", text }]);
@@ -278,6 +281,39 @@ export function AiCorrectionsPanel({
       setRunning(false);
       scrollToBottom();
     }
+  };
+
+  const confirmPending = () => {
+    if (!pending) return;
+    const { before, result } = pending;
+    setContent(() => result.content);
+    setUndoStack((prev) => [...prev, before].slice(-MAX_UNDO_SNAPSHOTS));
+    // Clear attachments once they've been applied to the page.
+    setAssets((prev) => {
+      prev.forEach((a) => a.previewUrl && URL.revokeObjectURL(a.previewUrl));
+      return [];
+    });
+    setMessages((prev) => [
+      ...prev,
+      {
+        role: "assistant",
+        text: result.summary || "Applied your change.",
+        changedPaths: result.changedPaths ?? [],
+        skipped: result.skipped ?? [],
+      },
+    ]);
+    setPending(null);
+    scrollToBottom();
+  };
+
+  const cancelPending = () => {
+    if (!pending) return;
+    setMessages((prev) => [
+      ...prev,
+      { role: "error", text: "Change cancelled — nothing was applied." },
+    ]);
+    setPending(null);
+    scrollToBottom();
   };
 
   const undo = () => {
