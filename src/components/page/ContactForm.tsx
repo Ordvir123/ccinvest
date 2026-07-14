@@ -4,9 +4,11 @@ import { Check, Loader2 } from "lucide-react";
 import { Section } from "@/components/ui/section";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { submitLead, validateLead } from "@/lib/leads";
 import { isRtlReading, type ReadingLang } from "@/types/page";
 import contactBg from "@/assets/contact-bg.jpg.asset.json";
+
 
 type Labels = {
   name: string;
@@ -79,7 +81,8 @@ export function ContactForm({
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
-  
+  const [message, setMessage] = useState("");
+
   const [company, setCompany] = useState(""); // honeypot
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -93,6 +96,7 @@ export function ContactForm({
       name,
       phone,
       email,
+      message,
       lang,
       page_id: pageId ?? null,
       page_slug: slug,
@@ -111,6 +115,8 @@ export function ContactForm({
       setName("");
       setPhone("");
       setEmail("");
+      setMessage("");
+
     } catch (err) {
       setError(err instanceof Error ? err.message : t.error);
     } finally {
@@ -188,6 +194,18 @@ export function ContactForm({
                 className="bg-card text-card-foreground placeholder:text-muted-foreground"
                 required
               />
+              <Textarea
+                id="c-message"
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                placeholder={t.message}
+                aria-label={t.message}
+                rows={4}
+                maxLength={2000}
+                className="bg-card text-card-foreground placeholder:text-muted-foreground"
+              />
+
+
 
 
               {error && (

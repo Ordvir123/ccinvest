@@ -398,9 +398,13 @@ export async function resolveTranslation(
   targetLang: ReadingLang,
   opts?: { force?: boolean },
 ): Promise<PageContent> {
+  // Public visitors on a PUBLISHED page must be able to switch reading
+  // language. Attach the caller's access token when signed in (so admins get
+  // fresh cache reads/writes under their own RLS), but don't require one —
+  // anon visitors are served by the server function using service-role cache
+  // access, gated to published pages only.
   const { data: sessionData } = await supabase.auth.getSession();
   const accessToken = sessionData.session?.access_token;
-  if (!accessToken) throw new Error("You must be signed in to translate.");
 
   const result = await translatePageContent({
     data: {
@@ -409,9 +413,10 @@ export async function resolveTranslation(
       targetLang,
       pageId,
       force: opts?.force ?? false,
-      accessToken,
+      accessToken: accessToken ?? "",
     },
   });
+
   const translated = (result?.content ?? {}) as PageContent;
   return preserveStableFields(content, translated);
 }

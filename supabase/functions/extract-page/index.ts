@@ -502,7 +502,7 @@ Deno.serve(async (req) => {
       return json({ error: "Server is missing ANTHROPIC_API_KEY." }, 500);
     }
 
-    // Require an authenticated user — this is an admin-only, cost-bearing endpoint.
+    // Require an authenticated ADMIN — this is a cost-bearing endpoint.
     const authHeader = req.headers.get("Authorization") ?? "";
     const token = authHeader.replace(/^Bearer\s+/i, "").trim();
     const supaUrl = Deno.env.get("SUPABASE_URL");
@@ -515,6 +515,19 @@ Deno.serve(async (req) => {
     if (authError || !userData?.user) {
       return json({ error: "Unauthorized." }, 401);
     }
+    const { data: isAdmin, error: roleError } = await authClient.rpc("has_role", {
+      _user_id: userData.user.id,
+      _role: "admin",
+    });
+    if (roleError) {
+      console.error("[extract-page] has_role RPC failed", roleError);
+      return json(
+        { error: "Admin role check unavailable. Ask an admin to run docs/admin-roles-setup.md." },
+        500,
+      );
+    }
+    if (!isAdmin) return json({ error: "Admin access required." }, 403);
+
 
     const input = await req.json().catch(() => null);
     const text = typeof input?.text === "string" ? input.text.trim() : "";
