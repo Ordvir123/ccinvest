@@ -906,10 +906,13 @@ function ApartmentSection({
     .filter((r) => hasText(r.text));
   const plan = apartment.attachment;
 
-  // DOM order is details → image (mobile stacks details first, image below).
-  // On desktop, "left" puts the image first; RTL mirrors via flex-row + dir.
-  const imageOrder = imageSide === "left" ? "md:order-1" : "md:order-2";
-  const detailsOrder = imageSide === "left" ? "md:order-2" : "md:order-1";
+  // "Image side" is VISUAL: the image sits on the chosen physical side in every
+  // language. DOM order is details → image; on mobile that stacks details first.
+  // On desktop we flip flex-direction to place the image on the requested side,
+  // taking RTL into account so the setting behaves the same in fr / en / he.
+  const rtl = isRtlReading(lang);
+  const reverse = imageSide === "right" ? rtl : !rtl;
+  const rowDir = reverse ? "md:flex-row-reverse" : "md:flex-row";
 
   return (
     <section className="bg-secondary">
