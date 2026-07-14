@@ -163,7 +163,7 @@ export type PageContent = {
     /** Per-locale proper names (streets etc.) — never machine-translated. */
     name_i18n?: Partial<Record<ReadingLang, string>>;
   };
-  about?: { heading?: string; body?: string; features?: string[]; feature_icons?: string[] };
+  about?: AboutData;
   gallery: Media[];
   /** Layout preset for the base gallery section (see page-sections). Absent = legacy carousel. */
   gallery_layout?: string;
