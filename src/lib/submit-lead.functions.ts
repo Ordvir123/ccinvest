@@ -58,16 +58,13 @@ export const submitLeadFn = createServerFn({ method: "POST" })
 
     // Best-effort per-IP rate limit.
     try {
-      const req = getRequest();
-      const ip =
-        req.headers.get("cf-connecting-ip") ??
-        req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
-        "unknown";
+      const ip = getRequestIP({ xForwardedFor: true }) ?? "unknown";
       if (rateLimited(ip)) throw new Error("Too many requests. Please try again in a minute.");
     } catch (err) {
       if (err instanceof Error && err.message.startsWith("Too many")) throw err;
-      // getRequest() unavailable — skip rate limit rather than block legitimate leads.
+      // Request context unavailable — skip rate limit rather than block legitimate leads.
     }
+
 
     const url = import.meta.env.VITE_SUPABASE_URL as string | undefined;
     // Canonical name is SUPABASE_SERVICE_ROLE_KEY (matches edge functions'
