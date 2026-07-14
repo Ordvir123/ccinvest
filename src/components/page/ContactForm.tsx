@@ -194,6 +194,18 @@ export function ContactForm({
                 className="bg-card text-card-foreground placeholder:text-muted-foreground"
                 required
               />
+              <Textarea
+                id="c-message"
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                placeholder={t.message}
+                aria-label={t.message}
+                rows={4}
+                maxLength={2000}
+                className="bg-card text-card-foreground placeholder:text-muted-foreground"
+              />
+
+
 
 
               {error && (
