@@ -111,20 +111,53 @@ export function AiCorrectionsPanel({
   content,
   setContent,
   sourceLang,
+  pageId,
 }: {
   content: PageContent;
   setContent: (updater: (prev: PageContent) => PageContent) => void;
   sourceLang: string;
+  /** Optional stable id used to persist the undo stack across reloads. */
+  pageId?: string;
 }) {
+  // Scope persistence to a specific page. Unsaved pages (no id yet) fall back
+  // to a shared "new" bucket, which is cleared as soon as the page is saved.
+  const storageKey = `ai-undo:${pageId ?? "new"}`;
+
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [running, setRunning] = useState(false);
-  const [undoStack, setUndoStack] = useState<PageContent[]>([]);
+  const [undoStack, setUndoStack] = useState<PageContent[]>(() => {
+    // Rehydrate the undo stack synchronously so the button reflects the true
+    // depth on first render after an accidental reload.
+    if (typeof window === "undefined") return [];
+    try {
+      const raw = window.sessionStorage.getItem(`ai-undo:${pageId ?? "new"}`);
+      if (!raw) return [];
+      const parsed = JSON.parse(raw);
+      return Array.isArray(parsed) ? (parsed as PageContent[]) : [];
+    } catch {
+      return [];
+    }
+  });
   const [pending, setPending] = useState<PendingEdit | null>(null);
   const [assets, setAssets] = useState<DraftAsset[]>([]);
   const [dragOver, setDragOver] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Persist every change so a reload keeps the ability to revert AI edits.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      if (undoStack.length === 0) {
+        window.sessionStorage.removeItem(storageKey);
+      } else {
+        window.sessionStorage.setItem(storageKey, JSON.stringify(undoStack));
+      }
+    } catch {
+      // Quota exceeded / storage disabled — persistence is best-effort only.
+    }
+  }, [undoStack, storageKey]);
 
   const scrollToBottom = () => {
     requestAnimationFrame(() => {
