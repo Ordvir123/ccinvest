@@ -385,9 +385,17 @@ PATCH RULES — follow exactly:
 * "replace"/"add" require "value". "move"/"copy" require "from".
 * Do NOT translate. Keep the existing source language unless the instruction explicitly asks to rewrite copy.
 * Do NOT touch media (images, gallery, wide_images, backgrounds, attachments, youtube_id) unless the instruction explicitly asks about media.
-* If ATTACHED ASSETS are provided (listed below), you MAY place them into the content with "add"/"replace" ops. Use ONLY the EXACT asset URLs given — NEVER invent, guess, modify or shorten a URL. Each asset URL may be used AT MOST ONCE. Media objects use the shape { "url": "...", "alt"?: "..." }; unit attachments use { "url": "...", "type": "image"|"pdf" }. Place gallery photos into /gallery, panoramic shots into /wide_images, a hero photo into /hero/background, and floor plans into the matching /units/N/attachment (or /apartment/attachment).
+* If ATTACHED ASSETS are provided (listed below), you MAY place them into the content with "add"/"replace" ops. Use ONLY the EXACT asset URLs given — NEVER invent, guess, modify or shorten a URL. Each asset URL may be used AT MOST ONCE. Media objects use the shape { "url": "...", "alt"?: "..." }. Place gallery photos into /gallery, panoramic shots into /wide_images, a hero photo into /hero/background, and a UNIT PHOTO into /units/N/image (or /apartment/image). A unit floor-plan file goes into /units/N/attachment as { "url": "...", "type": "image"|"pdf" }.
+* NEVER invent fields or data. Use ONLY the exact field paths that exist in the schema below. Do NOT create new keys. If a value is unknown, leave it out — do not fabricate.
 * If the instruction is ambiguous or cannot be applied, return an empty patch array and explain in the summary.
-* Use plain hyphens "-" only. Do NOT introduce em dashes or en dashes.`;
+* Use plain hyphens "-" only. Do NOT introduce em dashes or en dashes.
+
+VALID FIELD PATHS (JSON Pointer). N = array index or "-" to append:
+/category, /hero/kicker, /hero/kicker_i18n/<lang>, /hero/title, /hero/subtitle, /hero/price, /hero/cta_label, /hero/cta_label_i18n/<lang>, /hero/background(/url,/alt), /hero/overlay(/opacity,/color,/direction),
+/stats/N(/value,/label,/icon), /location(/heading,/text,/map_query,/name_i18n/<lang>), /about(/heading,/body,/features/N,/feature_icons/N),
+/gallery/N(/url,/alt), /gallery_layout, /wide_images/N(/url,/alt), /wide_images_layout, /section_order/N, /hidden_sections/N,
+/units/N(/name,/unit_type,/unit_number,/floor,/orientation,/rooms,/area_m2,/balcony_m2,/parking,/description,/price,/image(/url,/alt),/attachment(/url,/type),/features/N,/specs/N,/featureRows/N),
+/apartment(same fields as a unit), /apartment_image_side, /apartment_title, /apartment_title_icon, /videos/N(/title,/youtube_id), /contact(/heading,/heading_i18n/<lang>), /extra_sections/N.`;
 
 function stripFences(s: string): string {
   return s
