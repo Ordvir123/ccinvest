@@ -45,6 +45,7 @@ import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import {
   hasItems,
   hasText,
+  isRtlReading,
   type AboutData,
   type Media,
   type PageContent,
