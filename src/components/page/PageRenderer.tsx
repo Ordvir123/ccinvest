@@ -888,6 +888,7 @@ function ApartmentSection({
   featurePresets: SpecPreset[];
 }) {
   const [planOpen, setPlanOpen] = useState(false);
+  const [planFailed, setPlanFailed] = useState(false);
   const title = unitTitle(apartment, lang);
   const visibleRows = (apartment.specs ?? migrateUnitSpecs(apartment))
     .map((r) => ({
