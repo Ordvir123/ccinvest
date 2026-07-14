@@ -1014,7 +1014,7 @@ function ApartmentSection({
               )}
             </div>
             {apartment.image?.url && (
-              <div className={`md:w-1/2 ${imageOrder}`}>
+              <div className="md:w-1/2">
                 <SafeImg
                   src={apartment.image.url}
                   alt={apartment.image.alt ?? title}
