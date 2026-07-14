@@ -88,6 +88,8 @@ export type DetailRow = {
   linked?: boolean;
   label?: string;
   icon?: string;
+  /** Optional CSS color for the row icon (overrides preset color). */
+  color?: string;
   value?: string;
 };
 
