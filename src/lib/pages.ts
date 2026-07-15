@@ -221,6 +221,7 @@ export function cleanContent(content: PageContent): PageContent {
     cta_label: keepText(content.hero.cta_label),
     cta_label_i18n: cleanI18n(content.hero.cta_label_i18n),
     background: content.hero.background?.url ? content.hero.background : undefined,
+    overlay: content.hero.background?.url ? content.hero.overlay : undefined,
   };
 
   // Reusable per-type data cleaners (shared by base fields and extra_sections).
