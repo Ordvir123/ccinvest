@@ -148,6 +148,32 @@ function NewPage() {
     toAdd.forEach((a) => void startUpload(a));
   };
 
+  // Global paste: while in AI mode, any image on the clipboard is added as an asset.
+  // Text pastes into the textarea still work — we only intercept File items.
+  useEffect(() => {
+    if (mode !== "ai") return;
+    const onPaste = (e: ClipboardEvent) => {
+      const items = e.clipboardData?.items;
+      if (!items) return;
+      const files: File[] = [];
+      for (const item of Array.from(items)) {
+        if (item.kind === "file") {
+          const f = item.getAsFile();
+          if (f && (ACCEPTED_IMAGE_TYPES.includes(f.type) || f.type === PDF_TYPE)) {
+            files.push(f);
+          }
+        }
+      }
+      if (files.length) {
+        e.preventDefault();
+        addFiles(files);
+        toast.success(`Added ${files.length} file${files.length > 1 ? "s" : ""} from clipboard.`);
+      }
+    };
+    window.addEventListener("paste", onPaste);
+    return () => window.removeEventListener("paste", onPaste);
+  });
+
   const removeAsset = (id: string) => {
     setAssets((prev) => {
       const target = prev.find((a) => a.id === id);
