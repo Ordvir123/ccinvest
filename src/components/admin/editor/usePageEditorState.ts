@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -206,57 +206,104 @@ export function usePageEditorState({
     }
   };
 
-  const onSave = async () => {
-    if (!content.hero?.title?.trim()) {
-      toast.error("Hero title is required.");
-      console.error("[editor] onSave aborted: missing hero title");
+  // ---- Save/publish hardening ----------------------------------------------
+  // A single in-flight mutex prevents concurrent writes (double-clicked Save,
+  // autosave firing during a manual save, publish clicked twice, etc). All
+  // save paths — onSave, onPublish, autosave — go through performSave.
+  const savingRef = useRef(false);
+  const [autosaving, setAutosaving] = useState(false);
+  const [lastSavedAt, setLastSavedAt] = useState<Date | null>(initialPage ? new Date() : null);
+  const [dirty, setDirty] = useState(false);
+
+  // Any observable state change flags dirty. Skip the initial mount so a freshly
+  // loaded page doesn't immediately look dirty.
+  const firstMount = useRef(true);
+  useEffect(() => {
+    if (firstMount.current) {
+      firstMount.current = false;
       return;
+    }
+    setDirty(true);
+  }, [content, seo, slug, status, sourceLang]);
+
+  const performSave = async (opts: { silent?: boolean; publish?: boolean } = {}) => {
+    // Guard: only one write at a time.
+    if (savingRef.current) return null;
+    if (!content.hero?.title?.trim()) {
+      if (!opts.silent) toast.error("Hero title is required.");
+      if (!opts.silent) console.error("[editor] save aborted: missing hero title");
+      return null;
     }
     if (!slug) {
-      toast.error("A slug is required.");
-      console.error("[editor] onSave aborted: missing slug");
-      return;
+      if (!opts.silent) toast.error("A slug is required.");
+      if (!opts.silent) console.error("[editor] save aborted: missing slug");
+      return null;
     }
-    setSaving(true);
+
+    savingRef.current = true;
+    if (opts.silent) setAutosaving(true);
+    else if (opts.publish) setPublishing(true);
+    else setSaving(true);
+
     try {
       const taken = await isSlugTaken(slug, pageId);
       if (taken) {
         setSlugError("This slug is already used by another page.");
-        toast.error("Slug already in use — choose another.");
-        return;
+        if (!opts.silent) toast.error("Slug already in use — choose another.");
+        return null;
       }
+      const nextStatus = opts.publish ? "published" : status;
       const saved = await savePage({
         id: pageId,
         slug,
         source_lang: sourceLang,
-        status,
+        status: nextStatus,
         content,
         seo,
       });
-      toast.success("Draft saved.");
-      await persistCustomTitleOption();
+      if (opts.publish) setStatus("published");
+      setLastSavedAt(new Date());
+      setDirty(false);
+      if (!opts.silent) {
+        toast.success(opts.publish ? "Page published — it's now live." : "Draft saved.");
+      }
+      // Fire-and-forget: persisting reusable presets should never block the save.
+      persistCustomTitleOption().catch((err) => {
+        console.warn("[editor] persistCustomTitleOption failed", err);
+      });
       if (!pageId) {
         setPageId(saved.id);
         navigate({ to: "/admin/pages/$id", params: { id: saved.id }, replace: true });
       }
       return saved.id;
     } catch (err) {
-      console.error("[editor] onSave failed:", err);
-      toast.error(err instanceof Error ? err.message : "Failed to save.");
+      console.error(
+        opts.silent ? "[editor] autosave failed:" : "[editor] save failed:",
+        err,
+      );
+      if (!opts.silent) {
+        toast.error(err instanceof Error ? err.message : "Failed to save.");
+      }
+      return null;
     } finally {
+      savingRef.current = false;
+      setAutosaving(false);
       setSaving(false);
+      setPublishing(false);
     }
   };
+
+  const onSave = () => performSave();
 
   const liveUrl = slug ? `${SITE_ORIGIN}/${slug}` : "";
 
   const onPublish = async () => {
+    if (savingRef.current) return;
     if (!content.hero?.title?.trim()) {
       toast.error("Hero title is required before publishing.");
       console.error("[editor] onPublish aborted: missing hero title");
       return;
     }
-    setPublishing(true);
     try {
       const problem = await validateForPublish({ id: pageId, slug, title: content.hero.title });
       if (problem) {
@@ -265,29 +312,12 @@ export function usePageEditorState({
         console.error("[editor] onPublish validation failed:", problem);
         return;
       }
-      // Save AND publish in a single write so a brand-new page is created with
-      // status 'published' (avoids a save→navigate→status-flip race).
-      const saved = await savePage({
-        id: pageId,
-        slug,
-        source_lang: sourceLang,
-        status: "published",
-        content,
-        seo,
-      });
-      setStatus("published");
-      toast.success("Page published — it's now live.");
-      await persistCustomTitleOption();
-      if (!pageId) {
-        setPageId(saved.id);
-        navigate({ to: "/admin/pages/$id", params: { id: saved.id }, replace: true });
-      }
     } catch (err) {
-      console.error("[editor] onPublish failed:", err);
-      toast.error(err instanceof Error ? err.message : "Failed to publish.");
-    } finally {
-      setPublishing(false);
+      console.error("[editor] validateForPublish threw:", err);
+      toast.error(err instanceof Error ? err.message : "Failed to validate before publishing.");
+      return;
     }
+    await performSave({ publish: true });
   };
 
 
@@ -297,19 +327,71 @@ export function usePageEditorState({
       console.error("[editor] onUnpublish aborted: no page id");
       return;
     }
+    if (savingRef.current) return;
+    savingRef.current = true;
     setPublishing(true);
     try {
       const next = await setPageStatus(pageId, "draft");
       setStatus(next);
+      // Status change flips `dirty` via the effect above; treat as clean.
+      setLastSavedAt(new Date());
+      setDirty(false);
       toast.success("Page unpublished — now a draft.");
     } catch (err) {
       console.error("[editor] onUnpublish failed:", err);
       toast.error(err instanceof Error ? err.message : "Failed to unpublish.");
     } finally {
+      savingRef.current = false;
       setPublishing(false);
     }
 
   };
+
+  // ---- Autosave (every 3 minutes when dirty) --------------------------------
+  // Refs let the interval read the freshest state without resetting itself on
+  // every keystroke. The mutex above guarantees autosave never races a manual
+  // save or a publish click.
+  const performSaveRef = useRef(performSave);
+  useEffect(() => {
+    performSaveRef.current = performSave;
+  });
+  const autosaveGuardRef = useRef({
+    dirty,
+    slug,
+    slugError,
+    hasTitle: !!content.hero?.title?.trim(),
+  });
+  useEffect(() => {
+    autosaveGuardRef.current = {
+      dirty,
+      slug,
+      slugError,
+      hasTitle: !!content.hero?.title?.trim(),
+    };
+  });
+  useEffect(() => {
+    const AUTOSAVE_MS = 3 * 60 * 1000;
+    const timer = window.setInterval(() => {
+      const g = autosaveGuardRef.current;
+      if (!g.dirty) return;
+      if (!g.slug || !g.hasTitle || g.slugError) return;
+      if (savingRef.current) return;
+      void performSaveRef.current({ silent: true });
+    }, AUTOSAVE_MS);
+    return () => window.clearInterval(timer);
+  }, []);
+
+  // Warn before leaving the tab with unsaved changes.
+  useEffect(() => {
+    const onBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (!dirty) return;
+      e.preventDefault();
+      e.returnValue = "";
+    };
+    window.addEventListener("beforeunload", onBeforeUnload);
+    return () => window.removeEventListener("beforeunload", onBeforeUnload);
+  }, [dirty]);
+
 
   const copyShareLink = async (lang?: ReadingLang) => {
     if (!liveUrl) {
@@ -393,6 +475,9 @@ export function usePageEditorState({
     seo,
     setSeo,
     saving,
+    autosaving,
+    lastSavedAt,
+    dirty,
     titleOptions,
     specPresets,
     featurePresets,
