@@ -5,12 +5,14 @@ import { Textarea } from "@/components/ui/textarea";
 import { Field } from "@/components/admin/editor-parts";
 import { IconPicker } from "@/components/admin/IconPicker";
 import { ReorderList, ReorderToggle } from "@/components/admin/reorder";
+import { SingleImageUpload } from "@/components/admin/MediaUpload";
+import { OverlayControls } from "@/components/admin/editor/OverlayControls";
 import { hasItems, type AboutData, type Stat } from "@/types/page";
 import { MoveRemove, moveItem } from "@/components/admin/editor/shared";
 import type { PageEditorState } from "@/components/admin/editor/usePageEditorState";
 
 export function AboutSection({ s, id = "about" }: { s: PageEditorState; id?: string }) {
-  const { getData, setData, aboutFeatReorder, setAboutFeatReorder } = s;
+  const { getData, setData, aboutFeatReorder, setAboutFeatReorder, slug, canUpload } = s;
   const about = (getData(id) as AboutData | undefined) ?? {};
   const patchAbout = (p: Partial<AboutData>) => setData(id, { ...about, ...p });
   return (
