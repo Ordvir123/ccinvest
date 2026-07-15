@@ -192,6 +192,3 @@ function Swatch({
     </button>
   );
 }
-
-// Re-export for callers that used the old Button import indirectly.
-export { Button };
