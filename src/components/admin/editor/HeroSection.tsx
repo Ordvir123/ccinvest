@@ -1,16 +1,8 @@
 import { Input } from "@/components/ui/input";
 import { Field } from "@/components/admin/editor-parts";
 import { SingleImageUpload } from "@/components/admin/MediaUpload";
-import { Slider } from "@/components/ui/slider";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { READING_LANGS, isRtlReading, type HeroOverlay, type HeroOverlayColor } from "@/types/page";
-import { DEFAULT_HERO_OVERLAY, HERO_OVERLAY_COLORS } from "@/lib/hero-overlay";
+import { READING_LANGS, isRtlReading } from "@/types/page";
+import { OverlayControls } from "@/components/admin/editor/OverlayControls";
 import {
   KICKER_PLACEHOLDERS,
   CTA_PLACEHOLDERS,
@@ -82,58 +74,13 @@ export function HeroSection({ s }: { s: PageEditorState }) {
           disabled={!canUpload}
         />
       </Field>
-      {content.hero.background?.url && <OverlayControls s={s} />}
+      {content.hero.background?.url && (
+        <OverlayControls
+          value={content.hero.overlay}
+          onChange={(overlay) => patchHero({ overlay })}
+        />
+      )}
     </>
   );
 }
 
-function OverlayControls({ s }: { s: PageEditorState }) {
-  const { content, patchHero } = s;
-  const overlay = content.hero.overlay;
-  const opacity = overlay?.opacity ?? DEFAULT_HERO_OVERLAY.opacity;
-  const color = overlay?.color ?? DEFAULT_HERO_OVERLAY.color;
-  const direction = overlay?.direction ?? DEFAULT_HERO_OVERLAY.direction;
-  const update = (p: Partial<HeroOverlay>) =>
-    patchHero({ overlay: { opacity, color, direction, ...p } });
-  return (
-    <div className="rounded-lg border border-border p-3">
-      <p className="mb-3 text-sm font-medium text-foreground">Overlay / fade</p>
-      <Field label={`Opacity (${Math.round(opacity * 100)}%)`}>
-        <Slider
-          min={0}
-          max={100}
-          step={1}
-          value={[Math.round(opacity * 100)]}
-          onValueChange={([v]) => update({ opacity: v / 100 })}
-        />
-      </Field>
-      <Field label="Direction" hint="Gradient fade origin, or flat fill.">
-        <Select value={direction} onValueChange={(v) => update({ direction: v as HeroOverlay["direction"] })}>
-          <SelectTrigger>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="both">From top &amp; bottom</SelectItem>
-            <SelectItem value="top">From top</SelectItem>
-            <SelectItem value="bottom">From bottom</SelectItem>
-            <SelectItem value="none">Flat</SelectItem>
-          </SelectContent>
-        </Select>
-      </Field>
-      <Field label="Color">
-        <Select value={color} onValueChange={(v) => update({ color: v as HeroOverlayColor })}>
-          <SelectTrigger>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {(Object.keys(HERO_OVERLAY_COLORS) as HeroOverlayColor[]).map((k) => (
-              <SelectItem key={k} value={k}>
-                {HERO_OVERLAY_COLORS[k].label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </Field>
-    </div>
-  );
-}
