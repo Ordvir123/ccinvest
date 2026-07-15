@@ -1166,8 +1166,10 @@ function About({ about }: { about?: PageContent["about"] }) {
   if (!hasText(about.heading) && paragraphs.length === 0 && features.length === 0) {
     return null;
   }
-  return (
-    <Section>
+  const bg = about.background?.url;
+  const overlay = bg ? heroOverlayStyle(about.overlay) : null;
+  const inner = (
+    <Section className={bg ? "relative z-10" : undefined}>
       <div className="mx-auto max-w-3xl text-center">
         {hasText(about.heading) && (
           <h2 className="text-3xl text-ink md:text-4xl">{about.heading}</h2>
@@ -1208,6 +1210,19 @@ function About({ about }: { about?: PageContent["about"] }) {
         </ul>
       )}
     </Section>
+  );
+  if (!bg) return inner;
+  return (
+    <div className="relative isolate">
+      <img
+        src={bg}
+        alt={about.background?.alt ?? ""}
+        className="absolute inset-0 h-full w-full object-cover"
+        aria-hidden={!about.background?.alt}
+      />
+      {overlay && <div className="absolute inset-0" style={overlay} />}
+      {inner}
+    </div>
   );
 }
 
