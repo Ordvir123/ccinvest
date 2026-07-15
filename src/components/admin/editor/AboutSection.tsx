@@ -117,6 +117,23 @@ export function AboutSection({ s, id = "about" }: { s: PageEditorState; id?: str
           </div>
         </div>
       </Field>
+      <Field
+        label="Background image"
+        hint="Optional. Shown behind the About section with an overlay for readability."
+      >
+        <SingleImageUpload
+          slug={slug}
+          value={about?.background}
+          onChange={(background) => patchAbout({ background })}
+          disabled={!canUpload}
+        />
+      </Field>
+      {about?.background?.url && (
+        <OverlayControls
+          value={about?.overlay}
+          onChange={(overlay) => patchAbout({ overlay })}
+        />
+      )}
     </>
   );
 }
