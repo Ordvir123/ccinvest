@@ -404,3 +404,66 @@ export function PageEditor({
     </div>
   );
 }
+
+/** Small header status: "Saving…", "Saved 2m ago", or "Unsaved changes". */
+function AutosaveIndicator({
+  autosaving,
+  saving,
+  dirty,
+  lastSavedAt,
+}: {
+  autosaving: boolean;
+  saving: boolean;
+  dirty: boolean;
+  lastSavedAt: Date | null;
+}) {
+  // Re-render every 30s so the "N minutes ago" label stays fresh.
+  const [, setTick] = useState(0);
+  useEffect(() => {
+    const t = window.setInterval(() => setTick((n) => n + 1), 30_000);
+    return () => window.clearInterval(t);
+  }, []);
+
+  if (saving || autosaving) {
+    return (
+      <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+        <Loader2 className="h-3 w-3 animate-spin" />
+        {autosaving ? "Autosaving…" : "Saving…"}
+      </span>
+    );
+  }
+  if (dirty) {
+    return (
+      <span
+        className="inline-flex items-center gap-1 text-xs text-amber-600 dark:text-amber-400"
+        title="Unsaved changes — will autosave within 3 minutes"
+      >
+        <CircleDot className="h-3 w-3" /> Unsaved
+      </span>
+    );
+  }
+  if (lastSavedAt) {
+    return (
+      <span
+        className="inline-flex items-center gap-1 text-xs text-muted-foreground"
+        title={`Last saved ${lastSavedAt.toLocaleString()}`}
+      >
+        <Check className="h-3 w-3" /> Saved {formatRelative(lastSavedAt)}
+      </span>
+    );
+  }
+  return null;
+}
+
+function formatRelative(d: Date): string {
+  const diff = Math.max(0, Date.now() - d.getTime());
+  const sec = Math.floor(diff / 1000);
+  if (sec < 45) return "just now";
+  const min = Math.round(sec / 60);
+  if (min < 60) return `${min}m ago`;
+  const hr = Math.round(min / 60);
+  if (hr < 24) return `${hr}h ago`;
+  const day = Math.round(hr / 24);
+  return `${day}d ago`;
+}
+
