@@ -476,7 +476,7 @@ function NewPage() {
             >
               <UploadCloud className="h-6 w-6 text-muted-foreground" />
               <p className="text-sm text-foreground">
-                Drag &amp; drop files here, or click to select
+                Drag &amp; drop files here, paste with Ctrl/⌘+V, or click to select
               </p>
               <p className="text-xs text-muted-foreground">
                 JPG, PNG, WEBP, PDF · up to {MAX_IMAGES} images and {MAX_PDFS} PDFs (PDF max 20MB)
