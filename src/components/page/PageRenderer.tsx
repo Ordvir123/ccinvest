@@ -19,6 +19,7 @@ import { cn } from "@/lib/utils";
 
 import { getIcon, guessIcon } from "@/lib/page-icons";
 import { heroOverlayStyle } from "@/lib/hero-overlay";
+import { iconColorStyle } from "@/lib/icon-colors";
 import {
   unitTitle,
   ABOUT_APARTMENT_HEADING,
