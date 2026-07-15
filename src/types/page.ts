@@ -114,6 +114,10 @@ export type AboutData = {
   feature_icons?: string[];
   /** Per-feature CSS color for the icon (aligned by index with `features`). */
   feature_colors?: string[];
+  /** Optional background image behind the About section. */
+  background?: Media;
+  /** Optional overlay/fade over the background image. Absent = no overlay. */
+  overlay?: HeroOverlay;
 };
 
 /** Section types that can appear multiple times per page. */
