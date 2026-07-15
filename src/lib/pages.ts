@@ -241,13 +241,20 @@ export function cleanContent(content: PageContent): PageContent {
     const features = (a?.features ?? []).map(t).filter(Boolean);
     const icons = (a?.feature_icons ?? []).slice(0, features.length);
     const colors = (a?.feature_colors ?? []).slice(0, features.length);
-    if (!a || !(keepText(a.heading) || keepText(a.body) || features.length > 0)) return undefined;
+    const background = a?.background?.url ? a.background : undefined;
+    if (
+      !a ||
+      !(keepText(a.heading) || keepText(a.body) || features.length > 0 || background)
+    )
+      return undefined;
     return {
       heading: keepText(a.heading),
       body: keepText(a.body),
       features: features.length ? features : undefined,
       feature_icons: icons.some((x) => x) ? icons : undefined,
       feature_colors: colors.some((x) => x) ? colors : undefined,
+      background,
+      overlay: background ? a.overlay : undefined,
     };
   };
 
