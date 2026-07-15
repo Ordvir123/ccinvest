@@ -241,6 +241,12 @@ export function PageEditor({
               <ExternalLink className="h-3 w-3" /> {liveUrl}
             </a>
           )}
+          <AutosaveIndicator
+            autosaving={autosaving}
+            saving={saving}
+            dirty={dirty}
+            lastSavedAt={lastSavedAt}
+          />
         </div>
         <div className="flex items-center gap-2">
           <Button
