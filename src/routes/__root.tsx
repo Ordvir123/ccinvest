@@ -12,6 +12,7 @@ import { useEffect, type ReactNode } from "react";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import i18n, { applyDocumentDirection } from "../i18n";
+import { IconGradientDefs } from "../components/IconGradientDefs";
 
 function NotFoundComponent() {
   return (
