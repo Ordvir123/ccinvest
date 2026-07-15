@@ -19,6 +19,7 @@ import { cn } from "@/lib/utils";
 
 import { getIcon, guessIcon } from "@/lib/page-icons";
 import { heroOverlayStyle } from "@/lib/hero-overlay";
+import { iconColorStyle } from "@/lib/icon-colors";
 import {
   unitTitle,
   ABOUT_APARTMENT_HEADING,
@@ -215,7 +216,7 @@ function Stats({ stats }: { stats: PageContent["stats"] }) {
               {Icon && (
                 <span
                   className="mb-3 flex h-11 w-11 items-center justify-center rounded-full bg-primary/10 text-primary"
-                  style={s.color ? { color: s.color } : undefined}
+                  style={iconColorStyle(s.color)}
                 >
                   <Icon className="h-5 w-5" aria-hidden />
                 </span>
@@ -765,7 +766,7 @@ function UnitCard({
                     {RowIcon && (
                       <RowIcon
                         className="h-4 w-4 shrink-0 text-primary"
-                        style={r.color ? { color: r.color } : undefined}
+                        style={iconColorStyle(r.color)}
                         aria-hidden
                       />
                     )}
@@ -789,7 +790,7 @@ function UnitCard({
                   {FIcon ? (
                     <FIcon
                       className="h-4 w-4 shrink-0 text-primary"
-                      style={f.color ? { color: f.color } : undefined}
+                      style={iconColorStyle(f.color)}
                       aria-hidden
                     />
                   ) : (
@@ -947,7 +948,7 @@ function ApartmentSection({
               {HeadingIcon && (
                 <HeadingIcon
                   className="h-7 w-7 shrink-0 text-primary"
-                  style={headingColor ? { color: headingColor } : undefined}
+                  style={iconColorStyle(headingColor)}
                   aria-hidden
                 />
               )}
@@ -975,7 +976,7 @@ function ApartmentSection({
                           {RowIcon && (
                             <RowIcon
                               className="h-4 w-4 shrink-0 text-primary"
-                              style={r.color ? { color: r.color } : undefined}
+                              style={iconColorStyle(r.color)}
                               aria-hidden
                             />
                           )}
@@ -1001,7 +1002,7 @@ function ApartmentSection({
                         {FIcon ? (
                           <FIcon
                             className="h-4 w-4 shrink-0 text-primary"
-                            style={f.color ? { color: f.color } : undefined}
+                            style={iconColorStyle(f.color)}
                             aria-hidden
                           />
                         ) : (
@@ -1195,7 +1196,7 @@ function About({ about }: { about?: PageContent["about"] }) {
                 {FIcon && (
                   <span
                     className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary"
-                    style={fColor ? { color: fColor } : undefined}
+                    style={iconColorStyle(fColor)}
                   >
                     <FIcon className="h-4 w-4" aria-hidden />
                   </span>
