@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { toast } from "sonner";
 import {
@@ -147,6 +147,32 @@ function NewPage() {
     // Kick off uploads.
     toAdd.forEach((a) => void startUpload(a));
   };
+
+  // Global paste: while in AI mode, any image on the clipboard is added as an asset.
+  // Text pastes into the textarea still work — we only intercept File items.
+  useEffect(() => {
+    if (mode !== "ai") return;
+    const onPaste = (e: ClipboardEvent) => {
+      const items = e.clipboardData?.items;
+      if (!items) return;
+      const files: File[] = [];
+      for (const item of Array.from(items)) {
+        if (item.kind === "file") {
+          const f = item.getAsFile();
+          if (f && (ACCEPTED_IMAGE_TYPES.includes(f.type) || f.type === PDF_TYPE)) {
+            files.push(f);
+          }
+        }
+      }
+      if (files.length) {
+        e.preventDefault();
+        addFiles(files);
+        toast.success(`Added ${files.length} file${files.length > 1 ? "s" : ""} from clipboard.`);
+      }
+    };
+    window.addEventListener("paste", onPaste);
+    return () => window.removeEventListener("paste", onPaste);
+  });
 
   const removeAsset = (id: string) => {
     setAssets((prev) => {
@@ -450,7 +476,7 @@ function NewPage() {
             >
               <UploadCloud className="h-6 w-6 text-muted-foreground" />
               <p className="text-sm text-foreground">
-                Drag &amp; drop files here, or click to select
+                Drag &amp; drop files here, paste with Ctrl/⌘+V, or click to select
               </p>
               <p className="text-xs text-muted-foreground">
                 JPG, PNG, WEBP, PDF · up to {MAX_IMAGES} images and {MAX_PDFS} PDFs (PDF max 20MB)
