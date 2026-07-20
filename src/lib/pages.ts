@@ -261,15 +261,28 @@ export function cleanContent(content: PageContent): PageContent {
   const stats = cleanStatsData(content.stats);
 
 
+  const locName_i18n = (() => {
+    const src = content.location?.name_i18n;
+    if (!src) return undefined;
+    const out: Partial<Record<ReadingLang, string>> = {};
+    for (const l of READING_LANGS) {
+      const v = keepText(src[l]);
+      if (v) out[l] = v;
+    }
+    return Object.keys(out).length ? out : undefined;
+  })();
+
   const location =
     content.location &&
     (keepText(content.location.heading) ||
       keepText(content.location.text) ||
-      keepText(content.location.map_query))
+      keepText(content.location.map_query) ||
+      locName_i18n)
       ? {
           heading: keepText(content.location.heading),
           text: keepText(content.location.text),
           map_query: keepText(content.location.map_query),
+          name_i18n: locName_i18n,
         }
       : undefined;
 

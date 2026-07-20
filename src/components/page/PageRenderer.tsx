@@ -1315,6 +1315,7 @@ export function PageRenderer({
     const type = getSectionType(id);
     switch (type) {
       case "about":
+        if (content.category === "apartment") return null;
         return <About about={getSectionData(content, id) as AboutData | undefined} />;
       case "stats":
         return <Stats stats={(getSectionData(content, id) as Stat[] | undefined) ?? []} />;
