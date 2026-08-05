@@ -1186,7 +1186,8 @@ function About({ about, heading }: { about?: PageContent["about"]; heading?: str
   const paragraphs = hasText(about.body)
     ? about.body!.split(/\n\s*\n/).map((p) => p.trim()).filter(Boolean)
     : [];
-  if (!hasText(about.heading) && paragraphs.length === 0 && features.length === 0) {
+  const title = hasText(heading) ? heading : about.heading;
+  if (!hasText(title) && paragraphs.length === 0 && features.length === 0) {
     return null;
   }
   const bg = about.background?.url;
@@ -1194,9 +1195,7 @@ function About({ about, heading }: { about?: PageContent["about"]; heading?: str
   const inner = (
     <Section className={bg ? "relative z-10" : undefined}>
       <div className="mx-auto max-w-3xl text-center">
-        {hasText(about.heading) && (
-          <h2 className="text-3xl text-ink md:text-4xl">{about.heading}</h2>
-        )}
+        {hasText(title) && <h2 className="text-3xl text-ink md:text-4xl">{title}</h2>}
         {paragraphs.length > 0 && (
           <div className="mt-6 space-y-4">
             {paragraphs.map((p, i) => (
