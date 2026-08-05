@@ -445,6 +445,16 @@ export function usePageEditorState({
   };
 
 
+  // Per-instance custom heading (per reading language).
+  const setSectionHeading = (id: string, lang: ReadingLang, value: string) =>
+    setContent((c) => ({
+      ...c,
+      section_headings: {
+        ...(c.section_headings ?? {}),
+        [id]: { ...(c.section_headings?.[id] ?? {}), [lang]: value },
+      },
+    }));
+
   // Per-instance layout preset (gallery / wide_images only).
   const getLayout = (id: string) => getSectionLayout(content, id);
   const setLayout = (id: string, layout: string) =>
@@ -506,6 +516,7 @@ export function usePageEditorState({
     setData,
     getLayout,
     setLayout,
+    setSectionHeading,
     duplicateInstance,
     deleteInstance,
     reorderSections,

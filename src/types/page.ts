@@ -186,6 +186,12 @@ export type PageContent = {
   section_order?: string[];
   /** Section instance ids hidden from the public page. */
   hidden_sections?: string[];
+  /**
+   * Custom per-locale headings for rendered sections, keyed by section
+   * instance id ("gallery", "gallery#2", "videos", "listing", …). Empty /
+   * missing locales fall back to the built-in translated heading.
+   */
+  section_headings?: Record<string, Partial<Record<ReadingLang, string>>>;
   units?: Unit[];
   /** Single apartment block for apartment-type pages (mutually exclusive with units). */
   apartment?: Unit;

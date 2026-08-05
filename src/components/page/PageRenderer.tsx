@@ -194,10 +194,15 @@ function Hero({
   );
 }
 
-function Stats({ stats }: { stats: PageContent["stats"] }) {
+function Stats({ stats, heading }: { stats: PageContent["stats"]; heading?: string }) {
   if (!hasItems(stats)) return null;
   return (
     <section className="border-y border-border bg-secondary">
+      {hasText(heading) && (
+        <h2 className="mx-auto max-w-6xl px-4 pt-10 text-center text-3xl text-ink md:text-4xl">
+          {heading}
+        </h2>
+      )}
       <div className="mx-auto grid max-w-6xl grid-cols-2 divide-x divide-border md:grid-cols-4 rtl:divide-x-reverse">
         {stats.map((s, i) => {
           // Prefer a meaningful guess from the label when no icon is set or the
@@ -250,10 +255,12 @@ function LocationBlock({
   location,
   labels,
   lang,
+  heading,
 }: {
   location: NonNullable<PageContent["location"]>;
   labels: Record<string, string>;
   lang: ReadingLang;
+  heading?: string;
 }) {
   const hasMap = hasText(location.map_query);
   const properName = location.name_i18n?.[lang];
@@ -263,7 +270,7 @@ function LocationBlock({
       <div className="grid items-center gap-10 md:grid-cols-2">
         <div>
           {hasText(properName) && <p className="eyebrow mb-2 text-sm text-primary">{properName}</p>}
-          <h2 className="text-3xl text-ink md:text-4xl">{labels.location}</h2>
+          <h2 className="text-3xl text-ink md:text-4xl">{heading ?? labels.location}</h2>
           {hasText(location.text) && (
             <p className="mt-5 text-lg leading-relaxed text-muted-foreground">{location.text}</p>
           )}
@@ -557,10 +564,12 @@ function Gallery({
   gallery,
   labels,
   layout,
+  heading,
 }: {
   gallery: PageContent["gallery"];
   labels: Record<string, string>;
   layout?: string;
+  heading?: string;
 }) {
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(0);
@@ -578,7 +587,7 @@ function Gallery({
 
   return (
     <Section>
-      <h2 className="mb-8 text-center text-3xl text-ink md:text-4xl">{labels.gallery}</h2>
+      <h2 className="mb-8 text-center text-3xl text-ink md:text-4xl">{heading ?? labels.gallery}</h2>
       {useGrid ? (
         <div className="mx-auto w-full max-w-5xl">
           <MediaLayout
@@ -856,8 +865,10 @@ function Units({
   lang,
   specPresets,
   featurePresets,
+  heading,
 }: {
   units: PageContent["units"];
+  heading?: string;
   labels: Record<string, string>;
   lang: ReadingLang;
   specPresets: SpecPreset[];
@@ -867,7 +878,7 @@ function Units({
   return (
     <section className="bg-secondary">
       <Section>
-        <h2 className="mb-10 text-center text-3xl text-ink md:text-4xl">{labels.units}</h2>
+        <h2 className="mb-10 text-center text-3xl text-ink md:text-4xl">{heading ?? labels.units}</h2>
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {units!.map((u, i) => (
             <UnitCard
@@ -1081,14 +1092,16 @@ function ApartmentSection({
 function Videos({
   videos,
   labels,
+  heading,
 }: {
   videos: PageContent["videos"];
   labels: Record<string, string>;
+  heading?: string;
 }) {
   if (!hasItems(videos)) return null;
   return (
     <Section>
-      <h2 className="mb-10 text-center text-3xl text-ink md:text-4xl">{labels.videos}</h2>
+      <h2 className="mb-10 text-center text-3xl text-ink md:text-4xl">{heading ?? labels.videos}</h2>
       <div className="mx-auto flex max-w-5xl flex-wrap justify-center gap-8">
         {videos!.map((v, i) => (
           <figure key={i} className="w-full max-w-2xl md:w-[calc(50%-1rem)]">
@@ -1118,9 +1131,11 @@ function Videos({
 function WideImages({
   images,
   layout,
+  heading,
 }: {
   images?: PageContent["wide_images"];
   layout?: string;
+  heading?: string;
 }) {
   if (!hasItems(images)) return null;
 
@@ -1129,9 +1144,16 @@ function WideImages({
   const effective = layout === undefined ? "stacked" : effectiveLayout("wide_images", layout, images!.length);
 
 
+  const title = hasText(heading) ? (
+    <h2 className="mx-auto max-w-6xl px-4 pb-8 pt-12 text-center text-3xl text-ink md:text-4xl">
+      {heading}
+    </h2>
+  ) : null;
+
   if (effective === "stacked") {
     return (
       <section className="w-full">
+        {title}
         {images!.map((img, i) => (
           <img
             key={i}
@@ -1147,6 +1169,7 @@ function WideImages({
 
   return (
     <section className="w-full">
+      {title}
       <MediaLayout images={images!} layout={effective} framed={false} gap="gap-1" />
     </section>
   );
@@ -1157,13 +1180,14 @@ function WideImages({
  * and a features grid with per-feature icons. RTL is inherited from the page
  * `dir`, so no per-element direction handling is needed.
  */
-function About({ about }: { about?: PageContent["about"] }) {
+function About({ about, heading }: { about?: PageContent["about"]; heading?: string }) {
   if (!about) return null;
   const features = (about.features ?? []).filter((f) => hasText(f));
   const paragraphs = hasText(about.body)
     ? about.body!.split(/\n\s*\n/).map((p) => p.trim()).filter(Boolean)
     : [];
-  if (!hasText(about.heading) && paragraphs.length === 0 && features.length === 0) {
+  const title = hasText(heading) ? heading : about.heading;
+  if (!hasText(title) && paragraphs.length === 0 && features.length === 0) {
     return null;
   }
   const bg = about.background?.url;
@@ -1171,9 +1195,7 @@ function About({ about }: { about?: PageContent["about"] }) {
   const inner = (
     <Section className={bg ? "relative z-10" : undefined}>
       <div className="mx-auto max-w-3xl text-center">
-        {hasText(about.heading) && (
-          <h2 className="text-3xl text-ink md:text-4xl">{about.heading}</h2>
-        )}
+        {hasText(title) && <h2 className="text-3xl text-ink md:text-4xl">{title}</h2>}
         {paragraphs.length > 0 && (
           <div className="mt-6 space-y-4">
             {paragraphs.map((p, i) => (
@@ -1311,20 +1333,36 @@ export function PageRenderer({
 
   // Resolve a section instance id to its rendered node. Base ids read the
   // existing content fields; duplicate ids read their extra_sections data.
+  const sectionHeading = (id: string): string | undefined => {
+    const v = content.section_headings?.[id]?.[lang];
+    return hasText(v) ? v : undefined;
+  };
+
   const renderById = (id: string): React.ReactNode => {
     const type = getSectionType(id);
     switch (type) {
       case "about":
         if (content.category === "apartment") return null;
-        return <About about={getSectionData(content, id) as AboutData | undefined} />;
+        return (
+          <About
+            about={getSectionData(content, id) as AboutData | undefined}
+            heading={sectionHeading(id)}
+          />
+        );
       case "stats":
-        return <Stats stats={(getSectionData(content, id) as Stat[] | undefined) ?? []} />;
+        return (
+          <Stats
+            stats={(getSectionData(content, id) as Stat[] | undefined) ?? []}
+            heading={sectionHeading(id)}
+          />
+        );
       case "gallery":
         return (
           <Gallery
             gallery={(getSectionData(content, id) as Media[] | undefined) ?? []}
             labels={labels}
             layout={getSectionLayout(content, id)}
+            heading={sectionHeading(id)}
           />
         );
       case "wide_images":
@@ -1332,19 +1370,32 @@ export function PageRenderer({
           <WideImages
             images={getSectionData(content, id) as Media[] | undefined}
             layout={getSectionLayout(content, id)}
+            heading={sectionHeading(id)}
           />
         );
       case "videos":
-        return <Videos videos={getSectionData(content, id) as Video[] | undefined} labels={labels} />;
+        return (
+          <Videos
+            videos={getSectionData(content, id) as Video[] | undefined}
+            labels={labels}
+            heading={sectionHeading(id)}
+          />
+        );
       case "location":
         return content.location &&
           (hasText(content.location.text) || hasText(content.location.map_query)) ? (
-          <LocationBlock location={content.location} labels={labels} lang={lang} />
+          <LocationBlock
+            location={content.location}
+            labels={labels}
+            lang={lang}
+            heading={sectionHeading(id)}
+          />
         ) : null;
       case "listing":
         return content.category === "project" ? (
           <Units
             units={content.units}
+            heading={sectionHeading(id)}
             labels={labels}
             lang={lang}
             specPresets={settings.specPresets}
@@ -1361,7 +1412,7 @@ export function PageRenderer({
           <ApartmentSection
             apartment={content.apartment}
             imageSide={content.apartment_image_side === "left" ? "left" : "right"}
-            heading={content.apartment_title}
+            heading={sectionHeading(id) ?? content.apartment_title}
             headingIcon={content.apartment_title_icon}
             headingColor={content.apartment_title_color}
             labels={labels}
@@ -1374,6 +1425,7 @@ export function PageRenderer({
         return (
           <ContactForm
             heading={
+              sectionHeading(id) ??
               pickI18n(content.contact?.heading_i18n, content.contact?.heading, lang) ??
               (hasText(settings.defaultContactHeading) ? settings.defaultContactHeading : undefined)
             }

@@ -42,6 +42,7 @@ import { sectionLabel, getSectionType } from "@/lib/page-sections";
 import { HeroSection } from "@/components/admin/editor/HeroSection";
 import { AboutSection, StatsBody } from "@/components/admin/editor/AboutSection";
 import { ListingBody } from "@/components/admin/editor/UnitsSection";
+import { SectionHeadingField } from "@/components/admin/editor/SectionHeadingField";
 import { GallerySection, WideImagesSection } from "@/components/admin/editor/GallerySection";
 import { VideosSection } from "@/components/admin/editor/VideosSection";
 import { LocationSection } from "@/components/admin/editor/LocationSection";
@@ -139,22 +140,31 @@ export function PageEditor({
   };
 
   // Render the editor body for a section instance, parameterized by its id.
+  // Sections without their own heading field get the shared per-locale one.
   const renderSectionBody = (type: SectionKey, id: string): React.ReactNode => {
+    const headingField =
+      type === "contact" || type === "about" ? null : <SectionHeadingField s={s} id={id} />;
+    const withHeading = (body: React.ReactNode) => (
+      <div className="space-y-5">
+        {headingField}
+        {body}
+      </div>
+    );
     switch (type) {
       case "about":
         return <AboutSection s={s} id={id} />;
       case "stats":
-        return <StatsBody s={s} id={id} />;
+        return withHeading(<StatsBody s={s} id={id} />);
       case "location":
-        return <LocationSection s={s} />;
+        return withHeading(<LocationSection s={s} />);
       case "listing":
-        return <ListingBody s={s} />;
+        return withHeading(<ListingBody s={s} />);
       case "gallery":
-        return <GallerySection s={s} id={id} />;
+        return withHeading(<GallerySection s={s} id={id} />);
       case "wide_images":
-        return <WideImagesSection s={s} id={id} />;
+        return withHeading(<WideImagesSection s={s} id={id} />);
       case "videos":
-        return <VideosSection s={s} id={id} />;
+        return withHeading(<VideosSection s={s} id={id} />);
       case "contact":
         return <ContactSection s={s} />;
     }
