@@ -435,6 +435,18 @@ export function cleanContent(content: PageContent): PageContent {
     .filter(Boolean) as import("@/types/page").ExtraSection[];
   const extra_sections = cleanedExtras.length ? cleanedExtras : undefined;
 
+  // Per-section custom headings (per locale). Drop empty locales / entries.
+  const section_headings = (() => {
+    const src = content.section_headings;
+    if (!src) return undefined;
+    const out: Record<string, Partial<Record<ReadingLang, string>>> = {};
+    for (const [id, map] of Object.entries(src)) {
+      const cleaned = cleanI18n(map);
+      if (cleaned) out[id] = cleaned;
+    }
+    return Object.keys(out).length ? out : undefined;
+  })();
+
 
   return {
     category,
@@ -457,6 +469,7 @@ export function cleanContent(content: PageContent): PageContent {
     contact,
     section_order: content.section_order?.length ? content.section_order : undefined,
     hidden_sections: content.hidden_sections?.length ? content.hidden_sections : undefined,
+    section_headings,
   };
 }
 
