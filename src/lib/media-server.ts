@@ -38,8 +38,10 @@ export function isSafeKey(key: string): boolean {
   );
 }
 
-/** Returns the user id when the bearer token belongs to a CC Invest admin, otherwise null. */
-export async function verifyAdmin(request: Request): Promise<string | null> {
+export type AdminCtx = { userId: string; token: string };
+
+/** Returns the admin context when the bearer token belongs to a CC Invest admin, otherwise null. */
+export async function verifyAdmin(request: Request): Promise<AdminCtx | null> {
   const auth = request.headers.get("authorization") ?? "";
   const token = auth.startsWith("Bearer ") ? auth.slice(7) : "";
   const url = import.meta.env.VITE_SUPABASE_URL as string | undefined;
@@ -60,5 +62,22 @@ export async function verifyAdmin(request: Request): Promise<string | null> {
     body: "{}",
   });
   if (!adminRes.ok) return null;
-  return (await adminRes.json()) === true ? user.id : null;
+  return (await adminRes.json()) === true ? { userId: user.id, token } : null;
+}
+
+/** Call Supabase REST as the signed-in admin (RLS applies). */
+export async function supabaseAsAdmin(ctx: AdminCtx, path: string, init: RequestInit = {}) {
+  const url = import.meta.env.VITE_SUPABASE_URL as string;
+  const anon =
+    (import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string | undefined) ??
+    (import.meta.env.VITE_SUPABASE_ANON_KEY as string);
+  return fetch(`${url}/rest/v1/${path}`, {
+    ...init,
+    headers: {
+      apikey: anon,
+      Authorization: `Bearer ${ctx.token}`,
+      "Content-Type": "application/json",
+      ...(init.headers ?? {}),
+    },
+  });
 }

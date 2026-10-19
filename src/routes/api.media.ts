@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import type {} from "@tanstack/react-start";
-import { getMediaBucket, isSafeKey, verifyAdmin } from "@/lib/media-server";
+import { getMediaBucket, isSafeKey, supabaseAsAdmin, verifyAdmin } from "@/lib/media-server";
 
 const ALLOWED = new Set(["image/jpeg", "image/png", "image/webp", "application/pdf"]);
 const MAX_BYTES = 15 * 1024 * 1024;
@@ -19,7 +19,8 @@ export const Route = createFileRoute("/api/media")({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        if (!(await verifyAdmin(request))) return json({ error: "Unauthorized" }, 401);
+        const admin = await verifyAdmin(request);
+        if (!admin) return json({ error: "Unauthorized" }, 401);
 
         const form = await request.formData();
         const file = form.get("file");
@@ -38,15 +39,31 @@ export const Route = createFileRoute("/api/media")({
         await bucket.put(key, await file.arrayBuffer(), {
           httpMetadata: { contentType: file.type },
         });
-        return json({ url: `/media/${key}`, key });
+        const url = `/media/${key}`;
+        // Index the upload so Claude (and the admin) can find files per page.
+        const idx = await supabaseAsAdmin(admin, "media", {
+          method: "POST",
+          body: JSON.stringify({
+            key,
+            url,
+            folder,
+            filename: file.name.slice(0, 200),
+            content_type: file.type,
+            size_bytes: file.size,
+          }),
+        });
+        if (!idx.ok) console.error("[api/media] index insert failed", idx.status);
+        return json({ url, key });
       },
 
       DELETE: async ({ request }) => {
-        if (!(await verifyAdmin(request))) return json({ error: "Unauthorized" }, 401);
+        const admin = await verifyAdmin(request);
+        if (!admin) return json({ error: "Unauthorized" }, 401);
         const key = new URL(request.url).searchParams.get("key") ?? "";
         if (!isSafeKey(key)) return json({ error: "Bad key" }, 400);
         const bucket = await getMediaBucket();
         await bucket.delete(key);
+        await supabaseAsAdmin(admin, `media?key=eq.${encodeURIComponent(key)}`, { method: "DELETE" });
         return json({ ok: true });
       },
     },

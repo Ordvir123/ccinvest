@@ -1,5 +1,4 @@
 import { supabase } from "@/integrations/supabase/client";
-import { translatePageContent } from "@/lib/translate-page.functions";
 import type {
   AboutData,
   Media,
@@ -387,52 +386,32 @@ export function preserveStableFields(source: PageContent, translated: PageConten
 }
 
 /**
- * Visitor-facing resolve: fast-path reads the cached page_translations row
- * directly from the client (RLS allows anon read on published pages) and
- * returns it when source_hash matches the current source. Falls back to the
- * server function on a cache miss / stale hash / force refresh — the server
- * function handles the AI gateway call and cache write with service
- * privileges (and is itself gated to published pages for anon callers).
+ * Visitor-facing resolve. Translations are written ahead of time (by Claude or
+ * the admin Translations tab) into page_translations — nothing is generated on
+ * the fly. Order of preference:
+ *   1. a cached row whose source_hash matches the current source,
+ *   2. any cached row for that language (slightly out of date beats none),
+ *   3. the source-language content.
+ * `force` is kept for API compatibility; automatic machine translation was
+ * removed together with the Lovable AI gateway.
  */
 export async function resolveTranslation(
   pageId: string,
   content: PageContent,
   sourceLang: ReadingLang,
   targetLang: ReadingLang,
-  opts?: { force?: boolean },
+  _opts?: { force?: boolean },
 ): Promise<PageContent> {
   if (sourceLang === targetLang) return content;
-
-  if (!opts?.force) {
-    try {
-      const [cached, hash] = await Promise.all([
-        fetchTranslationRow(pageId, targetLang),
-        sourceHash(content),
-      ]);
-      if (cached && cached.source_hash && cached.source_hash === hash) {
-        return preserveStableFields(content, cached.content);
-      }
-    } catch {
-      // RLS refusal / network hiccup — fall through to the server function.
+  try {
+    const cached = await fetchTranslationRow(pageId, targetLang);
+    if (cached && cached.content && Object.keys(cached.content).length > 0) {
+      return preserveStableFields(content, cached.content);
     }
+  } catch {
+    // RLS refusal / network hiccup — fall back to the source language.
   }
-
-  const { data: sessionData } = await supabase.auth.getSession();
-  const accessToken = sessionData.session?.access_token;
-
-  const result = await translatePageContent({
-    data: {
-      content: content as Record<string, unknown>,
-      sourceLang,
-      targetLang,
-      pageId,
-      force: opts?.force ?? false,
-      accessToken: accessToken ?? "",
-    },
-  });
-
-  const translated = (result?.content ?? {}) as PageContent;
-  return preserveStableFields(content, translated);
+  return content;
 }
 
 /**
