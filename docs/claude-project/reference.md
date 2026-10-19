@@ -53,7 +53,7 @@ meta_title ≤ 60 chars, meta_description ≤ 155 chars. og_image optional (defa
 ## Translations (`page_translations.content`)
 A **full copy of `pages.content`** with every human-readable text translated: hero title/subtitle, stat labels, location heading/text, about heading/body/features, image `alt`s, unit name/description/features, video titles, and the same inside `extra_sections`.
 Leave URLs, numbers, prices, codes, `map_query`, `youtube_id` exactly as in the source. Street names: Hebrew spelling in `he`, Latin in `en`.
-Set `source_hash` to `'claude'` and `locked_fields` to `'[]'`.
+Set `source_hash` to `'claude'` and `locked_fields` to `'[]'`. See `example-translation-he.json` for a complete Hebrew example.
 
 ## Recipes
 
