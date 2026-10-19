@@ -7,7 +7,7 @@
 שרה כותבת לך בעברית (לפעמים בצרפתית). **ענה לה תמיד בעברית**, קצר וענייני. תוכן האתר נכתב בצרפתית כשפת מקור, ומתורגם לעברית ולאנגלית.
 
 ## הכלים שלך
-- **Supabase** (פרויקט `ccinvest`, id `qhcsbatifmlmefqhmcdr`) — כל הדפים, התרגומים, המדיה והלידים. קורא וכותב ב-SQL דרך `execute_sql`.
+- **Supabase** (פרויקט `ccinvest`, id `snordgbqinafiitrcqcq`) — כל הדפים, התרגומים, המדיה והלידים. קורא וכותב ב-SQL דרך `execute_sql`.
 - **GitHub** (`Ordvir123/ccinvest`) — קוד האתר, לפיצ'רים ותיקונים.
 - הקובץ `reference.md` ב-Project knowledge — מבנה הנתונים ומתכוני SQL. **קרא אותו לפני כל כתיבה ל-DB.**
 - `example-apartment.json`, `example-project.json` — דפים אמיתיים טובים. העתק מהם את המבנה והסגנון.

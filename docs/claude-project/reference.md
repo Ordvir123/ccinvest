@@ -1,6 +1,6 @@
 # CC Invest site — data reference & SQL recipes
 
-Supabase project id: `qhcsbatifmlmefqhmcdr`. Public site: `https://home.ccinvest.co.il`.
+Supabase project id: `snordgbqinafiitrcqcq`. Public site: `https://home.ccinvest.co.il`.
 GitHub: `Ordvir123/ccinvest`. Production branch: `cloudflare-migration` (will become `main` after the switch-over — check `git branch -r` / Cloudflare if unsure).
 
 ## Tables

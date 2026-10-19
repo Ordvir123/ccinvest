@@ -134,4 +134,9 @@ grant select on public.pages, public.page_translations to anon;
 grant insert on public.leads to anon;
 grant select, insert, update, delete on all tables in schema public to authenticated;
 grant usage, select on all sequences in schema public to authenticated;
-grant execute on function public.is_admin() to anon, authenticated;
+grant execute on function public.is_admin() to authenticated;
+
+-- ---------- hardening (Supabase security advisor) ----------
+alter function public.set_updated_at() set search_path = public;
+revoke execute on function public.snapshot_page() from public, anon, authenticated;
+revoke execute on function public.is_admin() from public, anon;
