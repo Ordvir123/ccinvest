@@ -51,7 +51,7 @@ function AdminLayout() {
 
   return (
     <div className="flex min-h-screen w-full bg-background">
-      <aside className="flex w-64 shrink-0 flex-col bg-sidebar text-sidebar-foreground">
+      <aside className="hidden w-64 shrink-0 flex-col bg-sidebar text-sidebar-foreground md:flex">
         <div className="px-6 py-6">
           <span className="font-serif text-xl font-semibold">{t("app.name")}</span>
         </div>
@@ -85,10 +85,36 @@ function AdminLayout() {
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="flex h-16 items-center justify-between border-b border-border px-6">
+        <header className="flex h-16 items-center justify-between gap-3 border-b border-border px-4 md:px-6">
           <span className="truncate text-sm text-muted-foreground">{user.email}</span>
           <LanguageSwitcher />
         </header>
+        {/* Phone: the sidebar becomes a scrollable row of tabs. */}
+        <nav className="flex gap-1 overflow-x-auto border-b border-border bg-sidebar px-2 py-2 text-sidebar-foreground md:hidden">
+          {navItems.map((item) => (
+            <Link
+              key={item.to}
+              to={item.to}
+              className={cn(
+                "flex shrink-0 items-center gap-1.5 rounded-md px-3 py-1.5 text-sm",
+                isActive(item.to, item.exact)
+                  ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                  : "text-sidebar-foreground/80",
+              )}
+            >
+              <item.icon className="h-4 w-4" aria-hidden />
+              {t(item.labelKey)}
+            </Link>
+          ))}
+          <button
+            type="button"
+            onClick={onLogout}
+            className="flex shrink-0 items-center gap-1.5 rounded-md px-3 py-1.5 text-sm text-sidebar-foreground/80"
+            aria-label={t("nav.logout")}
+          >
+            <LogOut className="h-4 w-4" aria-hidden />
+          </button>
+        </nav>
         <main className="min-w-0 flex-1">
           <Outlet />
         </main>
