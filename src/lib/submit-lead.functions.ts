@@ -13,7 +13,7 @@ import { z } from "zod";
 
 const LEAD_RECIPIENTS = ["sarah@ccinvest.co.il", "corinne@ccinvest.co.il"];
 const FROM = "CC Invest <no-reply@ccinvest.co.il>";
-const SITE_ORIGIN = "https://ccinvest.lovable.app";
+import { SITE_ORIGIN } from "@/lib/site";
 
 // Best-effort in-memory per-IP rate limiter. State lives inside a single
 // Cloudflare Worker isolate, so this is not distributed — but combined with

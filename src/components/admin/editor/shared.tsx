@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 import type { ReadingLang } from "@/types/page";
 
 export const SOURCE_LANGS = ["fr", "he", "en"] as const;
-export const SITE_ORIGIN = "https://ccinvest.lovable.app";
+export { SITE_ORIGIN } from "@/lib/site";
 
 /** Localized placeholders (guidance only — admin's entered value wins). */
 export const KICKER_PLACEHOLDERS: Record<ReadingLang, string> = {

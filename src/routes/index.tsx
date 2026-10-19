@@ -10,6 +10,7 @@ import { ContactForm } from "@/components/page/ContactForm";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { listPublishedPages } from "@/lib/pages";
+import { SITE_ORIGIN } from "@/lib/site";
 import type { ReadingLang } from "@/types/page";
 import heroImage from "@/assets/hero-apartment.jpg";
 
@@ -31,9 +32,9 @@ export const Route = createFileRoute("/")({
         property: "og:description",
         content: "Discover CC Invest's curated real estate projects in Tel Aviv.",
       },
-      { property: "og:url", content: "https://ccinvest.lovable.app/" },
+      { property: "og:url", content: `${SITE_ORIGIN}/` },
     ],
-    links: [{ rel: "canonical", href: "https://ccinvest.lovable.app/" }],
+    links: [{ rel: "canonical", href: `${SITE_ORIGIN}/` }],
   }),
   component: Home,
 });

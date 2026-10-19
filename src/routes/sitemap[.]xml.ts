@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import type {} from "@tanstack/react-start";
 
-const BASE_URL = "https://ccinvest.lovable.app";
+import { SITE_ORIGIN as BASE_URL } from "@/lib/site";
 const LANGS = ["fr", "he", "en"];
 
 export const Route = createFileRoute("/sitemap.xml")({

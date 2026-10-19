@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { uploadMedia } from "@/lib/media";
 import {
   Check,
   FileText,
@@ -71,15 +72,7 @@ type DraftAsset = {
 
 async function uploadDraftFile(file: File, kind: AssetKind): Promise<string> {
   const toUpload = kind === "image" ? await compressImage(file) : file;
-  const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "-");
-  const folder = `drafts/${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-  const path = `${folder}/${safeName}`;
-  const { error } = await supabase.storage
-    .from(PAGE_MEDIA_BUCKET)
-    .upload(path, toUpload, { cacheControl: "3600", upsert: false });
-  if (error) throw error;
-  const { data } = supabase.storage.from(PAGE_MEDIA_BUCKET).getPublicUrl(path);
-  return data.publicUrl;
+  return uploadMedia(toUpload, `drafts/${Date.now()}`);
 }
 
 /**

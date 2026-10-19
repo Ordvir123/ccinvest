@@ -1,4 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { SITE_ORIGIN } from "@/lib/site";
 import {
   Outlet,
   Link,
@@ -79,18 +80,15 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "CCINVEST" },
-      { name: "description", content: "CC Invest builds real estate landing pages with a React-based builder and Supabase backend." },
-      { name: "author", content: "Lovable" },
-      { property: "og:title", content: "CCINVEST" },
-      { property: "og:description", content: "CC Invest builds real estate landing pages with a React-based builder and Supabase backend." },
+      { title: "CC Invest — Immobilier à Tel Aviv" },
+      { name: "description", content: "Corinne Cohen Invest — accompagnement personnel pour acheter votre appartement à Tel Aviv, pour y vivre ou investir." },
+      { property: "og:site_name", content: "CC Invest" },
+      { property: "og:title", content: "CC Invest — Immobilier à Tel Aviv" },
+      { property: "og:description", content: "Corinne Cohen Invest — accompagnement personnel pour acheter votre appartement à Tel Aviv, pour y vivre ou investir." },
       { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary" },
-      { name: "twitter:site", content: "@Lovable" },
-      { name: "twitter:title", content: "CCINVEST" },
-      { name: "twitter:description", content: "CC Invest builds real estate landing pages with a React-based builder and Supabase backend." },
-      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/4d369935-1a95-4565-a8ca-21ea4c18c115/id-preview-c925aad6--c551c527-8e58-4db1-93a8-fc0012ba7373.lovable.app-1782302569606.png" },
-      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/4d369935-1a95-4565-a8ca-21ea4c18c115/id-preview-c925aad6--c551c527-8e58-4db1-93a8-fc0012ba7373.lovable.app-1782302569606.png" },
+      { property: "og:image", content: `${SITE_ORIGIN}/og-default.jpg` },
+      { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:image", content: `${SITE_ORIGIN}/og-default.jpg` },
     ],
     links: [
       { rel: "preconnect", href: "https://fonts.googleapis.com" },

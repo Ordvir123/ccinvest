@@ -4,7 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { FilePlus2, Pencil, Copy, CopyPlus, ExternalLink, Archive, ArchiveRestore, Trash2, Loader2 } from "lucide-react";
 
-const SITE_ORIGIN = "https://ccinvest.lovable.app";
+import { SITE_ORIGIN } from "@/lib/site";
 
 import { Section } from "@/components/ui/section";
 import { Button } from "@/components/ui/button";

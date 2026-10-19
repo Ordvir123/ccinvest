@@ -17,7 +17,7 @@ import {
 
 const TITLE_MAX = 60;
 const DESC_MAX = 155;
-const DOMAIN = "ccinvest.lovable.app";
+import { SITE_DOMAIN as DOMAIN } from "@/lib/site";
 
 function CharCount({ value, max }: { value?: string; max: number }) {
   const len = (value ?? "").length;

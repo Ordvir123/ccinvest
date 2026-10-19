@@ -4,5 +4,7 @@
   "name": "ccinvest",
   "compatibility_date": "2026-10-01",
   "compatibility_flags": ["nodejs_compat"],
-  "observability": { "enabled": true }
+  "observability": { "enabled": true },
+  // Images and PDFs, served at /media/<key> by src/routes/media.$.ts
+  "r2_buckets": [{ "binding": "MEDIA", "bucket_name": "ccinvest-media" }]
 }

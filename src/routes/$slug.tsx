@@ -15,7 +15,7 @@ import {
   type ReadingLang,
 } from "@/types/page";
 
-const SITE_ORIGIN = "https://ccinvest.lovable.app";
+import { SITE_ORIGIN, absoluteUrl } from "@/lib/site";
 const OG_LOCALE: Record<ReadingLang, string> = {
   fr: "fr_FR",
   he: "he_IL",
@@ -74,7 +74,7 @@ export const Route = createFileRoute("/$slug")({
       pick("og_image") ??
       page.content.gallery?.find((m) => hasText(m.url))?.url ??
       page.content.units?.find((u) => hasText(u.image?.url))?.image?.url;
-    if (hasText(ogImage) && ogImage.startsWith("//")) ogImage = "https:" + ogImage;
+    if (hasText(ogImage)) ogImage = absoluteUrl(ogImage);
 
     const suffix = lang !== source ? `?lang=${lang}` : "";
     return {

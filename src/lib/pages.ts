@@ -1,4 +1,5 @@
 import { supabase, isSupabaseConfigured } from "@/integrations/supabase/client";
+import { uploadMedia, deleteMedia } from "@/lib/media";
 import { TEMPLATE_SETTINGS_SLUG } from "@/lib/template-settings";
 import { compressImage } from "@/lib/image-compress";
 import { SEED_PAGES } from "@/lib/seed/montefiore-allenby";
@@ -571,27 +572,13 @@ export async function uploadUnitAttachment(
 }
 
 async function uploadToBucket(file: File, slug: string): Promise<Media> {
-  const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "-");
-  const folder = slug || `tmp-${crypto.randomUUID()}`;
-  const path = `${folder}/${crypto.randomUUID()}-${safeName}`;
-
-  const { error } = await supabase.storage
-    .from(PAGE_MEDIA_BUCKET)
-    .upload(path, file, { cacheControl: "3600", upsert: false });
-  if (error) throw error;
-
-  const { data } = supabase.storage.from(PAGE_MEDIA_BUCKET).getPublicUrl(path);
-  return { url: data.publicUrl, alt: "" };
+  const url = await uploadMedia(file, slug || `tmp-${crypto.randomUUID()}`);
+  return { url, alt: "" };
 }
 
 /** Delete a previously uploaded object from storage (best-effort). */
 export async function removePageMedia(url: string): Promise<void> {
-  const marker = `/${PAGE_MEDIA_BUCKET}/`;
-  const idx = url.indexOf(marker);
-  if (idx === -1) return; // not a managed object (e.g. seed placeholder)
-  const path = decodeURIComponent(url.slice(idx + marker.length));
-  const { error } = await supabase.storage.from(PAGE_MEDIA_BUCKET).remove([path]);
-  if (error) console.warn("[pages] failed to remove storage object:", error);
+  await deleteMedia(url);
 }
 
 /* ============================================================
