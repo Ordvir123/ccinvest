@@ -11,8 +11,6 @@ import { z } from "zod";
  * email fails — we never lose a lead.
  */
 
-const LEAD_RECIPIENTS = ["sarah@ccinvest.co.il", "corinne@ccinvest.co.il"];
-const FROM = "CC Invest <no-reply@ccinvest.co.il>";
 import { SITE_ORIGIN } from "@/lib/site";
 
 // Best-effort in-memory per-IP rate limiter. State lives inside a single
@@ -106,48 +104,43 @@ export const submitLeadFn = createServerFn({ method: "POST" })
       throw new Error("Could not save lead.");
     }
 
-    // 2) Send the notification email (best-effort; never blocks the lead).
+    // 2) Notify by email (best-effort; never blocks the lead). The email is sent
+    //    from Sarah's own Google account by a small Apps Script web app
+    //    (see docs/lead-notifications.md) — no mail provider or DNS records needed.
     let emailSent = false;
-    const resendKey = process.env.RESEND_API_KEY;
-    if (resendKey) {
-      const title = data.project_title || data.page_slug || "Unknown project";
+    const hookUrl = process.env.LEADS_WEBHOOK_URL;
+    const hookSecret = process.env.LEADS_WEBHOOK_SECRET;
+    if (hookUrl && hookSecret) {
+      const title = data.project_title || data.page_slug || "Site";
       const liveLink = data.page_slug ? `${SITE_ORIGIN}/${data.page_slug}` : SITE_ORIGIN;
-      const subject = `New lead — ${title} (${data.lang || "?"})`;
       const html = `
-        <h2>New lead from ${esc(title)}</h2>
-        <p><strong>Name:</strong> ${esc(data.name)}</p>
-        <p><strong>Phone:</strong> ${esc(data.phone || "—")}</p>
-        <p><strong>Email:</strong> ${esc(data.email)}</p>
-        <p><strong>Message:</strong><br>${esc(data.message || "—").replace(/\n/g, "<br>")}</p>
+        <h2>Nouveau lead — ${esc(title)}</h2>
+        <p><strong>Nom :</strong> ${esc(data.name)}</p>
+        <p><strong>Téléphone :</strong> ${esc(data.phone || "—")}</p>
+        <p><strong>Email :</strong> ${esc(data.email)}</p>
+        <p><strong>Message :</strong><br>${esc(data.message || "—").replace(/\n/g, "<br>")}</p>
         <hr>
-        <p><strong>Project:</strong> <a href="${esc(liveLink)}">${esc(title)}</a></p>
-        <p><strong>Language:</strong> ${esc(data.lang || "—")}</p>
-        <p><strong>Received:</strong> ${new Date().toISOString()}</p>
+        <p><strong>Page :</strong> <a href="${esc(liveLink)}">${esc(title)}</a></p>
+        <p><strong>Langue :</strong> ${esc(data.lang || "—")}</p>
       `;
       try {
-        const resp = await fetch("https://api.resend.com/emails", {
+        const resp = await fetch(hookUrl, {
           method: "POST",
-          headers: {
-            Authorization: `Bearer ${resendKey}`,
-            "Content-Type": "application/json",
-          },
+          headers: { "Content-Type": "text/plain" },
           body: JSON.stringify({
-            from: FROM,
-            to: LEAD_RECIPIENTS,
-            reply_to: data.email,
-            subject,
+            secret: hookSecret,
+            subject: `Nouveau lead — ${title}`,
             html,
+            replyTo: data.email,
           }),
         });
         emailSent = resp.ok;
-        if (!resp.ok) {
-          console.error("[submit-lead] Resend error", resp.status, await resp.text().catch(() => ""));
-        }
+        if (!resp.ok) console.error("[submit-lead] webhook error", resp.status);
       } catch (err) {
-        console.error("[submit-lead] email send error", err);
+        console.error("[submit-lead] webhook send error", err);
       }
     } else {
-      console.warn("[submit-lead] RESEND_API_KEY not configured — email skipped.");
+      console.warn("[submit-lead] LEADS_WEBHOOK_URL/SECRET not configured — email skipped.");
     }
 
     return { ok: true, emailSent };
