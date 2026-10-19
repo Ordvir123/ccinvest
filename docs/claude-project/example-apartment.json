@@ -1,0 +1,54 @@
+{
+  "_note": "Example of a good APARTMENT page (pages.content + pages.seo). Image URLs are illustrative — use the real ones from the media table.",
+  "slug": "rue-allenby",
+  "content": {
+    "category": "apartment",
+    "hero": {
+      "title": "Rue Allenby",
+      "subtitle": "à quelques pas seulement de la mer",
+      "price": "5 200 000 ₪",
+      "background": { "url": "/media/rue-allenby/balcon-vue-mer.jpg", "alt": "Balcon avec vue mer, Allenby 28 Tel Aviv" },
+      "overlay": { "color": "black", "opacity": 0.5, "direction": "both" },
+      "kicker_i18n": { "fr": "À VENDRE – TEL AVIV", "he": "למכירה – תל אביב", "en": "FOR SALE – TEL AVIV" },
+      "cta_label_i18n": { "fr": "Contactez-nous", "he": "צרו קשר", "en": "Contact us" }
+    },
+    "stats": [],
+    "location": {
+      "heading": "Un emplacement idéal",
+      "text": "Au début de la rue Allenby, à quelques pas seulement de la mer, cet appartement profite de l'un des emplacements les plus vivants et recherchés de Tel Aviv. La promenade et les plages sont accessibles à pied en quelques minutes, tout comme le marché du Carmel, Kerem HaTeimanim et les ruelles de Neve Tzedek. Le boulevard Rothschild, ses cafés et ses restaurants sont également tout proches.",
+      "map_query": "Allenby 28, Tel Aviv"
+    },
+    "apartment": {
+      "name": "Appartement Allenby 28",
+      "unit_type": "apartment",
+      "floor": "4",
+      "rooms": "3",
+      "area_m2": "60",
+      "balcony_m2": "7",
+      "orientation": "north_west",
+      "price": "5 200 000 ₪",
+      "description": "Dans un immeuble récent, au 4ème étage, un appartement de 3 pièces d'une surface de 60 m², prolongé par un balcon de 7 m² offrant une vue sur la mer. Situé en façade et orienté nord-ouest, il bénéficie d'une belle luminosité et de la brise marine. Entièrement rénové et meublé par une architecte, il est vendu tel quel, prêt à être habité dès le premier jour. Une cave vient compléter ce bien.",
+      "features": ["Vue mer", "Façade", "Cave", "Entièrement rénové et meublé par une architecte", "Vendu meublé"],
+      "image": { "url": "/media/rue-allenby/sejour.jpg", "alt": "Séjour lumineux avec accès au balcon" },
+      "attachment": { "url": "/media/rue-allenby/plan.png", "type": "image" }
+    },
+    "apartment_image_side": "right",
+    "gallery": [
+      { "url": "/media/rue-allenby/sejour-cuisine.jpg", "alt": "Séjour avec cuisine ouverte et accès balcon" },
+      { "url": "/media/rue-allenby/chambre.jpg", "alt": "Chambre avec tête de lit tapissée" },
+      { "url": "/media/rue-allenby/salle-de-bain.jpg", "alt": "Salle de bain avec douche en verre" },
+      { "url": "/media/rue-allenby/cuisine-vue-mer.jpg", "alt": "Cuisine avec vue mer depuis la fenêtre" }
+    ],
+    "wide_images": [
+      { "url": "/media/rue-allenby/panorama.jpg", "alt": "Vue panoramique sur la mer depuis le balcon" }
+    ],
+    "videos": [{ "youtube_id": "hQ5aYA_OPD8" }],
+    "contact": { "heading_i18n": { "fr": "Contactez-nous pour une visite", "he": "צרו קשר לתיאום ביקור", "en": "Contact us to arrange a visit" } },
+    "section_headings": { "gallery": { "fr": "Galerie de photos", "he": "גלריית תמונות", "en": "Photo gallery" } }
+  },
+  "seo": {
+    "fr": { "meta_title": "Appartement 3 pièces vue mer – Rue Allenby, Tel Aviv", "meta_description": "3 pièces de 60 m² + balcon 7 m² vue mer, 4ème étage, rénové et meublé par une architecte, à deux pas de la plage. 5 200 000 ₪." },
+    "he": { "meta_title": "דירת 3 חדרים עם נוף לים – רחוב אלנבי, תל אביב", "meta_description": "דירת 3 חדרים, 60 מ\"ר ומרפסת 7 מ\"ר עם נוף לים, קומה 4, משופצת ומרוהטת בידי אדריכלית, צעדים מהחוף. 5,200,000 ₪." },
+    "en": { "meta_title": "3-room sea-view apartment – Allenby Street, Tel Aviv", "meta_description": "60 m² 3-room apartment with a 7 m² sea-view balcony, 4th floor, fully renovated and furnished by an architect, steps from the beach. ₪5,200,000." }
+  }
+}

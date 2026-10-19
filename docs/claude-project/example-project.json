@@ -1,0 +1,95 @@
+{
+  "_note": "Example of a good PROJECT page (several units). Image URLs are illustrative — use the real ones from the media table. Units list shortened.",
+  "slug": "hamaccabi",
+  "content": {
+    "category": "project",
+    "hero": {
+      "title": "HaMaccabi",
+      "subtitle": "Au cœur du quartier résidentiel le plus recherché de Tel Aviv. Sept étages, seize appartements.",
+      "background": { "url": "/media/hamaccabi/facade-crepuscule.jpg", "alt": "Façade de HaMaccabi 3 au crépuscule" },
+      "overlay": { "color": "black", "opacity": 0.55, "direction": "bottom" },
+      "kicker_i18n": { "fr": "À VENDRE – TEL AVIV", "he": "למכירה – תל אביב", "en": "FOR SALE – TEL AVIV" },
+      "cta_label_i18n": { "fr": "Contactez-nous", "he": "צרו קשר", "en": "Contact us" }
+    },
+    "stats": [
+      { "value": "7", "label": "étages" },
+      { "value": "16", "label": "appartements" },
+      { "value": "1", "label": "étage Wellness privatif" }
+    ],
+    "location": {
+      "heading": "L'emplacement",
+      "text": "Le projet se situe rue HaMaccabi, dans un quartier très réputé près de la maison Bialik et du parc Meir, à la fois proche de Bograchov et de la mer. Maisons privées, bâtiments historiques classés, micro-quartiers restés authentiques.\n\nL'adresse est centrale et pratique : commerces, transports, crèches et écoles se rejoignent à pied en quelques minutes.",
+      "map_query": "HaMaccabi 3, Tel Aviv"
+    },
+    "about": {
+      "heading": "À propos du projet",
+      "body": "Le projet est conçu par le bureau d'architecture renommé Bar Orian, porté par un promoteur israélien reconnu, sur un terrain acquis en partenariat avec Altshuler Shaham. L'immeuble boutique offre à ses résidents des prestations haut de gamme :",
+      "features": [
+        "Étage Wellness privatif : salle de sport, sauna sec, salle d'entraînement privée",
+        "Cuisines italiennes premium",
+        "Parquet chêne trois plis dans toutes les chambres",
+        "Chauffage au sol intégral, pilotage par zone via application",
+        "Mamad (pièce de sécurité) dans chaque appartement",
+        "Places de parking et caves privatives (selon le lot)"
+      ]
+    },
+    "units": [
+      {
+        "name": "Appartement-jardin, 2 pièces",
+        "unit_type": "apartment",
+        "unit_number": "1",
+        "rooms": "2",
+        "area_m2": "46",
+        "orientation": "east",
+        "price": "4 190 000 ₪",
+        "description": "Le plus compact du projet, et le seul petit format doté d'un jardin privatif de plain-pied. Séjour, cuisine, une chambre (le mamad). Idéal pour un pied-à-terre ou un investissement locatif.",
+        "features": ["Jardin privatif de 21 m² avec terrasse dallée"],
+        "attachment": { "url": "/media/hamaccabi/plan-lot-1.png", "type": "image" }
+      },
+      {
+        "name": "4 pièces",
+        "unit_type": "apartment",
+        "unit_number": "3",
+        "floor": "1",
+        "rooms": "4",
+        "area_m2": "110",
+        "balcony_m2": "12",
+        "parking": "one",
+        "orientation": "Sud/Ouest/Est, sur rue",
+        "price": "8 690 000 ₪",
+        "description": "Suite parentale, mamad, terrasse solarium. Triple orientation traversante en façade avant.",
+        "features": ["Existe aussi au 2ème et 3ème étage : lot 6 à 8 890 000 ₪ et lot 9 à 8 990 000 ₪"],
+        "attachment": { "url": "/media/hamaccabi/plan-lot-3.png", "type": "image" }
+      },
+      {
+        "name": "Penthouse, 4 pièces",
+        "unit_type": "penthouse",
+        "unit_number": "16",
+        "floor": "6",
+        "rooms": "4",
+        "area_m2": "150",
+        "balcony_m2": "145",
+        "parking": "one",
+        "orientation": "4 orientations",
+        "price": "25 000 000 ₪",
+        "description": "L'appartement signature du projet. 150 m² de plain-pied, séjour ouvert sur deux terrasses opposées, cuisine avec îlot, suite parentale avec dressing. Au-dessus, un toit privatif d'environ 51 m² avec piscine face à la ville.",
+        "features": ["Deux terrasses solarium", "Toit privatif avec piscine", "Cave privative"],
+        "attachment": { "url": "/media/hamaccabi/plan-lot-16.png", "type": "image" }
+      }
+    ],
+    "gallery": [
+      { "url": "/media/hamaccabi/terrasse-penthouse.jpg", "alt": "Terrasse du penthouse avec vue sur la ville" },
+      { "url": "/media/hamaccabi/sejour-penthouse.jpg", "alt": "Séjour du penthouse avec escalier suspendu" },
+      { "url": "/media/hamaccabi/wellness-sauna.jpg", "alt": "Sauna sec de l'étage Wellness" },
+      { "url": "/media/hamaccabi/toit-piscine.jpg", "alt": "Toit-terrasse avec piscine privative" }
+    ],
+    "section_order": ["stats", "location", "about", "listing", "gallery", "wide_images", "videos", "contact"],
+    "contact": { "heading_i18n": { "fr": "Contact", "he": "צרו קשר", "en": "Contact" } },
+    "section_headings": { "gallery": { "fr": "Galerie de photos", "he": "גלריית תמונות", "en": "Photo gallery" } }
+  },
+  "seo": {
+    "fr": { "meta_title": "HaMaccabi – Projet neuf boutique à Tel Aviv", "meta_description": "16 appartements de 2 à 5 pièces et penthouse avec piscine, étage Wellness privatif, à deux pas du parc Meir et de la mer." },
+    "he": { "meta_title": "המכבי – פרויקט בוטיק חדש בתל אביב", "meta_description": "16 דירות 2–5 חדרים ופנטהאוז עם בריכה, קומת וולנס פרטית, צעדים מגן מאיר ומהים." },
+    "en": { "meta_title": "HaMaccabi – New boutique project in Tel Aviv", "meta_description": "16 apartments from 2 to 5 rooms and a penthouse with pool, private wellness floor, steps from Meir Park and the sea." }
+  }
+}
