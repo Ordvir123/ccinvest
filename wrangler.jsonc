@@ -1,0 +1,8 @@
+// Cloudflare Worker settings. Nitro merges this into the generated
+// .output/server/wrangler.json at build time.
+{
+  "name": "ccinvest",
+  "compatibility_date": "2026-10-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "observability": { "enabled": true }
+}
