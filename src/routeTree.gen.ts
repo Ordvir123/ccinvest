@@ -23,6 +23,7 @@ import { Route as AdminLoginRouteImport } from './routes/admin.login'
 import { Route as AdminAdminRouteImport } from './routes/_admin.admin'
 import { Route as AdminAdminIndexRouteImport } from './routes/_admin.admin.index'
 import { Route as AdminAdminSettingsRouteImport } from './routes/_admin.admin.settings'
+import { Route as AdminAdminMediaRouteImport } from './routes/_admin.admin.media'
 import { Route as AdminAdminLeadsRouteImport } from './routes/_admin.admin.leads'
 import { Route as AdminAdminPagesIndexRouteImport } from './routes/_admin.admin.pages.index'
 import { Route as AdminAdminPagesNewRouteImport } from './routes/_admin.admin.pages.new'
@@ -97,6 +98,11 @@ const AdminAdminSettingsRoute = AdminAdminSettingsRouteImport.update({
   path: '/settings',
   getParentRoute: () => AdminAdminRoute,
 } as any)
+const AdminAdminMediaRoute = AdminAdminMediaRouteImport.update({
+  id: '/media',
+  path: '/media',
+  getParentRoute: () => AdminAdminRoute,
+} as any)
 const AdminAdminLeadsRoute = AdminAdminLeadsRouteImport.update({
   id: '/leads',
   path: '/leads',
@@ -131,6 +137,7 @@ export interface FileRoutesByFullPath {
   '/media/$': typeof MediaSplatRoute
   '/preview/$id': typeof PreviewIdRoute
   '/admin/leads': typeof AdminAdminLeadsRoute
+  '/admin/media': typeof AdminAdminMediaRoute
   '/admin/settings': typeof AdminAdminSettingsRoute
   '/admin/': typeof AdminAdminIndexRoute
   '/admin/pages/$id': typeof AdminAdminPagesIdRoute
@@ -149,6 +156,7 @@ export interface FileRoutesByTo {
   '/media/$': typeof MediaSplatRoute
   '/preview/$id': typeof PreviewIdRoute
   '/admin/leads': typeof AdminAdminLeadsRoute
+  '/admin/media': typeof AdminAdminMediaRoute
   '/admin/settings': typeof AdminAdminSettingsRoute
   '/admin': typeof AdminAdminIndexRoute
   '/admin/pages/$id': typeof AdminAdminPagesIdRoute
@@ -170,6 +178,7 @@ export interface FileRoutesById {
   '/media/$': typeof MediaSplatRoute
   '/preview/$id': typeof PreviewIdRoute
   '/_admin/admin/leads': typeof AdminAdminLeadsRoute
+  '/_admin/admin/media': typeof AdminAdminMediaRoute
   '/_admin/admin/settings': typeof AdminAdminSettingsRoute
   '/_admin/admin/': typeof AdminAdminIndexRoute
   '/_admin/admin/pages/$id': typeof AdminAdminPagesIdRoute
@@ -191,6 +200,7 @@ export interface FileRouteTypes {
     | '/media/$'
     | '/preview/$id'
     | '/admin/leads'
+    | '/admin/media'
     | '/admin/settings'
     | '/admin/'
     | '/admin/pages/$id'
@@ -209,6 +219,7 @@ export interface FileRouteTypes {
     | '/media/$'
     | '/preview/$id'
     | '/admin/leads'
+    | '/admin/media'
     | '/admin/settings'
     | '/admin'
     | '/admin/pages/$id'
@@ -229,6 +240,7 @@ export interface FileRouteTypes {
     | '/media/$'
     | '/preview/$id'
     | '/_admin/admin/leads'
+    | '/_admin/admin/media'
     | '/_admin/admin/settings'
     | '/_admin/admin/'
     | '/_admin/admin/pages/$id'
@@ -350,6 +362,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminAdminSettingsRouteImport
       parentRoute: typeof AdminAdminRoute
     }
+    '/_admin/admin/media': {
+      id: '/_admin/admin/media'
+      path: '/media'
+      fullPath: '/admin/media'
+      preLoaderRoute: typeof AdminAdminMediaRouteImport
+      parentRoute: typeof AdminAdminRoute
+    }
     '/_admin/admin/leads': {
       id: '/_admin/admin/leads'
       path: '/leads'
@@ -383,6 +402,7 @@ declare module '@tanstack/react-router' {
 
 interface AdminAdminRouteChildren {
   AdminAdminLeadsRoute: typeof AdminAdminLeadsRoute
+  AdminAdminMediaRoute: typeof AdminAdminMediaRoute
   AdminAdminSettingsRoute: typeof AdminAdminSettingsRoute
   AdminAdminIndexRoute: typeof AdminAdminIndexRoute
   AdminAdminPagesIdRoute: typeof AdminAdminPagesIdRoute
@@ -392,6 +412,7 @@ interface AdminAdminRouteChildren {
 
 const AdminAdminRouteChildren: AdminAdminRouteChildren = {
   AdminAdminLeadsRoute: AdminAdminLeadsRoute,
+  AdminAdminMediaRoute: AdminAdminMediaRoute,
   AdminAdminSettingsRoute: AdminAdminSettingsRoute,
   AdminAdminIndexRoute: AdminAdminIndexRoute,
   AdminAdminPagesIdRoute: AdminAdminPagesIdRoute,

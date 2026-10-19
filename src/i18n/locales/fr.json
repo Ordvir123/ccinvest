@@ -12,7 +12,8 @@
     "properties": "Appartements",
     "projects": "Projets",
     "about": "À propos",
-    "contact": "Contact"
+    "contact": "Contact",
+    "media": "Médias"
   },
   "language": {
     "label": "Langue de l'interface",
@@ -95,5 +96,19 @@
   },
   "common": {
     "comingSoon": "Bientôt disponible"
+  },
+  "media": {
+    "title": "Médias",
+    "intro": "Déposez ici toutes les photos et fichiers d'une page, dans un dossier au nom de son slug. Ensuite, dites à Claude que les photos de la page sont en ligne.",
+    "folder": "Dossier (slug de la page)",
+    "needFolder": "Choisissez d'abord un dossier",
+    "drop": "Glissez ici, cliquez pour choisir, ou collez (Ctrl+V)",
+    "uploaded": "{{count}} fichiers envoyés",
+    "someFailed": "{{count}} fichiers n'ont pas été envoyés",
+    "inFolder": "{{count}} fichiers dans le dossier",
+    "copy": "Copier le lien",
+    "copied": "Lien copié",
+    "delete": "Supprimer",
+    "confirmDelete": "Supprimer ce fichier ?"
   }
 }

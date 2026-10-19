@@ -12,7 +12,8 @@
     "properties": "Apartments",
     "projects": "Projects",
     "about": "About",
-    "contact": "Contact"
+    "contact": "Contact",
+    "media": "Media"
   },
   "language": {
     "label": "Interface language",
@@ -95,5 +96,19 @@
   },
   "common": {
     "comingSoon": "Coming soon"
+  },
+  "media": {
+    "title": "Media",
+    "intro": "Upload all of a page's photos and files here, into a folder named after its slug. Then tell Claude the page's photos are uploaded.",
+    "folder": "Folder (page slug)",
+    "needFolder": "Pick a folder first",
+    "drop": "Drag here, click to choose, or paste (Ctrl+V)",
+    "uploaded": "{{count}} files uploaded",
+    "someFailed": "{{count}} files failed",
+    "inFolder": "{{count}} files in folder",
+    "copy": "Copy link",
+    "copied": "Link copied",
+    "delete": "Delete",
+    "confirmDelete": "Delete this file?"
   }
 }
