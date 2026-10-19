@@ -160,11 +160,11 @@ export function floorValue(floor: string, lang: ReadingLang): string {
   return n === 0 ? "Ground floor" : `Floor ${n}`;
 }
 
-/** Localized area / balcony value (m² in all locales). */
-export function areaValue(area: string): string {
+/** Localized area / balcony value (m² in fr/en, מ"ר in he so RTL text reads correctly). */
+export function areaValue(area: string, lang?: ReadingLang): string {
   const n = parseNumericField(area);
   if (n === null) return area.trim(); // legacy/edge value — never append a unit
-  return `${n} m²`;
+  return lang === "he" ? `${n} מ״ר` : `${n} m²`;
 }
 
 /** Localized orientation; falls back to raw text (handled by AI translation). */
@@ -284,7 +284,7 @@ export function formatSpecValue(kind: SpecValueKind, value: string, lang: Readin
     case "rooms":
       return roomsValue(v, lang);
     case "area":
-      return areaValue(v);
+      return areaValue(v, lang);
     case "orientation":
       return orientationValue(v, lang);
     case "parking":

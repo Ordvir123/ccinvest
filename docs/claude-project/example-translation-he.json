@@ -1,0 +1,107 @@
+{
+  "_note": "Example of page_translations.content for lang 'he' (translation of example-apartment.json). A full copy of the source content: texts translated, URLs/numbers/codes unchanged.",
+  "lang": "he",
+  "content": {
+    "category": "apartment",
+    "hero": {
+      "title": "רחוב אלנבי",
+      "subtitle": "צעדים ספורים מהים",
+      "price": "5 200 000 ₪",
+      "background": {
+        "url": "/media/rue-allenby/balcon-vue-mer.jpg",
+        "alt": "מרפסת עם נוף לים, אלנבי 28 תל אביב"
+      },
+      "overlay": {
+        "color": "black",
+        "opacity": 0.5,
+        "direction": "both"
+      },
+      "kicker_i18n": {
+        "fr": "À VENDRE – TEL AVIV",
+        "he": "למכירה – תל אביב",
+        "en": "FOR SALE – TEL AVIV"
+      },
+      "cta_label_i18n": {
+        "fr": "Contactez-nous",
+        "he": "צרו קשר",
+        "en": "Contact us"
+      }
+    },
+    "stats": [],
+    "location": {
+      "heading": "מיקום אידיאלי",
+      "text": "בתחילת רחוב אלנבי, צעדים ספורים מהים, הדירה נהנית מאחד המיקומים התוססים והמבוקשים בתל אביב. הטיילת והחופים במרחק הליכה של דקות, וכך גם שוק הכרמל, כרם התימנים וסמטאות נווה צדק. שדרות רוטשילד, בתי הקפה והמסעדות שלה, קרובים גם הם.",
+      "map_query": "Allenby 28, Tel Aviv"
+    },
+    "apartment": {
+      "name": "דירה באלנבי 28",
+      "unit_type": "apartment",
+      "floor": "4",
+      "rooms": "3",
+      "area_m2": "60",
+      "balcony_m2": "7",
+      "orientation": "north_west",
+      "price": "5 200 000 ₪",
+      "description": "בבניין חדש, בקומה הרביעית, דירת 3 חדרים בשטח 60 מ\"ר עם מרפסת של 7 מ\"ר ונוף לים. הדירה בחזית, בכיוון צפון-מערב, ונהנית מאור טבעי ומבריזה מהים. משופצת ומרוהטת במלואה בידי אדריכלית, נמכרת כמות שהיא ומוכנה למגורים מהיום הראשון. מחסן משלים את הנכס.",
+      "features": [
+        "נוף לים",
+        "חזית",
+        "מחסן",
+        "שיפוץ וריהוט מלא בידי אדריכלית",
+        "נמכרת מרוהטת"
+      ],
+      "image": {
+        "url": "/media/rue-allenby/sejour.jpg",
+        "alt": "סלון מואר עם יציאה למרפסת"
+      },
+      "attachment": {
+        "url": "/media/rue-allenby/plan.png",
+        "type": "image"
+      }
+    },
+    "apartment_image_side": "right",
+    "gallery": [
+      {
+        "url": "/media/rue-allenby/sejour-cuisine.jpg",
+        "alt": "סלון ומטבח פתוח עם יציאה למרפסת"
+      },
+      {
+        "url": "/media/rue-allenby/chambre.jpg",
+        "alt": "חדר שינה עם ראש מיטה מרופד"
+      },
+      {
+        "url": "/media/rue-allenby/salle-de-bain.jpg",
+        "alt": "חדר רחצה עם מקלחון זכוכית"
+      },
+      {
+        "url": "/media/rue-allenby/cuisine-vue-mer.jpg",
+        "alt": "מטבח עם נוף לים מהחלון"
+      }
+    ],
+    "wide_images": [
+      {
+        "url": "/media/rue-allenby/panorama.jpg",
+        "alt": "נוף פנורמי לים מהמרפסת"
+      }
+    ],
+    "videos": [
+      {
+        "youtube_id": "hQ5aYA_OPD8"
+      }
+    ],
+    "contact": {
+      "heading_i18n": {
+        "fr": "Contactez-nous pour une visite",
+        "he": "צרו קשר לתיאום ביקור",
+        "en": "Contact us to arrange a visit"
+      }
+    },
+    "section_headings": {
+      "gallery": {
+        "fr": "Galerie de photos",
+        "he": "גלריית תמונות",
+        "en": "Photo gallery"
+      }
+    }
+  }
+}

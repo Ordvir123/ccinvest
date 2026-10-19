@@ -175,7 +175,7 @@ function Hero({
         )}
         {hasText(hero.price) && (
           <p className="mt-8 font-serif text-3xl !text-primary-foreground md:text-4xl">
-            {hero.price}
+            <span dir="ltr" className="inline-block">{hero.price}</span>
           </p>
         )}
         {hasText(ctaLabel) && (
@@ -203,7 +203,14 @@ function Stats({ stats, heading }: { stats: PageContent["stats"]; heading?: stri
           {heading}
         </h2>
       )}
-      <div className="mx-auto grid max-w-6xl grid-cols-2 divide-x divide-border md:grid-cols-4 rtl:divide-x-reverse">
+      <div
+        className={cn(
+          "mx-auto grid max-w-6xl grid-cols-2 divide-x divide-border rtl:divide-x-reverse",
+          // Size the row to the number of stats so 1–3 stats stay centred on desktop.
+          stats.length === 1 && "max-w-xs grid-cols-1",
+          stats.length === 3 ? "md:max-w-4xl md:grid-cols-3" : stats.length >= 4 && "md:grid-cols-4",
+        )}
+      >
         {stats.map((s, i) => {
           // Prefer a meaningful guess from the label when no icon is set or the
           // stored icon is the generic "sparkles" default (avoids repeated icons).
@@ -624,8 +631,8 @@ function Gallery({
               </CarouselItem>
             ))}
           </CarouselContent>
-          <CarouselPrevious />
-          <CarouselNext />
+          <CarouselPrevious className="left-2 bg-background/90 md:-left-12" />
+          <CarouselNext className="right-2 bg-background/90 md:-right-12" />
         </Carousel>
       )}
 
@@ -692,8 +699,8 @@ function GalleryCarousel({
         </CarouselContent>
         {showArrows && (
           <>
-            <CarouselPrevious />
-            <CarouselNext />
+            <CarouselPrevious className="left-2 bg-background/90 md:-left-12" />
+            <CarouselNext className="right-2 bg-background/90 md:-right-12" />
           </>
         )}
       </Carousel>
@@ -763,15 +770,24 @@ function UnitCard({
       <CardContent className="flex flex-1 flex-col p-6">
         <h3 className="font-serif text-2xl text-ink">{title}</h3>
         {hasText(unit.price) && (
-          <p className="mt-1 text-lg font-semibold text-primary">{unit.price}</p>
+          <p className="mt-1 text-lg font-semibold text-primary">
+            <span dir="ltr" className="inline-block">{unit.price}</span>
+          </p>
         )}
         {visibleRows.length > 0 && (
           <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
             {visibleRows.map((r, ri) => {
               const RowIcon = getIcon(r.icon);
               return (
-                <div key={ri} className="flex justify-between gap-2 border-b border-border/60 pb-1">
-                  <dt className="flex items-center gap-1.5 text-muted-foreground">
+                <div
+                  key={ri}
+                  className={cn(
+                    "flex min-w-0 justify-between gap-2 border-b border-border/60 pb-1",
+                    // Long free-text values (e.g. "Sud/Ouest/Est, sur rue") take the full row.
+                    String(r.value ?? "").length > 12 && "col-span-2",
+                  )}
+                >
+                  <dt className="flex shrink-0 items-center gap-1.5 text-muted-foreground">
                     {RowIcon && (
                       <RowIcon
                         className="h-4 w-4 shrink-0 text-primary"
@@ -781,7 +797,7 @@ function UnitCard({
                     )}
                     {r.label}
                   </dt>
-                  <dd className="font-medium text-foreground">{r.value}</dd>
+                  <dd className="min-w-0 text-end font-medium text-foreground">{r.value}</dd>
                 </div>
               );
             })}
@@ -803,7 +819,7 @@ function UnitCard({
                       aria-hidden
                     />
                   ) : (
-                    <ChevronRight className="h-4 w-4 text-primary rtl:rotate-180" aria-hidden />
+                    <ChevronRight className="h-4 w-4 shrink-0 text-primary rtl:rotate-180" aria-hidden />
                   )}
                   {f.text}
                 </li>
@@ -972,7 +988,9 @@ function ApartmentSection({
             <div className="flex flex-col p-6 md:w-1/2 md:p-10">
               <h3 className="font-serif text-3xl text-ink md:text-4xl">{title}</h3>
               {hasText(apartment.price) && (
-                <p className="mt-2 text-xl font-semibold text-primary">{apartment.price}</p>
+                <p className="mt-2 text-xl font-semibold text-primary">
+                  <span dir="ltr" className="inline-block">{apartment.price}</span>
+                </p>
               )}
               {visibleRows.length > 0 && (
                 <dl className="mt-6 grid grid-cols-2 gap-x-6 gap-y-4">
@@ -1018,7 +1036,7 @@ function ApartmentSection({
                           />
                         ) : (
                           <ChevronRight
-                            className="h-4 w-4 text-primary rtl:rotate-180"
+                            className="h-4 w-4 shrink-0 text-primary rtl:rotate-180"
                             aria-hidden
                           />
                         )}
@@ -1388,7 +1406,10 @@ export function PageRenderer({
             location={content.location}
             labels={labels}
             lang={lang}
-            heading={sectionHeading(id)}
+            heading={
+              sectionHeading(id) ??
+              (hasText(content.location.heading) ? content.location.heading : undefined)
+            }
           />
         ) : null;
       case "listing":

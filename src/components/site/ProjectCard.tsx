@@ -34,7 +34,9 @@ export function ProjectCard({ project }: { project: PublishedCard }) {
         <h3 className="mt-1 line-clamp-1 font-display text-xl">{project.title}</h3>
         <div className="mt-3 flex items-center justify-between">
           {project.priceFrom ? (
-            <p className="font-display text-2xl text-primary">{project.priceFrom}</p>
+            <p className="font-display text-2xl text-primary">
+              <span dir="ltr" className="inline-block">{project.priceFrom}</span>
+            </p>
           ) : (
             <span />
           )}
