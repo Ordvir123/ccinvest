@@ -28,7 +28,6 @@ import { cn } from "@/lib/utils";
 import { SectionCard } from "@/components/admin/editor-parts";
 import { TranslationsTab } from "@/components/admin/TranslationsTab";
 import { SeoEditor } from "@/components/admin/SeoEditor";
-import { AiCorrectionsPanel } from "@/components/admin/AiCorrectionsPanel";
 import { cleanContent } from "@/lib/pages";
 import { READING_LANGS, type Page, type PageContent, type ReadingLang } from "@/types/page";
 
@@ -172,7 +171,6 @@ export function PageEditor({
 
   const formPanel = (
     <div className="space-y-4">
-      <AiCorrectionsPanel content={content} setContent={setContent} sourceLang={sourceLang} pageId={pageId} />
 
       <SectionManager
         orderedIds={orderedIds}
