@@ -606,7 +606,13 @@ function toCard(page: Page): PublishedCard {
   return {
     slug: page.slug,
     title: c.hero.title?.trim() || page.slug,
-    location: hasText(c.location?.heading) ? c.location!.heading : undefined,
+    // A place name (street/neighbourhood) when one was entered — never the section
+    // heading, which is generic ("Un emplacement idéal") and was shown on every card.
+    location: (() => {
+      const names = c.location?.name_i18n ?? {};
+      const name = names[(page.source_lang as ReadingLang) ?? "fr"] ?? names.fr;
+      return hasText(name) ? name : undefined;
+    })(),
     priceFrom: priceFrom || undefined,
     cover: cover || undefined,
     category: c.category === "project" ? "project" : "apartment",

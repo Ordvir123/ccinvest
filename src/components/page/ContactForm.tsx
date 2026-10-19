@@ -7,7 +7,6 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { submitLead, validateLead } from "@/lib/leads";
 import { isRtlReading, type ReadingLang } from "@/types/page";
-import contactBg from "@/assets/contact-bg.jpg.asset.json";
 
 
 type Labels = {
@@ -131,7 +130,7 @@ export function ContactForm({
       dir={isRtlReading(lang) ? "rtl" : "ltr"}
     >
       <img
-        src={backgroundUrl?.trim() ? backgroundUrl : contactBg.url}
+        src={backgroundUrl?.trim() ? backgroundUrl : "/brand/contact-bg.jpg"}
         alt=""
         aria-hidden
         loading="lazy"

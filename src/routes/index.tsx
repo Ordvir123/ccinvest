@@ -45,26 +45,35 @@ function useCountUp(target: string | number, duration = 1500) {
   const prefix = match?.[1] ?? '';
   const numTarget = match ? parseInt(match[2], 10) : (isNumber ? target : 0);
   const suffix = match?.[3] ?? '';
-  const initial = isNumber ? 0 : (match ? prefix + '0' + suffix : target);
 
-  const [value, setValue] = useState<string | number>(initial);
+  // Start from the final value so server-rendered HTML, crawlers and no-JS
+  // visitors see the real numbers (they used to see "0%").
+  const [value, setValue] = useState<string | number>(target);
   const ref = useRef<HTMLDivElement>(null);
-  const [inView, setInView] = useState(false);
+  const [animate, setAnimate] = useState(false);
 
   useEffect(() => {
-    if (!ref.current) return;
+    const el = ref.current;
+    if (!el || (!isNumber && !match)) return;
+    // Already on screen at load → keep the final value, no animation.
+    if (el.getBoundingClientRect().top < window.innerHeight) return;
+    setValue(isNumber ? 0 : prefix + '0' + suffix);
     const obs = new IntersectionObserver(
       ([entry]) => {
-        if (entry.isIntersecting) setInView(true);
+        if (entry.isIntersecting) {
+          setAnimate(true);
+          obs.disconnect();
+        }
       },
       { threshold: 0.4 },
     );
-    obs.observe(ref.current);
+    obs.observe(el);
     return () => obs.disconnect();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
-    if (!inView) return;
+    if (!animate) return;
     const start = performance.now();
     let raf = 0;
     const tick = (now: number) => {
@@ -75,7 +84,7 @@ function useCountUp(target: string | number, duration = 1500) {
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, [inView, numTarget, isNumber, prefix, suffix, duration]);
+  }, [animate, numTarget, isNumber, prefix, suffix, duration]);
 
   return { value, ref };
 }

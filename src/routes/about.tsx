@@ -5,7 +5,6 @@ import { SiteHeader } from "@/components/site/SiteHeader";
 import { SiteFooter } from "@/components/site/SiteFooter";
 import { ContactForm } from "@/components/page/ContactForm";
 import type { ReadingLang } from "@/types/page";
-import teamPortrait from "@/assets/team-portrait.png.asset.json";
 
 const READING = ["fr", "he", "en"] as const;
 const toReadingLang = (l: string): ReadingLang =>
@@ -40,9 +39,13 @@ function AboutPage() {
           </div>
           <div className="mt-12 rounded-lg bg-background py-10">
             <img
-              src={teamPortrait.url}
+              src="/brand/team-portrait.png"
               alt={t("public.about.title")}
               className="mx-auto w-full max-w-sm rounded-lg"
+              onError={(e) => {
+                // Hide the frame instead of showing a broken image until the file is added.
+                (e.currentTarget.parentElement as HTMLElement).style.display = "none";
+              }}
             />
           </div>
         </div>
