@@ -9,5 +9,5 @@ export function absoluteUrl(url: string): string {
   return url;
 }
 
-/** Sarah's WhatsApp number in international format (no +, no spaces) — used by the floating button. */
-export const CONTACT_WHATSAPP = "972507220426";
+/** Contact WhatsApp number (Corinne) in international format (no +, no spaces) — used by the floating button. */
+export const CONTACT_WHATSAPP = "972584172229";
