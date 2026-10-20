@@ -6,5 +6,11 @@
   "compatibility_flags": ["nodejs_compat"],
   "observability": { "enabled": true },
   // Images and PDFs, served at /media/<key> by src/routes/media.$.ts
-  "r2_buckets": [{ "binding": "MEDIA", "bucket_name": "ccinvest-media" }]
+  "r2_buckets": [{ "binding": "MEDIA", "bucket_name": "ccinvest-media" }],
+  // Bindings for Cloudflare preview builds (PR branches). Previews read the same
+  // media bucket so pages show their real photos; uploads from a preview admin
+  // also land there (same as production).
+  "previews": {
+    "r2_buckets": [{ "binding": "MEDIA", "bucket_name": "ccinvest-media" }]
+  }
 }
