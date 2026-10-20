@@ -40,7 +40,7 @@ function AboutPage() {
           </div>
           <div className="mt-12 rounded-lg bg-background py-10">
             <img
-              src="/brand/team-portrait.png"
+              src="/brand/team-portrait.jpg"
               alt={t("public.about.title")}
               className="mx-auto w-full max-w-sm rounded-lg"
               onError={(e) => {
