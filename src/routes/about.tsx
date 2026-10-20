@@ -32,17 +32,17 @@ function AboutPage() {
       <SiteHeader />
       <main className="flex-1">
         <div className="container mx-auto max-w-3xl px-4 py-20">
-          <h1 className="mb-6 font-display text-4xl md:text-5xl">
+          <h1 className="animate-rise mb-6 font-display text-[2.6rem] leading-[1.02] md:text-6xl">
             {t("public.aboutPage.title")}
           </h1>
           <div className="whitespace-pre-line text-lg leading-relaxed text-muted-foreground">
             {t("public.aboutPage.body")}
           </div>
-          <div className="mt-12 rounded-lg bg-background py-10">
+          <div className="mt-12 rounded-3xl bg-background py-10">
             <img
               src="/brand/team-portrait.jpg"
               alt={t("public.about.title")}
-              className="mx-auto w-full max-w-sm rounded-lg"
+              className="mx-auto w-full max-w-sm rounded-2xl"
               onError={(e) => {
                 // Hide the frame instead of showing a broken image until the file is added.
                 (e.currentTarget.parentElement as HTMLElement).style.display = "none";

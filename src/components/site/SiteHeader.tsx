@@ -21,10 +21,10 @@ export function SiteHeader() {
   ] as const;
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/85 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/80 backdrop-blur-xl">
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
         <Link to="/" className="flex items-center gap-2">
-          <div className="flex h-9 w-9 items-center justify-center rounded-md bg-primary font-display text-lg font-bold text-primary-foreground">
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary font-display text-lg font-bold text-primary-foreground">
             CC
           </div>
           <span className="hidden font-display text-lg tracking-tight sm:inline">
@@ -38,8 +38,8 @@ export function SiteHeader() {
               key={item.to}
               to={item.to}
               className={cn(
-                "px-3 py-2 text-sm font-medium transition-colors hover:text-primary",
-                pathname === item.to ? "text-primary" : "text-muted-foreground",
+                "rounded-full px-4 py-2 text-sm font-medium transition-colors hover:bg-secondary hover:text-primary",
+                pathname === item.to ? "bg-secondary text-primary" : "text-muted-foreground",
               )}
             >
               {item.label}
@@ -62,15 +62,15 @@ export function SiteHeader() {
       </div>
 
       {open && (
-        <div className="border-t border-border/40 bg-background md:hidden">
-          <nav className="container mx-auto flex flex-col px-4 py-2">
+        <div className="animate-rise border-t border-border/40 bg-background md:hidden" style={{ animationDuration: "350ms" }}>
+          <nav className="container mx-auto flex flex-col px-4 py-3">
             {items.map((item) => (
               <Link
                 key={item.to}
                 to={item.to}
                 onClick={() => setOpen(false)}
                 className={cn(
-                  "border-b border-border/40 py-3 text-sm font-medium last:border-0",
+                  "border-b border-border/40 py-4 font-display text-2xl font-medium last:border-0",
                   pathname === item.to ? "text-primary" : "text-foreground",
                 )}
               >

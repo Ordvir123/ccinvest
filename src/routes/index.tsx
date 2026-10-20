@@ -93,9 +93,9 @@ function useCountUp(target: string | number, duration = 1500) {
 function StatItem({ value, label }: { value: string | number; label: string }) {
   const { value: v, ref } = useCountUp(value);
   return (
-    <div ref={ref} className="text-center">
-      <div className="font-display text-4xl text-cta md:text-5xl">{v}</div>
-      <div className="mt-2 text-xs uppercase tracking-wider text-primary-foreground/70 md:text-sm">
+    <div ref={ref} className="border-s border-white/15 ps-4 md:ps-6">
+      <div className="font-display text-5xl font-semibold tracking-tight text-cta md:text-6xl">{v}</div>
+      <div className="mt-2 text-sm leading-snug text-primary-foreground/75">
         {label}
       </div>
     </div>
@@ -119,7 +119,7 @@ function Home() {
       <SiteHeader />
 
       {/* Hero */}
-      <section className="relative h-[85vh] min-h-[560px] w-full overflow-hidden">
+      <section className="relative isolate flex min-h-[calc(100svh-4rem)] w-full flex-col overflow-hidden md:min-h-[88vh]">
         <img
           src={heroImage}
           alt="Tel Aviv luxury apartment"
@@ -127,35 +127,46 @@ function Home() {
           height={1080}
           decoding="async"
           fetchPriority="high"
-          className="absolute inset-0 h-full w-full object-cover"
+          className="animate-hero-zoom absolute inset-0 -z-10 h-full w-full object-cover"
         />
-        <div className="absolute inset-0 bg-gradient-overlay" />
-        <div className="absolute inset-0 bg-gradient-hero" />
-        <div className="container relative z-10 mx-auto flex h-full items-center px-4">
-          <div className="max-w-2xl text-primary-foreground">
-            <p className="mb-4 text-sm uppercase tracking-[0.3em] text-cta">
+        <div className="absolute inset-0 -z-10 bg-[oklch(0.18_0.04_265/0.3)]" />
+        <div className="absolute inset-x-0 bottom-0 -z-10 h-3/4 bg-gradient-to-t from-[oklch(0.16_0.04_265/0.88)] via-[oklch(0.16_0.04_265/0.4)] to-transparent" />
+        <div className="container relative mx-auto mt-auto px-5 pb-12 pt-32 md:px-10 md:pb-20">
+          <div className="max-w-3xl text-primary-foreground">
+            <p
+              className="animate-rise mb-5 inline-flex rounded-full border border-white/25 bg-white/10 px-3 py-1 text-xs font-medium tracking-wide text-white/90 backdrop-blur"
+              style={{ animationDelay: "120ms" }}
+            >
               {t("public.hero.eyebrow")}
             </p>
-            <h1 className="font-display text-4xl leading-tight !text-primary-foreground [text-shadow:0_2px_14px_oklch(0.15_0.03_265/0.55)] md:text-6xl lg:text-7xl">
+            <h1
+              className="animate-rise font-display text-[2.6rem] leading-[1] !text-primary-foreground [text-shadow:0_2px_24px_oklch(0.15_0.03_265/0.35)] sm:text-6xl md:text-7xl lg:text-8xl"
+              style={{ animationDelay: "220ms" }}
+            >
               {t("public.hero.title")}
             </h1>
-            <p className="mt-6 text-lg text-primary-foreground/85 md:text-xl">
+            <p
+              className="animate-rise mt-6 max-w-xl text-lg leading-relaxed text-primary-foreground/90 md:text-xl"
+              style={{ animationDelay: "340ms" }}
+            >
               {t("public.hero.subtitle")}
             </p>
-            <Button
-              asChild
-              size="lg"
-              className="mt-8 bg-cta uppercase tracking-wider text-cta-foreground hover:bg-cta/90"
-            >
-              <Link to="/appartements">{t("public.hero.cta")}</Link>
-            </Button>
+            <div className="animate-rise mt-8" style={{ animationDelay: "460ms" }}>
+              <Button
+                asChild
+                size="lg"
+                className="h-12 rounded-full bg-cta px-7 text-base font-medium text-cta-foreground shadow-lg shadow-black/20 transition-transform hover:-translate-y-0.5 hover:bg-cta/90"
+              >
+                <Link to="/appartements">{t("public.hero.cta")}</Link>
+              </Button>
+            </div>
           </div>
         </div>
       </section>
 
       {/* Stats strip */}
-      <section className="bg-primary py-12 text-primary-foreground md:py-16">
-        <div className="container mx-auto grid grid-cols-2 gap-8 px-4 md:grid-cols-4">
+      <section className="bg-primary py-12 text-primary-foreground md:py-20">
+        <div className="container mx-auto grid grid-cols-2 gap-x-6 gap-y-10 px-5 md:grid-cols-4 md:px-10">
           <StatItem value="98%" label={t("public.stats.satisfaction")} />
           <StatItem value={12} label={t("public.stats.experience")} />
           <StatItem value="350+" label={t("public.stats.deals")} />
@@ -164,51 +175,63 @@ function Home() {
       </section>
 
       {/* Projects */}
-      <section className="container mx-auto px-4 py-20">
-        <div className="mb-12 text-center">
-          <h2 className="font-display text-3xl md:text-4xl">
-            {t("public.properties.title")}
-          </h2>
-          <p className="mt-2 text-muted-foreground">
-            {t("public.properties.subtitle")}
-          </p>
+      <section className="py-16 md:py-24">
+        <div className="container mx-auto mb-8 flex items-end justify-between gap-6 px-5 md:mb-12 md:px-10">
+          <div>
+            <h2 className="section-title">{t("public.properties.title")}</h2>
+            <p className="mt-3 text-muted-foreground">{t("public.properties.subtitle")}</p>
+          </div>
+          {featured.length > 0 && (
+            <Link
+              to="/appartements"
+              className="hidden shrink-0 rounded-full border border-border px-5 py-2.5 text-sm font-medium transition-colors hover:bg-secondary md:inline-flex"
+            >
+              {t("public.properties.viewAll")}
+            </Link>
+          )}
         </div>
         {isLoading ? (
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          <div className="container mx-auto grid gap-6 px-5 md:grid-cols-2 md:px-10 lg:grid-cols-3">
             {[0, 1, 2].map((i) => (
-              <Skeleton key={i} className="h-80" />
+              <Skeleton key={i} className="h-80 rounded-3xl" />
             ))}
           </div>
         ) : featured.length === 0 ? (
-          <p className="py-10 text-center text-muted-foreground">
+          <p className="container mx-auto px-5 py-10 text-muted-foreground md:px-10">
             {t("public.properties.empty")}
           </p>
         ) : (
           <>
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {/* Phones: swipe sideways with the next card peeking in. */}
+            <div className="container mx-auto flex snap-x snap-mandatory gap-4 overflow-x-auto scroll-px-5 px-5 pb-4 [scrollbar-width:none] md:grid md:snap-none md:grid-cols-2 md:gap-6 md:overflow-visible md:px-10 lg:grid-cols-3">
               {featured.map((p) => (
-                <ProjectCard key={p.slug} project={p} />
+                <div key={p.slug} className="w-[84%] shrink-0 snap-start md:w-auto">
+                  <ProjectCard project={p} />
+                </div>
               ))}
             </div>
-            <div className="mt-10 text-center">
-              <Button asChild variant="outline" size="lg">
-                <Link to="/appartements">{t("public.properties.viewAll")}</Link>
-              </Button>
+            <div className="container mx-auto mt-6 px-5 md:hidden">
+              <Link
+                to="/appartements"
+                className="flex h-12 items-center justify-center rounded-full border border-border text-sm font-medium transition-colors active:bg-secondary"
+              >
+                {t("public.properties.viewAll")}
+              </Link>
             </div>
           </>
         )}
       </section>
 
       {/* About teaser */}
-      <section className="bg-secondary py-20">
-        <div className="container mx-auto max-w-3xl px-4 text-center">
-          <h2 className="mb-6 font-display text-3xl md:text-4xl">
+      <section className="bg-secondary py-16 md:py-24">
+        <div className="container mx-auto max-w-3xl px-5 md:px-10">
+          <h2 className="section-title mb-6">
             {t("public.about.title")}
           </h2>
           <div className="mb-8 whitespace-pre-line text-lg leading-relaxed text-muted-foreground">
             {t("public.about.body")}
           </div>
-          <Button asChild variant="default" size="lg">
+          <Button asChild variant="default" size="lg" className="h-12 rounded-full px-7">
             <Link to="/about">{t("public.about.cta")}</Link>
           </Button>
         </div>

@@ -145,7 +145,7 @@ export function ContactForm({
       <Section className="relative z-10 pb-16 md:pb-24">
         <div className="mx-auto max-w-xl pb-8 md:pb-12">
 
-          <h2 className="text-center text-3xl text-primary-foreground md:text-4xl">
+          <h2 className="section-title text-center !text-primary-foreground">
             {heading ?? "Contact"}
           </h2>
           {subheading && (
@@ -153,7 +153,7 @@ export function ContactForm({
           )}
 
           {done ? (
-            <div className="mt-8 flex flex-col items-center gap-3 rounded-lg bg-card/95 p-8 text-center text-card-foreground">
+            <div className="mt-8 flex flex-col items-center gap-3 animate-rise rounded-3xl bg-card/95 p-8 text-center text-card-foreground">
               <Check className="h-10 w-10 text-primary" />
               <p className="text-lg">{t.success}</p>
               <a
@@ -184,7 +184,7 @@ export function ContactForm({
                   onChange={(e) => setName(e.target.value)}
                   placeholder={t.name}
                   aria-label={t.name}
-                  className="bg-card text-card-foreground placeholder:text-muted-foreground"
+                  className="h-13 rounded-2xl border-0 bg-white/95 px-4 text-base text-card-foreground shadow-sm placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-cta"
                   required
                 />
                 <Input
@@ -193,7 +193,7 @@ export function ContactForm({
                   onChange={(e) => setPhone(e.target.value)}
                   placeholder={t.phone}
                   aria-label={t.phone}
-                  className="bg-card text-card-foreground placeholder:text-muted-foreground"
+                  className="h-13 rounded-2xl border-0 bg-white/95 px-4 text-base text-card-foreground shadow-sm placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-cta"
                 />
               </div>
               <Input
@@ -203,7 +203,7 @@ export function ContactForm({
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder={t.email}
                 aria-label={t.email}
-                className="bg-card text-card-foreground placeholder:text-muted-foreground"
+                className="h-13 rounded-2xl border-0 bg-white/95 px-4 text-base text-card-foreground shadow-sm placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-cta"
                 required
               />
               <Textarea
@@ -214,7 +214,7 @@ export function ContactForm({
                 aria-label={t.message}
                 rows={4}
                 maxLength={2000}
-                className="bg-card text-card-foreground placeholder:text-muted-foreground"
+                className="rounded-2xl py-3 border-0 bg-white/95 px-4 text-base text-card-foreground shadow-sm placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-cta"
               />
 
 
@@ -230,7 +230,7 @@ export function ContactForm({
                 type="submit"
                 size="lg"
                 disabled={sending || !interactive}
-                className="w-full bg-cta uppercase tracking-wider text-cta-foreground hover:bg-cta/90"
+                className="h-13 w-full rounded-full bg-cta text-base font-medium text-cta-foreground shadow-lg shadow-black/15 transition-transform hover:-translate-y-0.5 hover:bg-cta/90 active:scale-[0.98]"
               >
                 {sending ? (
                   <>
