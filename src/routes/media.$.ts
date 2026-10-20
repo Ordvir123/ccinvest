@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import type {} from "@tanstack/react-start";
-import { getMediaBucket, isSafeKey } from "@/lib/media-server";
+import { SMALL_SUFFIX, getMediaBucket, isSafeKey } from "@/lib/media-server";
 
 /** Serves uploaded images/PDFs from R2: /media/<folder>/<file>. Keys are immutable (uuid-prefixed). */
 export const Route = createFileRoute("/media/$")({
@@ -11,7 +11,9 @@ export const Route = createFileRoute("/media/$")({
         if (!isSafeKey(key)) return new Response("Not found", { status: 404 });
 
         const bucket = await getMediaBucket();
-        const obj = await bucket.get(key);
+        // ?w=960 → the small copy when one exists, otherwise the original.
+        const wantSmall = new URL(request.url).searchParams.get("w") === "960";
+        const obj = (wantSmall && (await bucket.get(`${key}${SMALL_SUFFIX}`))) || (await bucket.get(key));
         if (!obj) return new Response("Not found", { status: 404 });
 
         if (request.headers.get("if-none-match") === obj.httpEtag) {

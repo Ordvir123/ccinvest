@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 
 import { SiteHeader } from "@/components/site/SiteHeader";
 import { SiteFooter } from "@/components/site/SiteFooter";
+import { WhatsAppButton } from "@/components/site/WhatsAppButton";
 import { ProjectCard } from "@/components/site/ProjectCard";
 import { Skeleton } from "@/components/ui/skeleton";
 import { listPublishedPages } from "@/lib/pages";
@@ -63,6 +64,7 @@ function ProjectsPage() {
         )}
       </main>
       <SiteFooter />
+      <WhatsAppButton />
     </div>
   );
 }

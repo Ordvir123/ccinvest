@@ -16,6 +16,7 @@ import {
 } from "@/lib/page-sections";
 
 import { cn } from "@/lib/utils";
+import { responsiveProps } from "@/lib/responsive-image";
 
 import { getIcon, guessIcon } from "@/lib/page-icons";
 import { heroOverlayStyle } from "@/lib/hero-overlay";
@@ -140,6 +141,7 @@ function Hero({
         <>
           <img
             src={bg}
+            {...responsiveProps(bg)}
             alt={hero.background?.alt ?? hero.title}
             decoding="async"
             fetchPriority="high"
@@ -321,6 +323,7 @@ function SafeImg({
   if (failed) return null;
   return (
     <img
+      {...(rest.srcSet ? {} : responsiveProps(rest.src as string | undefined, "(min-width: 768px) 50vw, 100vw"))}
       {...rest}
       onError={(e) => {
         setFailed(true);
@@ -623,6 +626,7 @@ function Gallery({
                 >
                   <img
                     src={img.url}
+                    {...responsiveProps(img.url, "(min-width: 768px) 600px, 100vw")}
                     alt={img.alt ?? `Image ${i + 1}`}
                     loading="lazy"
                     className="aspect-[4/3] w-full object-cover transition-transform duration-300 hover:scale-[1.03]"
@@ -689,6 +693,7 @@ function GalleryCarousel({
               >
                 <img
                   src={img.url}
+                  {...responsiveProps(img.url, "(min-width: 768px) 900px, 100vw")}
                   alt={img.alt ?? `Image ${i + 1}`}
                   loading="lazy"
                   className="aspect-[4/3] w-full object-cover transition-transform duration-300 hover:scale-[1.03]"
@@ -1176,6 +1181,7 @@ function WideImages({
           <img
             key={i}
             src={img.url}
+            {...responsiveProps(img.url)}
             alt={img.alt ?? ""}
             loading="lazy"
             className="block w-full object-cover"
@@ -1256,6 +1262,7 @@ function About({ about, heading }: { about?: PageContent["about"]; heading?: str
     <div className="relative isolate">
       <img
         src={bg}
+        {...responsiveProps(bg)}
         alt={about.background?.alt ?? ""}
         className="absolute inset-0 h-full w-full object-cover"
         aria-hidden={!about.background?.alt}

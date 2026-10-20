@@ -1,13 +1,15 @@
 import { Link } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
+import { cn } from "@/lib/utils";
+import { CONTACT_WHATSAPP } from "@/lib/site";
 
 /** Branded public site footer (ported design). */
-export function SiteFooter() {
+export function SiteFooter({ className }: { className?: string } = {}) {
   const { t } = useTranslation();
   const year = new Date().getFullYear();
 
   return (
-    <footer className="mt-20 bg-primary text-primary-foreground">
+    <footer className={cn("mt-20 bg-primary text-primary-foreground", className)}>
       <div className="container mx-auto grid gap-8 px-4 py-12 md:grid-cols-3">
         <div>
           <div className="flex items-center gap-2">
@@ -37,6 +39,11 @@ export function SiteFooter() {
               </Link>
             </li>
             <li>
+              <Link to="/projects" className="hover:text-cta">
+                {t("nav.projects")}
+              </Link>
+            </li>
+            <li>
               <Link to="/about" className="hover:text-cta">
                 {t("nav.about")}
               </Link>
@@ -51,9 +58,18 @@ export function SiteFooter() {
           <p className="text-sm text-primary-foreground/80">Tel Aviv-Yafo, Israel</p>
           <a
             href="mailto:contact@ccinvest.co.il"
-            className="text-sm text-primary-foreground/80 hover:text-cta"
+            className="block text-sm text-primary-foreground/80 hover:text-cta"
           >
             contact@ccinvest.co.il
+          </a>
+          <a
+            href={`https://wa.me/${CONTACT_WHATSAPP}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-1 block text-sm text-primary-foreground/80 hover:text-cta"
+            dir="ltr"
+          >
+            WhatsApp +972 50-722-0426
           </a>
         </div>
       </div>

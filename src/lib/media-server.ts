@@ -28,6 +28,9 @@ export async function getMediaBucket(): Promise<R2Bucket> {
   return mod.env.MEDIA;
 }
 
+/** R2 key suffix of the 960px copy stored next to each image. */
+export const SMALL_SUFFIX = "~w960";
+
 /** Media keys look like "<folder>/<file>"; reject anything that could escape that shape. */
 export function isSafeKey(key: string): boolean {
   return (

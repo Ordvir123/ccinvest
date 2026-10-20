@@ -4,6 +4,9 @@ import { useQuery } from "@tanstack/react-query";
 
 import { PageRenderer } from "@/components/page/PageRenderer";
 import { ReadingLanguageSwitcher } from "@/components/page/ReadingLanguageSwitcher";
+import { SiteFooter } from "@/components/site/SiteFooter";
+import { WhatsAppButton } from "@/components/site/WhatsAppButton";
+import { useTranslation } from "react-i18next";
 import { fetchPublishedPage } from "@/lib/pages";
 import { fetchTemplateSettings } from "@/lib/template-settings";
 import { resolveTranslation } from "@/lib/translate";
@@ -154,12 +157,15 @@ function ProjectPage() {
     retry: false,
   });
 
-  // Apply reading direction for the visitor's chosen language.
+  // Apply reading direction for the visitor's chosen language, and keep the
+  // site chrome (footer) in the same language.
+  const { i18n } = useTranslation();
   useEffect(() => {
     if (typeof document === "undefined") return;
     document.documentElement.lang = activeLang;
     document.documentElement.dir = isRtlReading(activeLang) ? "rtl" : "ltr";
-  }, [activeLang]);
+    if (i18n.language !== activeLang) void i18n.changeLanguage(activeLang);
+  }, [activeLang, i18n]);
 
   if (pageQuery.isLoading) {
     return (
@@ -185,7 +191,11 @@ function ProjectPage() {
 
   return (
     <>
-      <ReadingLanguageSwitcher value={activeLang} onChange={setLang} />
+      <ReadingLanguageSwitcher
+        value={activeLang}
+        onChange={setLang}
+        category={page.content.category === "project" ? "project" : "apartment"}
+      />
       <PageRenderer
         content={content}
         interactive
@@ -194,17 +204,18 @@ function ProjectPage() {
         lang={activeLang}
         settings={settingsQuery.data}
       />
-
+      <SiteFooter className="mt-0" />
+      <WhatsAppButton lang={activeLang} title={content.hero?.title} />
 
       {isTranslating && (
-        <div className="fixed bottom-5 z-40 flex items-center gap-2 rounded-md border border-border bg-card/95 px-3 py-1.5 text-xs text-muted-foreground shadow ltr:right-5 rtl:left-5">
+        <div className="fixed bottom-24 z-40 flex items-center gap-2 rounded-md border border-border bg-card/95 px-3 py-1.5 text-xs text-muted-foreground shadow ltr:right-5 rtl:left-5">
           <span className="h-3 w-3 animate-spin rounded-full border-2 border-muted-foreground border-t-transparent" />
           {activeLang === "he" ? "מתרגם…" : "Translating…"}
         </div>
       )}
 
       {needsTranslation && translationQuery.isError && (
-        <div className="fixed bottom-5 z-40 rounded-md border border-destructive/40 bg-card/95 px-3 py-1.5 text-xs text-destructive shadow ltr:right-5 rtl:left-5">
+        <div className="fixed bottom-24 z-40 rounded-md border border-destructive/40 bg-card/95 px-3 py-1.5 text-xs text-destructive shadow ltr:right-5 rtl:left-5">
           {(translationQuery.error as Error)?.message ?? "Translation failed."}
         </div>
       )}

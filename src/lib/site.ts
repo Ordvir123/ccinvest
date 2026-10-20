@@ -8,3 +8,6 @@ export function absoluteUrl(url: string): string {
   if (url.startsWith("/")) return `${SITE_ORIGIN}${url}`;
   return url;
 }
+
+/** Sarah's WhatsApp number in international format (no +, no spaces) — used by the floating button. */
+export const CONTACT_WHATSAPP = "972507220426";

@@ -590,6 +590,8 @@ export type PublishedCard = {
   title: string;
   location?: string;
   priceFrom?: string;
+  /** True when priceFrom is the lowest of several unit prices (shown as "from …"). */
+  priceIsFrom?: boolean;
   cover?: string;
   category: PageCategory;
 };
@@ -599,10 +601,15 @@ function toCard(page: Page): PublishedCard {
   const cover =
     c.gallery?.find((m) => hasText(m.url))?.url ??
     c.units?.find((u) => hasText(u.image?.url))?.image?.url;
-  // price-from: hero price, else cheapest-looking unit price (first non-empty).
-  const priceFrom = hasText(c.hero.price)
-    ? c.hero.price
-    : c.units?.find((u) => hasText(u.price))?.price;
+  // Hero price when set; otherwise the cheapest unit price ("from …").
+  const unitPrices = (c.units ?? [])
+    .map((u) => u.price)
+    .filter((p): p is string => hasText(p))
+    .map((p) => ({ p, n: Number(p.replace(/[^\d]/g, "")) }))
+    .filter((x) => x.n > 0)
+    .sort((a, b) => a.n - b.n);
+  const priceIsFrom = !hasText(c.hero.price) && unitPrices.length > 1;
+  const priceFrom = hasText(c.hero.price) ? c.hero.price : unitPrices[0]?.p;
   return {
     slug: page.slug,
     title: c.hero.title?.trim() || page.slug,
@@ -614,6 +621,7 @@ function toCard(page: Page): PublishedCard {
       return hasText(name) ? name : undefined;
     })(),
     priceFrom: priceFrom || undefined,
+    priceIsFrom,
     cover: cover || undefined,
     category: c.category === "project" ? "project" : "apartment",
   };

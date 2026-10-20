@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 
 import { SiteHeader } from "@/components/site/SiteHeader";
 import { SiteFooter } from "@/components/site/SiteFooter";
+import { WhatsAppButton } from "@/components/site/WhatsAppButton";
 import { ProjectCard } from "@/components/site/ProjectCard";
 import { ContactForm } from "@/components/page/ContactForm";
 import { Button } from "@/components/ui/button";
@@ -223,6 +224,7 @@ function Home() {
       />
 
       <SiteFooter />
+      <WhatsAppButton />
     </div>
   );
 }

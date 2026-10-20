@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import type {} from "@tanstack/react-start";
-import { getMediaBucket, isSafeKey, supabaseAsAdmin, verifyAdmin } from "@/lib/media-server";
+import { SMALL_SUFFIX, getMediaBucket, isSafeKey, supabaseAsAdmin, verifyAdmin } from "@/lib/media-server";
 
 const ALLOWED = new Set(["image/jpeg", "image/png", "image/webp", "application/pdf"]);
 const MAX_BYTES = 15 * 1024 * 1024;
@@ -39,6 +39,12 @@ export const Route = createFileRoute("/api/media")({
         await bucket.put(key, await file.arrayBuffer(), {
           httpMetadata: { contentType: file.type },
         });
+        const small = form.get("small");
+        if (small instanceof File && ALLOWED.has(small.type) && small.size < file.size) {
+          await bucket.put(`${key}${SMALL_SUFFIX}`, await small.arrayBuffer(), {
+            httpMetadata: { contentType: small.type },
+          });
+        }
         const url = `/media/${key}`;
         // Index the upload so Claude (and the admin) can find files per page.
         const idx = await supabaseAsAdmin(admin, "media", {
@@ -63,6 +69,7 @@ export const Route = createFileRoute("/api/media")({
         if (!isSafeKey(key)) return json({ error: "Bad key" }, 400);
         const bucket = await getMediaBucket();
         await bucket.delete(key);
+        await bucket.delete(`${key}${SMALL_SUFFIX}`);
         await supabaseAsAdmin(admin, `media?key=eq.${encodeURIComponent(key)}`, { method: "DELETE" });
         return json({ ok: true });
       },

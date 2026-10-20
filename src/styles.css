@@ -92,8 +92,8 @@
   --accent: oklch(0.94 0.015 250);
   --accent-foreground: oklch(0.22 0.06 265);
 
-  --cta: oklch(0.78 0.22 130);              /* lime/green CTA */
-  --cta-foreground: oklch(0.18 0.05 145);
+  --cta: oklch(0.8 0.1 78);                 /* warm brass — pairs with the navy logo */
+  --cta-foreground: oklch(0.2 0.05 265);
 
   --destructive: oklch(0.6 0.22 27);
   --destructive-foreground: oklch(0.98 0.005 240);
@@ -104,12 +104,12 @@
 
   --sidebar: oklch(0.22 0.06 265);
   --sidebar-foreground: oklch(0.98 0.005 240);
-  --sidebar-primary: oklch(0.78 0.22 130);
-  --sidebar-primary-foreground: oklch(0.18 0.05 145);
+  --sidebar-primary: oklch(0.8 0.1 78);
+  --sidebar-primary-foreground: oklch(0.2 0.05 265);
   --sidebar-accent: oklch(0.28 0.06 265);
   --sidebar-accent-foreground: oklch(0.98 0.005 240);
   --sidebar-border: oklch(0.3 0.05 265);
-  --sidebar-ring: oklch(0.78 0.22 130);
+  --sidebar-ring: oklch(0.8 0.1 78);
 
   /* Brand gradient (kept name for existing renderer/admin usage). */
   --gradient-brand: linear-gradient(135deg, oklch(0.22 0.06 265), oklch(0.35 0.09 265));

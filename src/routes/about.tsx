@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 
 import { SiteHeader } from "@/components/site/SiteHeader";
 import { SiteFooter } from "@/components/site/SiteFooter";
+import { WhatsAppButton } from "@/components/site/WhatsAppButton";
 import { ContactForm } from "@/components/page/ContactForm";
 import type { ReadingLang } from "@/types/page";
 
@@ -59,6 +60,7 @@ function AboutPage() {
         />
       </main>
       <SiteFooter />
+      <WhatsAppButton />
     </div>
   );
 }

@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { makeSmallCopy } from "@/lib/image-compress";
 
 /**
  * Client helpers for media stored in R2 (served from /media/<key>).
@@ -19,6 +20,9 @@ export async function uploadMedia(file: File, folder: string): Promise<string> {
   const body = new FormData();
   body.append("file", file);
   body.append("folder", folder);
+  // Small copy for phones/thumbnails, served at /media/<key>?w=960.
+  const small = await makeSmallCopy(file);
+  if (small && small.size < file.size) body.append("small", small, "small");
   const res = await fetch("/api/media", { method: "POST", headers: await authHeader(), body });
   const data = (await res.json().catch(() => ({}))) as { url?: string; error?: string };
   if (!res.ok || !data.url) throw new Error(data.error ?? `Upload failed (${res.status})`);
