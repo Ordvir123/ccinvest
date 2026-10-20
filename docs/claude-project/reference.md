@@ -9,7 +9,8 @@ GitHub: `Ordvir123/ccinvest`. Production branch: `cloudflare-migration` (will be
 |---|---|
 | `pages` | `id uuid`, `slug text` (URL path, unique), `status` (`draft` = not on the site yet, `published` = live, `archived` = sold / taken off the site but kept), `source_lang` (always `fr`), `content jsonb`, `seo jsonb`, `updated_at` |
 | `page_translations` | `page_id`, `lang` (`he`/`en`), `content jsonb` (translated copy of `pages.content`), `source_hash text`, `locked_fields jsonb` — unique on (`page_id`,`lang`) |
-| `media` | one row per uploaded file: `folder` (= page slug), `url` (`/media/...`), `filename`, `content_type`, `created_at` |
+| `media` | one row per uploaded file: `page_id` (the page it belongs to; null until the page exists), `folder` (page slug / future slug), `url` (`/media/...`), `filename`, `kind` (`photo`/`plan`/`document`, detected on upload), `width`, `height`, `created_at` |
+| `style_notes` | what you learned about how Sarah builds pages: `topic` (`writing`/`photos`/`structure`/`translation`/`general`), `note`, `example`, `source_page_id`, `active` |
 | `page_history` | automatic snapshot of the previous version before every update/delete of `pages` |
 | `leads` | contact-form submissions — **read only** |
 
@@ -59,9 +60,41 @@ Set `source_hash` to `'claude'`. When updating an existing translation, keep `lo
 
 Use dollar-quoting (`$j$ ... $j$`) for JSON so quotes and apostrophes never need escaping.
 
-**Media uploaded for a page**
+**Media of a page** (works before the page exists too — by folder)
 ```sql
-select url, filename, content_type from media where folder = 'rue-allenby' order by created_at;
+select url, filename, kind, width, height from media
+where page_id = (select id from pages where slug = 'rue-allenby') or folder = 'rue-allenby'
+order by created_at;
+```
+
+**What you learned so far** (read before every page)
+```sql
+select topic, note, example from style_notes where active order by topic, created_at;
+```
+
+**Recent published pages of the same type** (Sarah's real style)
+```sql
+select slug, content, seo from pages
+where status = 'published' and content->>'category' = 'apartment'
+order by updated_at desc limit 3;
+```
+
+**Your first draft vs. what Sarah published** (after she publishes)
+```sql
+-- first saved version = the oldest history row (or the current row if never edited)
+select content from page_history
+where page_id = (select id from pages where slug = 'rue-allenby')
+order by changed_at asc limit 1;
+select content from pages where slug = 'rue-allenby';
+```
+
+**Save / retire a lesson**
+```sql
+insert into style_notes (topic, note, example, source_page_id)
+values ('writing', $j$Description d'appartement : commencer par l'étage et l'orientation, pas par le prix.$j$,
+        $j$« Au 4ème étage, orienté nord-ouest, … »$j$,
+        (select id from pages where slug = 'rue-allenby'));
+update style_notes set active = false where id = '<id>';
 ```
 
 **Create a draft page**
