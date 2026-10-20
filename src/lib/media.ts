@@ -1,5 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
-import { makeSmallCopy } from "@/lib/image-compress";
+import { analyzeMedia, makeSmallCopy } from "@/lib/image-compress";
 
 /**
  * Client helpers for media stored in R2 (served from /media/<key>).
@@ -15,11 +15,24 @@ async function authHeader(): Promise<Record<string, string>> {
   return { Authorization: `Bearer ${token}` };
 }
 
-/** Upload a (pre-compressed) file into `folder` and return its public URL (/media/...). */
-export async function uploadMedia(file: File, folder: string): Promise<string> {
+/**
+ * Upload a (pre-compressed) file into `folder` and return its public URL (/media/...).
+ * `pageId` links it to a page; without it the server links it to the page whose
+ * slug equals the folder (or later, when such a page is created).
+ */
+export async function uploadMedia(
+  file: File,
+  folder: string,
+  opts: { pageId?: string } = {},
+): Promise<string> {
   const body = new FormData();
   body.append("file", file);
   body.append("folder", folder);
+  if (opts.pageId) body.append("page_id", opts.pageId);
+  const meta = await analyzeMedia(file);
+  body.append("kind", meta.kind);
+  if (meta.width) body.append("width", String(meta.width));
+  if (meta.height) body.append("height", String(meta.height));
   // Small copy for phones/thumbnails, served at /media/<key>?w=960.
   const small = await makeSmallCopy(file);
   if (small && small.size < file.size) body.append("small", small, "small");

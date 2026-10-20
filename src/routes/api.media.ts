@@ -4,6 +4,7 @@ import { SMALL_SUFFIX, getMediaBucket, isSafeKey, supabaseAsAdmin, verifyAdmin }
 
 const ALLOWED = new Set(["image/jpeg", "image/png", "image/webp", "application/pdf"]);
 const MAX_BYTES = 15 * 1024 * 1024;
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { "content-type": "application/json" } });
@@ -46,6 +47,19 @@ export const Route = createFileRoute("/api/media")({
           });
         }
         const url = `/media/${key}`;
+        // Link to a page: explicit page_id, else the page whose slug is the folder.
+        let pageId = String(form.get("page_id") ?? "");
+        if (!UUID.test(pageId)) {
+          pageId = "";
+          const r = await supabaseAsAdmin(admin, `pages?select=id&slug=eq.${encodeURIComponent(folder)}`);
+          const rows = r.ok ? ((await r.json()) as { id: string }[]) : [];
+          if (rows[0]?.id) pageId = rows[0].id;
+        }
+        const kind = String(form.get("kind") ?? "");
+        const int = (v: FormDataEntryValue | null) => {
+          const n = Number(v);
+          return Number.isInteger(n) && n > 0 && n < 100000 ? n : null;
+        };
         // Index the upload so Claude (and the admin) can find files per page.
         const idx = await supabaseAsAdmin(admin, "media", {
           method: "POST",
@@ -56,6 +70,10 @@ export const Route = createFileRoute("/api/media")({
             filename: file.name.slice(0, 200),
             content_type: file.type,
             size_bytes: file.size,
+            page_id: pageId || null,
+            kind: ["photo", "plan", "document"].includes(kind) ? kind : null,
+            width: int(form.get("width")),
+            height: int(form.get("height")),
           }),
         });
         if (!idx.ok) console.error("[api/media] index insert failed", idx.status);

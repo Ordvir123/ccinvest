@@ -104,8 +104,41 @@ create table if not exists public.media (
   created_at timestamptz not null default now()
 );
 create index if not exists media_folder_idx on public.media (folder, created_at);
+-- page_id links a file to its page; folder is the readable name used before the page exists.
+alter table public.media
+  add column if not exists page_id uuid references public.pages(id) on delete set null,
+  add column if not exists width integer,
+  add column if not exists height integer,
+  add column if not exists kind text check (kind in ('photo', 'plan', 'document')),
+  add column if not exists sort_order integer;
+create index if not exists media_page_idx on public.media (page_id, created_at);
+
+-- When a page is created/renamed, adopt media uploaded to a folder with that slug.
+create or replace function public.adopt_media_for_page() returns trigger
+language plpgsql security definer set search_path = public as $$
+begin
+  update public.media set page_id = new.id where page_id is null and folder = new.slug;
+  return new;
+end $$;
+create trigger pages_adopt_media after insert or update of slug on public.pages
+  for each row execute function public.adopt_media_for_page();
 alter table public.media enable row level security;
 create policy "Admins manage media" on public.media for all to authenticated
+  using (public.is_admin()) with check (public.is_admin());
+
+-- ---------- style notes (what Claude has learned about how Sarah builds pages) ----------
+create table if not exists public.style_notes (
+  id uuid primary key default gen_random_uuid(),
+  topic text not null check (topic in ('writing', 'photos', 'structure', 'translation', 'general')),
+  note text not null,
+  example text,
+  source_page_id uuid references public.pages(id) on delete set null,
+  active boolean not null default true,
+  created_at timestamptz not null default now()
+);
+create index if not exists style_notes_active_idx on public.style_notes (active, topic);
+alter table public.style_notes enable row level security;
+create policy "Admins manage style notes" on public.style_notes for all to authenticated
   using (public.is_admin()) with check (public.is_admin());
 
 -- ---------- leads ----------
@@ -140,3 +173,4 @@ grant execute on function public.is_admin() to authenticated;
 alter function public.set_updated_at() set search_path = public;
 revoke execute on function public.snapshot_page() from public, anon, authenticated;
 revoke execute on function public.is_admin() from public, anon;
+revoke execute on function public.adopt_media_for_page() from public, anon, authenticated;

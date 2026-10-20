@@ -108,3 +108,44 @@ export async function makeSmallCopy(file: File, quality = DEFAULT_QUALITY): Prom
     return null;
   }
 }
+
+export type MediaKind = "photo" | "plan" | "document";
+
+/**
+ * Dimensions and a best guess of what an image is. Floor plans are mostly
+ * white/light-grey with little colour; photos are not. PDFs count as documents.
+ */
+export async function analyzeMedia(
+  file: File,
+): Promise<{ width?: number; height?: number; kind: MediaKind }> {
+  if (file.type === "application/pdf") return { kind: "document" };
+  if (typeof document === "undefined" || !COMPRESSIBLE.has(file.type)) return { kind: "photo" };
+  try {
+    const img = await loadImage(file);
+    const w = 96;
+    const h = Math.max(1, Math.round((img.height * w) / img.width));
+    const canvas = document.createElement("canvas");
+    canvas.width = w;
+    canvas.height = h;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return { width: img.width, height: img.height, kind: "photo" };
+    ctx.drawImage(img, 0, 0, w, h);
+    const d = ctx.getImageData(0, 0, w, h).data;
+    let light = 0;
+    let colourful = 0;
+    let dark = 0;
+    const n = d.length / 4;
+    for (let i = 0; i < d.length; i += 4) {
+      const r = d[i], g = d[i + 1], b = d[i + 2], a = d[i + 3];
+      if (a < 20 || (r > 225 && g > 225 && b > 225)) light++;
+      if (Math.max(r, g, b) - Math.min(r, g, b) > 60) colourful++;
+      if (a >= 20 && 0.299 * r + 0.587 * g + 0.114 * b < 90) dark++;
+    }
+    // Plans: mostly white paper, thin dark lines, little colour. A portrait on a
+    // white wall is also mostly white but has large dark areas (hair, clothes).
+    const isPlan = light / n > 0.6 && dark / n < 0.15 && colourful / n < 0.15;
+    return { width: img.width, height: img.height, kind: isPlan ? "plan" : "photo" };
+  } catch {
+    return { kind: "photo" };
+  }
+}
