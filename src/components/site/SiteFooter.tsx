@@ -13,7 +13,7 @@ export function SiteFooter({ className }: { className?: string } = {}) {
       <div className="container mx-auto grid gap-8 px-4 py-12 md:grid-cols-3">
         <div>
           <div className="flex items-center gap-2">
-            <div className="flex h-9 w-9 items-center justify-center rounded-md bg-cta font-display text-lg font-bold text-cta-foreground">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-cta font-display text-lg font-bold text-cta-foreground">
               CC
             </div>
             <span className="font-display text-lg">CC Invest</span>
@@ -24,7 +24,7 @@ export function SiteFooter({ className }: { className?: string } = {}) {
         </div>
 
         <div>
-          <h4 className="mb-3 font-display text-sm uppercase tracking-wider">
+          <h4 className="mb-3 font-display text-base font-semibold">
             {t("nav.home")}
           </h4>
           <ul className="space-y-2 text-sm text-primary-foreground/80">
@@ -52,7 +52,7 @@ export function SiteFooter({ className }: { className?: string } = {}) {
         </div>
 
         <div>
-          <h4 className="mb-3 font-display text-sm uppercase tracking-wider">
+          <h4 className="mb-3 font-display text-base font-semibold">
             {t("nav.contact")}
           </h4>
           <p className="text-sm text-primary-foreground/80">Tel Aviv-Yafo, Israel</p>

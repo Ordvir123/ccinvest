@@ -247,13 +247,13 @@ function ProjectPage() {
         <div className="mt-8 flex flex-wrap justify-center gap-3">
           <a
             href="/appartements"
-            className="rounded-md bg-cta px-5 py-2.5 text-sm font-medium uppercase tracking-wider text-cta-foreground hover:bg-cta/90"
+            className="rounded-full bg-cta px-6 py-3 text-sm font-medium text-cta-foreground transition-transform hover:-translate-y-0.5"
           >
             Nos appartements
           </a>
           <a
             href="/projects"
-            className="rounded-md border border-border px-5 py-2.5 text-sm font-medium hover:bg-accent"
+            className="rounded-full border border-border px-6 py-3 text-sm font-medium transition-colors hover:bg-secondary"
           >
             Nos projets
           </a>
@@ -270,15 +270,17 @@ function ProjectPage() {
 
   return (
     <>
-      <ReadingLanguageSwitcher value={activeLang} onChange={setLang} />
-      <PageRenderer
-        content={content}
-        interactive
-        pageId={page.id}
-        slug={page.slug}
-        lang={activeLang}
-        settings={settingsQuery.data}
-      />
+      <div className="relative">
+        <ReadingLanguageSwitcher value={activeLang} onChange={setLang} overlay />
+        <PageRenderer
+          content={content}
+          interactive
+          pageId={page.id}
+          slug={page.slug}
+          lang={activeLang}
+          settings={settingsQuery.data}
+        />
+      </div>
       <SiteFooter className="mt-0" />
       <WhatsAppButton lang={activeLang} title={content.hero?.title} />
 

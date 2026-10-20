@@ -17,7 +17,7 @@ export function ProjectCard({ project }: { project: PublishedCard }) {
       params={{ slug: project.slug }}
       target="_blank"
       rel="noopener noreferrer"
-      className="group block overflow-hidden rounded-lg bg-card shadow-card transition-all hover:-translate-y-1 hover:shadow-elegant"
+      className="group block overflow-hidden rounded-3xl bg-card shadow-card transition-all duration-300 hover:-translate-y-1 hover:shadow-elegant active:scale-[0.99]"
     >
       <div className="relative aspect-[4/3] overflow-hidden bg-muted">
         {project.cover ? (
@@ -26,7 +26,7 @@ export function ProjectCard({ project }: { project: PublishedCard }) {
             {...responsiveProps(project.cover, "(min-width: 768px) 33vw, 100vw")}
             alt={project.title}
             loading="lazy"
-            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+            className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.06]"
           />
         ) : (
           <div className="h-full w-full bg-gradient-to-br from-muted to-accent" />
@@ -34,16 +34,16 @@ export function ProjectCard({ project }: { project: PublishedCard }) {
       </div>
       <div className="p-5">
         {project.location && (
-          <p className="text-xs uppercase tracking-wider text-muted-foreground">
+          <p className="text-sm text-muted-foreground">
             {project.location}
           </p>
         )}
-        <h3 className="mt-1 line-clamp-1 font-display text-xl">{project.title}</h3>
+        <h3 className="mt-1 line-clamp-1 font-display text-2xl font-semibold tracking-tight">{project.title}</h3>
         <div className="mt-3 flex items-center justify-between">
           {project.priceFrom ? (
-            <p className="font-display text-2xl text-primary">
+            <p className="font-display text-2xl font-semibold text-primary">
               {project.priceIsFrom && (
-                <span className="me-1.5 block font-sans text-xs uppercase tracking-wider text-muted-foreground">
+                <span className="me-1.5 block font-sans text-xs font-normal text-muted-foreground">
                   {from}
                 </span>
               )}
@@ -52,7 +52,7 @@ export function ProjectCard({ project }: { project: PublishedCard }) {
           ) : (
             <span />
           )}
-          <ArrowUpRight className="h-5 w-5 text-cta transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+          <span className="flex h-10 w-10 items-center justify-center rounded-full bg-secondary text-primary transition-colors group-hover:bg-cta group-hover:text-cta-foreground"><ArrowUpRight className="h-5 w-5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5 rtl:-scale-x-100" /></span>
         </div>
       </div>
     </Link>

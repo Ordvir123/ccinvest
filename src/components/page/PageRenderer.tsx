@@ -17,6 +17,8 @@ import {
 
 import { cn } from "@/lib/utils";
 import { responsiveProps } from "@/lib/responsive-image";
+import { StickyContactBar } from "@/components/page/StickyContactBar";
+import { useReveal } from "@/lib/use-reveal";
 
 import { getIcon, guessIcon } from "@/lib/page-icons";
 import { heroOverlayStyle } from "@/lib/hero-overlay";
@@ -137,7 +139,10 @@ function Hero({
   const ctaLabel = hasText(ctaResolved) ? ctaResolved : settings.defaultCtaLabel;
   const overlay = heroOverlayStyle(hero.overlay);
   return (
-    <section className="relative overflow-hidden bg-gradient-brand text-primary-foreground">
+    <section
+      id="page-hero"
+      className="relative isolate flex min-h-[88svh] flex-col overflow-hidden bg-gradient-brand text-primary-foreground md:min-h-[92vh]"
+    >
       {bg && (
         <>
           <img
@@ -146,53 +151,74 @@ function Hero({
             alt={hero.background?.alt ?? hero.title}
             decoding="async"
             fetchPriority="high"
-            className="absolute inset-0 h-full w-full object-cover"
+            className="animate-hero-zoom absolute inset-0 -z-10 h-full w-full object-cover"
           />
           {overlay ? (
-            <div className="absolute inset-0" style={overlay} />
+            <div className="absolute inset-0 -z-10" style={overlay} />
           ) : (
-            <>
-              {/* Dark overlay keeps hero text readable over any image. */}
-              <div className="absolute inset-0 bg-gradient-overlay" />
-              <div className="absolute inset-0 bg-[oklch(0.18_0.04_265/0.55)]" />
-            </>
+            <div className="absolute inset-0 -z-10 bg-[oklch(0.18_0.04_265/0.35)]" />
           )}
+          {/* Always darken the bottom, where the text sits. */}
+          <div className="absolute inset-x-0 bottom-0 -z-10 h-3/4 bg-gradient-to-t from-[oklch(0.16_0.04_265/0.85)] via-[oklch(0.16_0.04_265/0.35)] to-transparent" />
         </>
       )}
-      <Section className="relative z-10 flex min-h-[80vh] flex-col justify-center py-20 text-center md:py-24">
+
+      {/* Brand mark, top corner */}
+      <div className="relative mx-auto flex w-[calc(100%-2.5rem)] max-w-6xl pt-5 md:w-[calc(100%-5rem)] md:pt-7">
         <img
           src={settings.brandLogoUrl}
           alt={settings.brandName}
-          className="mx-auto mb-8 h-20 w-auto rounded-lg bg-card px-6 py-4 shadow-sm md:mb-10 md:h-28"
+          className="animate-rise h-12 w-auto rounded-xl bg-white/92 px-3 py-2 shadow-sm backdrop-blur md:h-16 md:px-4"
         />
+      </div>
+
+      {/* Title block, anchored to the bottom */}
+      <div className="relative mx-auto mt-auto w-[calc(100%-2.5rem)] max-w-6xl pb-10 pt-24 md:w-[calc(100%-5rem)] md:pb-16">
         {hasText(kicker) && (
-          <p className="eyebrow mb-5 text-xs text-primary-foreground/80">{kicker}</p>
+          <p
+            className="animate-rise mb-4 inline-flex rounded-full border border-white/25 bg-white/10 px-3 py-1 text-xs font-medium tracking-wide text-white/90 backdrop-blur"
+            style={{ animationDelay: "120ms" }}
+          >
+            {kicker}
+          </p>
         )}
-        <h1 className="mx-auto max-w-3xl text-balance text-4xl !text-primary-foreground [text-shadow:0_2px_12px_oklch(0.15_0.03_265/0.5)] sm:text-5xl md:text-7xl">
+        <h1
+          className="animate-rise max-w-4xl text-balance text-[2.75rem] leading-[0.98] !text-white [text-shadow:0_2px_24px_oklch(0.15_0.03_265/0.35)] sm:text-6xl md:text-8xl"
+          style={{ animationDelay: "220ms" }}
+        >
           {hero.title}
         </h1>
         {hasText(hero.subtitle) && (
-          <p className="mx-auto mt-7 max-w-2xl text-lg leading-relaxed text-primary-foreground/90 [text-shadow:0_1px_8px_oklch(0.15_0.03_265/0.45)]">
+          <p
+            className="animate-rise mt-5 max-w-xl text-lg leading-relaxed text-white/90 md:text-xl"
+            style={{ animationDelay: "340ms" }}
+          >
             {hero.subtitle}
           </p>
         )}
-        {hasText(hero.price) && (
-          <p className="mt-8 font-serif text-3xl !text-primary-foreground md:text-4xl">
-            <span dir="ltr" className="inline-block">{hero.price}</span>
-          </p>
-        )}
-        {hasText(ctaLabel) && (
-          <div className="mt-10">
-            <Button
-              size="lg"
-              className="bg-cta uppercase tracking-wider text-cta-foreground hover:bg-cta/90"
-              onClick={scrollToContact}
-            >
-              {ctaLabel}
-            </Button>
+        {(hasText(hero.price) || hasText(ctaLabel)) && (
+          <div
+            className="animate-rise mt-8 flex flex-wrap items-center gap-3"
+            style={{ animationDelay: "460ms" }}
+          >
+            {hasText(hero.price) && (
+              <span className="inline-flex h-12 items-center rounded-full bg-white/15 px-5 font-display text-xl font-semibold text-white backdrop-blur-md md:text-2xl">
+                <span dir="ltr">{hero.price}</span>
+              </span>
+            )}
+            {hasText(ctaLabel) && (
+              <Button
+                size="lg"
+                className="h-12 rounded-full bg-cta px-7 text-base font-medium text-cta-foreground shadow-lg shadow-black/20 transition-transform hover:-translate-y-0.5 hover:bg-cta/90"
+                onClick={scrollToContact}
+              >
+                {ctaLabel}
+              </Button>
+            )}
           </div>
         )}
-      </Section>
+      </div>
+      <StickyContactBar price={hero.price} ctaLabel={hasText(ctaLabel) ? ctaLabel : undefined} />
     </section>
   );
 }
@@ -202,7 +228,7 @@ function Stats({ stats, heading }: { stats: PageContent["stats"]; heading?: stri
   return (
     <section className="border-y border-border bg-secondary">
       {hasText(heading) && (
-        <h2 className="mx-auto max-w-6xl px-4 pt-10 text-center text-3xl text-ink md:text-4xl">
+        <h2 className="section-title mx-auto max-w-6xl px-5 pt-14 md:px-10">
           {heading}
         </h2>
       )}
@@ -236,7 +262,7 @@ function Stats({ stats, heading }: { stats: PageContent["stats"]; heading?: stri
                   <Icon className="h-5 w-5" aria-hidden />
                 </span>
               )}
-              <div className="font-serif text-3xl text-ink md:text-5xl">{s.value}</div>
+              <div className="font-display text-4xl font-semibold tracking-tight text-ink md:text-6xl">{s.value}</div>
               <div className="eyebrow mt-2 text-[0.65rem] text-steel">{s.label}</div>
             </div>
           );
@@ -280,7 +306,7 @@ function LocationBlock({
       <div className="grid items-center gap-10 md:grid-cols-2">
         <div>
           {hasText(properName) && <p className="eyebrow mb-2 text-sm text-primary">{properName}</p>}
-          <h2 className="text-3xl text-ink md:text-4xl">{heading ?? labels.location}</h2>
+          <h2 className="section-title">{heading ?? labels.location}</h2>
           {hasText(location.text) && (
             <p className="mt-5 text-lg leading-relaxed text-muted-foreground">{location.text}</p>
           )}
@@ -598,7 +624,7 @@ function Gallery({
 
   return (
     <Section>
-      <h2 className="mb-8 text-center text-3xl text-ink md:text-4xl">{heading ?? labels.gallery}</h2>
+      <h2 className="section-title mb-8">{heading ?? labels.gallery}</h2>
       {useGrid ? (
         <div className="mx-auto w-full max-w-5xl">
           <MediaLayout
@@ -619,25 +645,25 @@ function Gallery({
         <Carousel opts={{ loop: true }} className="mx-auto w-full max-w-4xl">
           <CarouselContent>
             {gallery.map((img, i) => (
-              <CarouselItem key={i} className="md:basis-2/3">
+              <CarouselItem key={i} className="basis-[86%] md:basis-2/3">
                 <button
                   type="button"
                   onClick={() => openLightbox(i)}
-                  className="block w-full overflow-hidden rounded-lg border border-border"
+                  className="block w-full overflow-hidden rounded-2xl"
                 >
                   <img
                     src={img.url}
                     {...responsiveProps(img.url, "(min-width: 768px) 600px, 100vw")}
                     alt={img.alt ?? `Image ${i + 1}`}
                     loading="lazy"
-                    className="aspect-[4/3] w-full object-cover transition-transform duration-300 hover:scale-[1.03]"
+                    className="aspect-[4/3] w-full object-cover transition-transform duration-700 hover:scale-[1.04]"
                   />
                 </button>
               </CarouselItem>
             ))}
           </CarouselContent>
-          <CarouselPrevious className="left-2 bg-background/90 md:-left-12" />
-          <CarouselNext className="right-2 bg-background/90 md:-right-12" />
+          <CarouselPrevious className="left-2 hidden bg-background/90 md:-left-12 md:flex" />
+          <CarouselNext className="right-2 hidden bg-background/90 md:-right-12 md:flex" />
         </Carousel>
       )}
 
@@ -687,14 +713,14 @@ function GalleryCarousel({
               <button
                 type="button"
                 onClick={() => onImageClick(i)}
-                className="block w-full overflow-hidden rounded-lg border border-border"
+                className="block w-full overflow-hidden rounded-2xl"
               >
                 <img
                   src={img.url}
                   {...responsiveProps(img.url, "(min-width: 768px) 900px, 100vw")}
                   alt={img.alt ?? `Image ${i + 1}`}
                   loading="lazy"
-                  className="aspect-[4/3] w-full object-cover transition-transform duration-300 hover:scale-[1.03]"
+                  className="aspect-[4/3] w-full object-cover transition-transform duration-700 hover:scale-[1.04]"
                 />
               </button>
             </CarouselItem>
@@ -702,8 +728,8 @@ function GalleryCarousel({
         </CarouselContent>
         {showArrows && (
           <>
-            <CarouselPrevious className="left-2 bg-background/90 md:-left-12" />
-            <CarouselNext className="right-2 bg-background/90 md:-right-12" />
+            <CarouselPrevious className="left-2 hidden bg-background/90 md:-left-12 md:flex" />
+            <CarouselNext className="right-2 hidden bg-background/90 md:-right-12 md:flex" />
           </>
         )}
       </Carousel>
@@ -761,7 +787,7 @@ function UnitCard({
   const plan = unit.attachment;
 
   return (
-    <Card className="flex flex-col overflow-hidden">
+    <Card className="flex w-[86%] shrink-0 snap-start flex-col overflow-hidden rounded-3xl border-0 shadow-[0_18px_50px_-28px_oklch(0.2_0.05_265/0.35)] md:w-auto">
       {unit.image?.url && (
         <SafeImg
           src={unit.image.url}
@@ -771,9 +797,9 @@ function UnitCard({
         />
       )}
       <CardContent className="flex flex-1 flex-col p-6">
-        <h3 className="font-serif text-2xl text-ink">{title}</h3>
+        <h3 className="font-display text-2xl text-ink">{title}</h3>
         {hasText(unit.price) && (
-          <p className="mt-1 text-lg font-semibold text-primary">
+          <p className="mt-1 font-display text-xl font-semibold text-primary">
             <span dir="ltr" className="inline-block">{unit.price}</span>
           </p>
         )}
@@ -785,7 +811,7 @@ function UnitCard({
                 <div
                   key={ri}
                   className={cn(
-                    "flex min-w-0 justify-between gap-2 border-b border-border/60 pb-1",
+                    "flex min-w-0 justify-between gap-2 border-b border-border/50 pb-1.5",
                     // Long free-text values (e.g. "Sud/Ouest/Est, sur rue") take the full row.
                     String(r.value ?? "").length > 12 && "col-span-2",
                   )}
@@ -835,14 +861,14 @@ function UnitCard({
           <button
             type="button"
             onClick={() => setPlanOpen(true)}
-            className="mt-4 block overflow-hidden rounded-md border border-border"
+            className="group mt-auto block overflow-hidden rounded-2xl border border-border bg-white [margin-top:max(1rem,auto)]"
           >
             <SafeImg
               src={plan.url}
               alt={labels.floorPlan}
               loading="lazy"
               onFail={() => setPlanFailed(true)}
-              className="aspect-video w-full object-cover transition-transform duration-300 hover:scale-[1.03]"
+              className="aspect-video w-full object-contain p-2 transition-transform duration-500 group-hover:scale-[1.03]"
             />
             <span className="block bg-secondary px-3 py-1.5 text-xs font-medium text-muted-foreground">
               {labels.floorPlan}
@@ -854,7 +880,7 @@ function UnitCard({
             href={plan.url}
             target="_blank"
             rel="noopener noreferrer"
-            className="mt-4 flex items-center gap-3 rounded-md border border-border bg-secondary px-4 py-3 text-sm font-medium text-foreground transition-colors hover:bg-secondary/70"
+            className="mt-4 flex items-center gap-3 rounded-2xl border border-border bg-secondary px-4 py-3 text-sm font-medium text-foreground transition-colors hover:bg-secondary/70"
           >
             <FileText className="h-5 w-5 shrink-0 text-primary" aria-hidden />
             {labels.floorPlan}
@@ -897,8 +923,9 @@ function Units({
   return (
     <section className="bg-secondary">
       <Section>
-        <h2 className="mb-10 text-center text-3xl text-ink md:text-4xl">{heading ?? labels.units}</h2>
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <h2 className="section-title mb-8">{heading ?? labels.units}</h2>
+        {/* Phone: swipe between apartments (next card peeks in). Desktop: grid. */}
+        <div className="-mx-5 flex snap-x snap-mandatory gap-4 overflow-x-auto scroll-px-5 px-5 pb-4 [scrollbar-width:none] md:mx-0 md:grid md:grid-cols-2 md:gap-6 md:overflow-visible md:px-0 md:pb-0 lg:grid-cols-3 [&::-webkit-scrollbar]:hidden">
           {units!.map((u, i) => (
             <UnitCard
               key={i}
@@ -974,7 +1001,7 @@ function ApartmentSection({
             ? heading
             : (ABOUT_APARTMENT_HEADING[lang] ?? ABOUT_APARTMENT_HEADING.fr);
           return (
-            <h2 className="mb-10 flex items-center justify-center gap-3 text-center text-3xl text-ink md:text-4xl">
+            <h2 className="section-title mb-8 flex items-center gap-3">
               {HeadingIcon && (
                 <HeadingIcon
                   className="h-7 w-7 shrink-0 text-primary"
@@ -986,25 +1013,26 @@ function ApartmentSection({
             </h2>
           );
         })()}
-        <Card className="overflow-hidden">
-          <div className={`flex flex-col gap-0 ${rowDir} md:items-stretch`}>
+        <Card className="overflow-hidden rounded-3xl border-0 shadow-[0_24px_60px_-30px_oklch(0.2_0.05_265/0.35)]">
+          {/* Mobile: photo first, then details. Desktop: side by side. */}
+          <div className={`flex flex-col-reverse gap-0 ${rowDir} md:items-stretch`}>
             <div className="flex flex-col p-6 md:w-1/2 md:p-10">
-              <h3 className="font-serif text-3xl text-ink md:text-4xl">{title}</h3>
+              <h3 className="font-display text-3xl text-ink md:text-4xl">{title}</h3>
               {hasText(apartment.price) && (
-                <p className="mt-2 text-xl font-semibold text-primary">
+                <p className="mt-2 font-display text-2xl font-semibold text-primary">
                   <span dir="ltr" className="inline-block">{apartment.price}</span>
                 </p>
               )}
               {visibleRows.length > 0 && (
-                <dl className="mt-6 grid grid-cols-2 gap-x-6 gap-y-4">
+                <dl className="mt-6 grid grid-cols-2 gap-2.5">
                   {visibleRows.map((r, ri) => {
                     const RowIcon = getIcon(r.icon);
                     return (
                       <div
                         key={ri}
-                        className="flex flex-col gap-0.5 border-b border-border/60 pb-2"
+                        className="flex flex-col gap-1 rounded-2xl bg-secondary px-4 py-3"
                       >
-                        <dt className="flex items-center gap-1.5 text-xs uppercase tracking-wide text-muted-foreground">
+                        <dt className="flex items-center gap-1.5 text-xs text-muted-foreground">
                           {RowIcon && (
                             <RowIcon
                               className="h-4 w-4 shrink-0 text-primary"
@@ -1014,7 +1042,7 @@ function ApartmentSection({
                           )}
                           {r.label}
                         </dt>
-                        <dd className="text-base font-medium text-foreground">{r.value}</dd>
+                        <dd className="text-base font-semibold text-foreground">{r.value}</dd>
                       </div>
                     );
                   })}
@@ -1054,14 +1082,14 @@ function ApartmentSection({
                 <button
                   type="button"
                   onClick={() => setPlanOpen(true)}
-                  className="mt-6 block overflow-hidden rounded-md border border-border"
+                  className="group mt-6 block overflow-hidden rounded-2xl border border-border bg-white"
                 >
                   <SafeImg
                     src={plan.url}
                     alt={labels.floorPlan}
                     loading="lazy"
                     onFail={() => setPlanFailed(true)}
-                    className="aspect-video w-full object-cover transition-transform duration-300 hover:scale-[1.03]"
+                    className="aspect-video w-full object-contain p-2 transition-transform duration-500 group-hover:scale-[1.03]"
                   />
                   <span className="block bg-secondary px-3 py-1.5 text-xs font-medium text-muted-foreground">
                     {labels.floorPlan}
@@ -1073,7 +1101,7 @@ function ApartmentSection({
                   href={plan.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="mt-6 flex items-center gap-3 rounded-md border border-border bg-background px-4 py-3 text-sm font-medium text-foreground transition-colors hover:bg-secondary/70"
+                  className="mt-6 flex items-center gap-3 rounded-2xl border border-border bg-background px-4 py-3 text-sm font-medium text-foreground transition-colors hover:bg-secondary/70"
                 >
                   <FileText className="h-5 w-5 shrink-0 text-primary" aria-hidden />
                   {labels.floorPlan}
@@ -1081,12 +1109,13 @@ function ApartmentSection({
               )}
             </div>
             {apartment.image?.url && (
-              <div className="md:w-1/2">
+              <div className="overflow-hidden md:w-1/2">
                 <SafeImg
                   src={apartment.image.url}
                   alt={apartment.image.alt ?? title}
                   loading="lazy"
-                  className="h-64 w-full object-cover md:h-full"
+                  data-reveal
+                  className="aspect-[4/3] w-full object-cover md:aspect-auto md:h-full"
                 />
               </div>
             )}
@@ -1122,7 +1151,7 @@ function Videos({
   if (!hasItems(videos)) return null;
   return (
     <Section>
-      <h2 className="mb-10 text-center text-3xl text-ink md:text-4xl">{heading ?? labels.videos}</h2>
+      <h2 className="section-title mb-8">{heading ?? labels.videos}</h2>
       <div className="mx-auto flex max-w-5xl flex-wrap justify-center gap-8">
         {videos!.map((v, i) => (
           <figure key={i} className="w-full max-w-2xl md:w-[calc(50%-1rem)]">
@@ -1166,7 +1195,7 @@ function WideImages({
 
 
   const title = hasText(heading) ? (
-    <h2 className="mx-auto max-w-6xl px-4 pb-8 pt-12 text-center text-3xl text-ink md:text-4xl">
+    <h2 className="section-title mx-auto max-w-6xl px-5 pb-8 pt-14 md:px-10">
       {heading}
     </h2>
   ) : null;
@@ -1182,6 +1211,7 @@ function WideImages({
             {...responsiveProps(img.url)}
             alt={img.alt ?? ""}
             loading="lazy"
+            data-reveal="bleed"
             className="block w-full object-cover"
           />
         ))}
@@ -1216,8 +1246,8 @@ function About({ about, heading }: { about?: PageContent["about"]; heading?: str
   const overlay = bg ? heroOverlayStyle(about.overlay) : null;
   const inner = (
     <Section className={bg ? "relative z-10" : undefined}>
-      <div className="mx-auto max-w-3xl text-center">
-        {hasText(title) && <h2 className="text-3xl text-ink md:text-4xl">{title}</h2>}
+      <div className="max-w-3xl">
+        {hasText(title) && <h2 className="section-title">{title}</h2>}
         {paragraphs.length > 0 && (
           <div className="mt-6 space-y-4">
             {paragraphs.map((p, i) => (
@@ -1229,7 +1259,7 @@ function About({ about, heading }: { about?: PageContent["about"]; heading?: str
         )}
       </div>
       {features.length > 0 && (
-        <ul className="mx-auto mt-10 grid max-w-4xl gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <ul className="mt-10 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {features.map((f, i) => {
             const FIcon =
               getIcon(about.feature_icons?.[i]) ?? getIcon(guessIcon(f, "sparkles"));
@@ -1237,7 +1267,7 @@ function About({ about, heading }: { about?: PageContent["about"]; heading?: str
             return (
               <li
                 key={i}
-                className="flex items-center gap-3 rounded-lg border border-border bg-card p-4 text-start"
+                className="flex items-center gap-3 rounded-2xl bg-secondary p-4 text-start"
               >
                 {FIcon && (
                   <span
@@ -1346,6 +1376,7 @@ export function PageRenderer({
   onSectionSelect,
 }: PageRendererProps) {
   const labels = LABELS[lang] ?? LABELS.fr;
+  useReveal([content]);
   const brandStyle = hasText(settings.primaryColor)
     ? ({
         "--primary": settings.primaryColor,

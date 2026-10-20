@@ -37,8 +37,8 @@ function ProjectsPage() {
   return (
     <div className="flex min-h-screen flex-col">
       <SiteHeader />
-      <main className="container mx-auto flex-1 px-4 py-16">
-        <h1 className="mb-2 font-display text-4xl md:text-5xl">
+      <main className="container mx-auto flex-1 px-5 py-10 md:px-10 md:py-16">
+        <h1 className="animate-rise mb-2 font-display text-[2.6rem] leading-[1.02] md:text-6xl">
           {t("public.projects.title")}
         </h1>
         <p className="mb-10 text-muted-foreground">
@@ -48,7 +48,7 @@ function ProjectsPage() {
         {isLoading ? (
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {[0, 1, 2].map((i) => (
-              <Skeleton key={i} className="h-80 w-full" />
+              <Skeleton key={i} className="h-80 w-full rounded-3xl" />
             ))}
           </div>
         ) : !data || data.length === 0 ? (
@@ -57,8 +57,10 @@ function ProjectsPage() {
           </p>
         ) : (
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {data.map((p) => (
-              <ProjectCard key={p.slug} project={p} />
+            {data.map((p, i) => (
+              <div key={p.slug} className="animate-rise" style={{ animationDelay: `${Math.min(i, 6) * 80}ms` }}>
+                <ProjectCard project={p} />
+              </div>
             ))}
           </div>
         )}

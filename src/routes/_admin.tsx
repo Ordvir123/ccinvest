@@ -53,7 +53,7 @@ function AdminLayout() {
     <div className="flex min-h-screen w-full bg-background">
       <aside className="hidden w-64 shrink-0 flex-col bg-sidebar text-sidebar-foreground md:flex">
         <div className="px-6 py-6">
-          <span className="font-serif text-xl font-semibold">{t("app.name")}</span>
+          <span className="font-display text-xl font-semibold">{t("app.name")}</span>
         </div>
         <nav className="flex-1 space-y-1 px-3">
           {navItems.map((item) => (
