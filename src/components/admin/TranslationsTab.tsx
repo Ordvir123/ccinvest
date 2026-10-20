@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { Sparkles, Save, Lock, Unlock, AlertTriangle, Loader2 } from "lucide-react";
+import { Save, Lock, Unlock, AlertTriangle } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -12,7 +12,6 @@ import {
   setPath,
   sourceHash,
   fetchTranslationRow,
-  resolveTranslation,
   saveTranslation,
 } from "@/lib/translate";
 import type { PageContent, ReadingLang } from "@/types/page";
@@ -37,7 +36,6 @@ export function TranslationsTab({
   const [rowHash, setRowHash] = useState<string | null>(null);
   const [currentHash, setCurrentHash] = useState<string>("");
   const [loading, setLoading] = useState(false);
-  const [translating, setTranslating] = useState(false);
   const [saving, setSaving] = useState(false);
 
   const fields = useMemo(() => listTranslatableFields(source), [source]);
@@ -76,10 +74,12 @@ export function TranslationsTab({
     };
   }, [pageId, lang, source]);
 
-  const isStale = !!rowHash && !!currentHash && rowHash !== currentHash;
+  // Rows written by Claude carry source_hash "claude" (it can't compute the
+  // browser-side hash), so only real hashes can be judged stale.
+  const isStale =
+    !!rowHash && /^[0-9a-f]{64}$/.test(rowHash) && !!currentHash && rowHash !== currentHash;
 
-  const setField = (path: string, value: string) =>
-    setWorking((w) => setPath(w, path, value));
+  const setField = (path: string, value: string) => setWorking((w) => setPath(w, path, value));
 
   const toggleLock = (path: string) =>
     setLocked((prev) => {
@@ -88,28 +88,6 @@ export function TranslationsTab({
       else next.add(path);
       return next;
     });
-
-  const onAutoTranslate = async () => {
-    if (!pageId) return;
-    setTranslating(true);
-    try {
-      // Force a fresh translation; locked fields are preserved server-side.
-      const content = await resolveTranslation(
-        pageId,
-        source,
-        sourceLang as ReadingLang,
-        lang,
-        { force: true },
-      );
-      setWorking({ ...structuredClone(source), ...content });
-      setRowHash(currentHash);
-      toast.success("Auto-translated. Locked fields were preserved.");
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Translation failed");
-    } finally {
-      setTranslating(false);
-    }
-  };
 
   const onSave = async () => {
     if (!pageId) return;
@@ -151,10 +129,6 @@ export function TranslationsTab({
           ))}
         </div>
         <div className="flex gap-2">
-          <Button type="button" size="sm" variant="outline" onClick={onAutoTranslate} disabled={translating}>
-            {translating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-            Auto-translate
-          </Button>
           <Button type="button" size="sm" onClick={onSave} disabled={saving}>
             <Save className="h-4 w-4" /> {saving ? "Saving…" : "Save translation"}
           </Button>
@@ -164,7 +138,8 @@ export function TranslationsTab({
       {isStale && (
         <div className="flex items-center gap-2 rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-sm text-amber-700 dark:text-amber-400">
           <AlertTriangle className="h-4 w-4 shrink-0" />
-          Source changed — translations may be outdated. Re-run Auto-translate (locked fields stay).
+          Source changed — translations may be outdated. Ask Claude: “update the translations of
+          this page”.
         </div>
       )}
 
@@ -230,8 +205,10 @@ export function TranslationsTab({
           })}
 
           <p className="text-xs text-muted-foreground">
-            <Badge variant="secondary" className="mr-1">Locked</Badge>
-            fields are protected — Auto-translate will not overwrite them.
+            <Badge variant="secondary" className="mr-1">
+              Locked
+            </Badge>
+            fields are marked as hand-edited — Claude will keep them when it updates translations.
           </p>
         </div>
       )}
