@@ -69,7 +69,7 @@ export function SiteFooter({ className }: { className?: string } = {}) {
             className="mt-1 block text-sm text-primary-foreground/80 hover:text-cta"
             dir="ltr"
           >
-            WhatsApp +972 50-722-0426
+            WhatsApp +972 58-417-2229
           </a>
         </div>
       </div>
