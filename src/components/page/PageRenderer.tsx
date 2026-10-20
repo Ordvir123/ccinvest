@@ -59,6 +59,7 @@ import {
   type Video,
 } from "@/types/page";
 import { ContactForm } from "@/components/page/ContactForm";
+import { Lightbox } from "@/components/page/Lightbox";
 import { DEFAULT_TEMPLATE_SETTINGS, type TemplateSettings } from "@/lib/template-settings";
 
 /** Section labels translated by the page's reading language. */
@@ -640,16 +641,13 @@ function Gallery({
         </Carousel>
       )}
 
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-4xl border-none bg-transparent p-0 shadow-none">
-          <DialogTitle className="sr-only">Image</DialogTitle>
-          <img
-            src={gallery[active]?.url}
-            alt={gallery[active]?.alt ?? `Image ${active + 1}`}
-            className="max-h-[85vh] w-full rounded-lg object-contain"
-          />
-        </DialogContent>
-      </Dialog>
+      <Lightbox
+        images={gallery}
+        index={active}
+        open={open}
+        onOpenChange={setOpen}
+        onIndexChange={setActive}
+      />
     </Section>
   );
 }
