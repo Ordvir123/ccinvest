@@ -8,13 +8,15 @@ import { SiteFooter } from "@/components/site/SiteFooter";
 import { WhatsAppButton } from "@/components/site/WhatsAppButton";
 import { useTranslation } from "react-i18next";
 import { fetchPublishedPage } from "@/lib/pages";
-import { fetchTemplateSettings } from "@/lib/template-settings";
+import { fetchTemplateSettings, type TemplateSettings } from "@/lib/template-settings";
 import { resolveTranslation } from "@/lib/translate";
 import {
   isRtlReading,
   seoForLang,
   hasText,
   READING_LANGS,
+  type Page,
+  type PageContent,
   type ReadingLang,
 } from "@/types/page";
 
@@ -40,6 +42,11 @@ type HeadData = {
   ogImage?: string;
   canonical: string;
   pageUrl: string;
+  /** Page, settings and (when ?lang= asks for it) translated content, so the
+   *  first HTML response already contains the full page. */
+  page?: Page;
+  settings?: TemplateSettings;
+  translated?: PageContent;
 };
 
 export const Route = createFileRoute("/$slug")({
@@ -54,7 +61,10 @@ export const Route = createFileRoute("/$slug")({
   // per-language meta tags even though they don't run JS. Humans still get the
   // full interactive SPA that hydrates below.
   loader: async ({ params, deps }): Promise<HeadData> => {
-    const page = await fetchPublishedPage(params.slug);
+    const [page, settings] = await Promise.all([
+      fetchPublishedPage(params.slug),
+      fetchTemplateSettings(),
+    ]);
     if (!page) {
       return {
         found: false,
@@ -92,7 +102,12 @@ export const Route = createFileRoute("/$slug")({
     }
 
     const suffix = lang !== source ? `?lang=${lang}` : "";
+    const translated =
+      lang !== source ? await resolveTranslation(page.id, page.content, source, lang) : undefined;
     return {
+      page,
+      settings,
+      translated,
       found: true,
       slug: params.slug,
       lang,
@@ -169,14 +184,21 @@ function ProjectPage() {
   const search = Route.useSearch();
   const [lang, setLang] = useState<ReadingLang | null>(search.lang ?? null);
 
+  // Server-rendered: the loader already fetched everything; the queries start
+  // from that data and only refetch on the client if it is missing.
+  const loaded = Route.useLoaderData();
   const pageQuery = useQuery({
     queryKey: ["public-page", slug],
     queryFn: () => fetchPublishedPage(slug),
+    // null = the loader confirmed there is no such page (render the 404 directly).
+    initialData: loaded ? (loaded.found ? loaded.page : null) : undefined,
+    staleTime: 60 * 1000,
   });
 
   const settingsQuery = useQuery({
     queryKey: ["template-settings"],
     queryFn: fetchTemplateSettings,
+    initialData: loaded?.settings,
     staleTime: 5 * 60 * 1000,
   });
 
@@ -190,6 +212,7 @@ function ProjectPage() {
   const translationQuery = useQuery({
     queryKey: ["page-translation", page?.id, activeLang],
     queryFn: () => resolveTranslation(page!.id, page!.content, sourceLang, activeLang),
+    initialData: activeLang === loaded?.lang ? loaded?.translated : undefined,
     enabled: needsTranslation,
     staleTime: Infinity,
     retry: false,
@@ -247,11 +270,7 @@ function ProjectPage() {
 
   return (
     <>
-      <ReadingLanguageSwitcher
-        value={activeLang}
-        onChange={setLang}
-        category={page.content.category === "project" ? "project" : "apartment"}
-      />
+      <ReadingLanguageSwitcher value={activeLang} onChange={setLang} />
       <PageRenderer
         content={content}
         interactive
