@@ -99,16 +99,38 @@
   },
   "media": {
     "title": "Médias",
-    "intro": "Déposez ici toutes les photos et fichiers d'une page, dans un dossier au nom de son slug. Ensuite, dites à Claude que les photos de la page sont en ligne.",
-    "folder": "Dossier (slug de la page)",
-    "needFolder": "Choisissez d'abord un dossier",
+    "intro": "Déposez ici les photos et fichiers de chaque page. Ensuite, dites à Claude que les photos de la page sont prêtes : il les place lui-même.",
+    "uploadTo": "Envoyer vers la page",
+    "choosePage": "Choisir une page…",
+    "newPage": "+ Nouvelle page (pas encore créée)",
+    "newPageHelp": "Nom court, par ex. rue-dizengoff",
+    "newPageHint": "Les photos attendront dans le dossier",
+    "needFolder": "Choisissez d'abord une page",
     "drop": "Glissez ici, cliquez pour choisir, ou collez (Ctrl+V)",
     "uploaded": "{{count}} fichiers envoyés",
     "someFailed": "{{count}} fichiers n'ont pas été envoyés",
-    "inFolder": "{{count}} fichiers dans le dossier",
+    "library": "Tous les médias ({{count}})",
+    "allPages": "Toutes les pages",
+    "filtered": "{{count}} page(s) sélectionnée(s)",
+    "unassigned": "En attente d'une page",
+    "clearFilter": "Effacer le filtre",
+    "empty": "Aucun fichier pour l'instant.",
+    "files": "{{count}} fichiers",
+    "editPage": "Modifier la page",
+    "waitingForPage": "En attente de la page",
     "copy": "Copier le lien",
     "copied": "Lien copié",
     "delete": "Supprimer",
-    "confirmDelete": "Supprimer ce fichier ?"
+    "confirmDelete": "Supprimer ce fichier ?",
+    "kind": {
+      "plan": "Plan",
+      "document": "PDF",
+      "photo": "Photo"
+    },
+    "status": {
+      "draft": "brouillon",
+      "archived": "archivée",
+      "published": "publiée"
+    }
   }
 }

@@ -99,16 +99,38 @@
   },
   "media": {
     "title": "Media",
-    "intro": "Upload all of a page's photos and files here, into a folder named after its slug. Then tell Claude the page's photos are uploaded.",
-    "folder": "Folder (page slug)",
-    "needFolder": "Pick a folder first",
+    "intro": "Upload each page's photos and files here. Then tell Claude the page's photos are ready — it places them itself.",
+    "uploadTo": "Upload to page",
+    "choosePage": "Choose a page…",
+    "newPage": "+ New page (not created yet)",
+    "newPageHelp": "Short name, e.g. rue-dizengoff",
+    "newPageHint": "Photos will wait in folder",
+    "needFolder": "Choose a page first",
     "drop": "Drag here, click to choose, or paste (Ctrl+V)",
     "uploaded": "{{count}} files uploaded",
     "someFailed": "{{count}} files failed",
-    "inFolder": "{{count}} files in folder",
+    "library": "All media ({{count}})",
+    "allPages": "All pages",
+    "filtered": "{{count}} page(s) selected",
+    "unassigned": "Waiting for a page",
+    "clearFilter": "Clear filter",
+    "empty": "No files yet.",
+    "files": "{{count}} files",
+    "editPage": "Edit page",
+    "waitingForPage": "Waiting for page",
     "copy": "Copy link",
     "copied": "Link copied",
     "delete": "Delete",
-    "confirmDelete": "Delete this file?"
+    "confirmDelete": "Delete this file?",
+    "kind": {
+      "plan": "Plan",
+      "document": "PDF",
+      "photo": "Photo"
+    },
+    "status": {
+      "draft": "draft",
+      "archived": "archived",
+      "published": "published"
+    }
   }
 }

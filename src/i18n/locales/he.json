@@ -99,16 +99,38 @@
   },
   "media": {
     "title": "מדיה",
-    "intro": "מעלים לכאן את כל התמונות והקבצים של דף אחד לתיקייה בשם ה-slug שלו. אחרי ההעלאה כותבים ל-Claude שהתמונות של הדף הועלו, והוא ישבץ אותן.",
-    "folder": "תיקייה (slug של הדף)",
-    "needFolder": "קודם בוחרים תיקייה",
+    "intro": "מעלים לכאן את התמונות והקבצים של כל דף. אחרי ההעלאה כותבים ל-Claude שהתמונות של הדף מוכנות, והוא ישבץ אותן לבד.",
+    "uploadTo": "להעלות לדף",
+    "choosePage": "בחרו דף…",
+    "newPage": "+ דף חדש שעוד לא נבנה",
+    "newPageHelp": "שם קצר באנגלית, למשל rue-dizengoff",
+    "newPageHint": "התמונות יחכו בתיקייה",
+    "needFolder": "קודם בוחרים דף",
     "drop": "גוררים לכאן, לוחצים לבחירה, או מדביקים (Ctrl+V)",
     "uploaded": "הועלו {{count}} קבצים",
     "someFailed": "{{count}} קבצים לא הועלו",
-    "inFolder": "{{count}} קבצים בתיקייה",
+    "library": "כל המדיה ({{count}})",
+    "allPages": "כל הדפים",
+    "filtered": "{{count}} דפים נבחרו",
+    "unassigned": "ממתינים לדף",
+    "clearFilter": "ניקוי סינון",
+    "empty": "אין עדיין קבצים.",
+    "files": "{{count}} קבצים",
+    "editPage": "עריכת הדף",
+    "waitingForPage": "ממתין לדף",
     "copy": "העתקת קישור",
     "copied": "הקישור הועתק",
     "delete": "מחיקה",
-    "confirmDelete": "למחוק את הקובץ?"
+    "confirmDelete": "למחוק את הקובץ?",
+    "kind": {
+      "plan": "תוכנית",
+      "document": "PDF",
+      "photo": "תמונה"
+    },
+    "status": {
+      "draft": "טיוטה",
+      "archived": "בארכיון",
+      "published": "פורסם"
+    }
   }
 }

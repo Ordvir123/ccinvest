@@ -13,6 +13,7 @@ import {
   Loader2,
   Check,
   CircleDot,
+  Images,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -260,6 +261,13 @@ export function PageEditor({
           />
         </div>
         <div className="flex items-center gap-2">
+          {pageId && (
+            <Button type="button" variant="outline" size="sm" asChild>
+              <a href={`/admin/media?page=${pageId}`} title="Upload and manage this page's photos">
+                <Images className="h-4 w-4" /> Médias
+              </a>
+            </Button>
+          )}
           <Button
             type="button"
             variant="outline"
