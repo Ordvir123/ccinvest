@@ -7,7 +7,7 @@ import type { PageEditorState } from "@/components/admin/editor/usePageEditorSta
 
 /** Default (built-in) heading shown on the public page, per section + locale. */
 const DEFAULT_HEADINGS: Partial<Record<SectionKey, Record<ReadingLang, string>>> = {
-  gallery: { fr: "Galerie", he: "גלריה", en: "Gallery" },
+  gallery: { fr: "Galerie de photos", he: "גלריה", en: "Gallery" },
   videos: { fr: "Vidéos", he: "סרטונים", en: "Videos" },
   location: { fr: "Emplacement idéal", he: "מיקום אידיאלי", en: "Ideal location" },
   listing: { fr: "Appartements disponibles", he: "דירות זמינות", en: "Available apartments" },

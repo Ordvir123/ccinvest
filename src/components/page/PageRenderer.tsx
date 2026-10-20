@@ -65,7 +65,7 @@ import { DEFAULT_TEMPLATE_SETTINGS, type TemplateSettings } from "@/lib/template
 /** Section labels translated by the page's reading language. */
 const LABELS: Record<ReadingLang, Record<string, string>> = {
   fr: {
-    gallery: "Galerie",
+    gallery: "Galerie de photos",
     units: "Appartements disponibles",
     videos: "Vidéos",
     location: "Emplacement idéal",
