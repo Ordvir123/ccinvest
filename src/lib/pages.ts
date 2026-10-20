@@ -2,7 +2,6 @@ import { supabase, isSupabaseConfigured } from "@/integrations/supabase/client";
 import { uploadMedia, deleteMedia } from "@/lib/media";
 import { TEMPLATE_SETTINGS_SLUG } from "@/lib/template-settings";
 import { compressImage } from "@/lib/image-compress";
-import { SEED_PAGES } from "@/lib/seed/montefiore-allenby";
 import {
   READING_LANGS,
   normalizeSeo,
@@ -18,10 +17,9 @@ import {
 } from "@/types/page";
 
 
-/** Fetch a published page by slug (anon-readable). Falls back to local seed. */
+/** Fetch a published page by slug (anon-readable). Null when missing or on error. */
 export async function fetchPublishedPage(slug: string): Promise<Page | null> {
-  // Env not wired yet — use the local seed so the renderer is demonstrable.
-  if (!isSupabaseConfigured) return SEED_PAGES[slug] ?? null;
+  if (!isSupabaseConfigured) return null;
   try {
     const { data, error } = await supabase
       .from("pages")
@@ -29,14 +27,13 @@ export async function fetchPublishedPage(slug: string): Promise<Page | null> {
       .eq("slug", slug)
       .eq("status", "published")
       .maybeSingle();
-
     if (error) throw error;
-    if (data) return data as Page;
+    if (!data || data.slug === TEMPLATE_SETTINGS_SLUG) return null;
+    return data as Page;
   } catch (err) {
-    // Network/env not configured yet — fall through to seed.
-    console.warn("[pages] falling back to local seed:", err);
+    console.warn("[pages] fetchPublishedPage failed:", err);
+    return null;
   }
-  return SEED_PAGES[slug] ?? null;
 }
 
 /** Look up a translation; returns null when none exists (Slice 4 fills these). */
@@ -632,13 +629,7 @@ export async function listPublishedPages(category?: PageCategory): Promise<Publi
   const byCategory = (cards: PublishedCard[]) =>
     category ? cards.filter((c) => c.category === category) : cards;
 
-  if (!isSupabaseConfigured) {
-    return byCategory(
-      Object.values(SEED_PAGES)
-        .filter((p) => p.status === "published")
-        .map(toCard),
-    );
-  }
+  if (!isSupabaseConfigured) return [];
   try {
     const { data, error } = await supabase
       .from("pages")
@@ -652,12 +643,8 @@ export async function listPublishedPages(category?: PageCategory): Promise<Publi
         .map((row) => toCard(row as Page)),
     );
   } catch (err) {
-    console.warn("[pages] published list falling back to seed:", err);
-    return byCategory(
-      Object.values(SEED_PAGES)
-        .filter((p) => p.status === "published")
-        .map(toCard),
-    );
+    console.warn("[pages] published list failed:", err);
+    return [];
   }
 }
 

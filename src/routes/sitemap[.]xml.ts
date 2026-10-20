@@ -17,7 +17,7 @@ export const Route = createFileRoute("/sitemap.xml")({
         if (supaUrl && supaKey) {
           try {
             const resp = await fetch(
-              `${supaUrl}/rest/v1/pages?status=eq.published&select=slug,source_lang`,
+              `${supaUrl}/rest/v1/pages?status=eq.published&select=slug,source_lang,updated_at`,
               { headers: { apikey: supaKey, Authorization: `Bearer ${supaKey}` } },
             );
             if (resp.ok) slugs = await resp.json();
@@ -33,7 +33,7 @@ export const Route = createFileRoute("/sitemap.xml")({
           `  <url><loc>${BASE_URL}/about</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>`,
         ];
 
-        for (const { slug, source_lang } of slugs) {
+        for (const { slug, source_lang } of slugs.filter((r) => !r.slug.startsWith("__"))) {
           const source = source_lang || "fr";
           const alternates = LANGS.map((l) => {
             const href =

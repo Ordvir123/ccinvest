@@ -19,6 +19,7 @@ import {
 } from "@/types/page";
 
 import { SITE_ORIGIN, absoluteUrl } from "@/lib/site";
+import { isManagedImage } from "@/lib/responsive-image";
 const OG_LOCALE: Record<ReadingLang, string> = {
   fr: "fr_FR",
   he: "he_IL",
@@ -29,6 +30,9 @@ type HeadData = {
   found: boolean;
   slug: string;
   lang: ReadingLang;
+  source?: ReadingLang;
+  price?: string;
+  category?: string;
   title?: string;
   description?: string;
   ogTitle?: string;
@@ -73,17 +77,28 @@ export const Route = createFileRoute("/$slug")({
     const description = pick("meta_description") ?? page.content.hero?.subtitle;
     const ogTitle = pick("og_title") ?? title;
     const ogDescription = pick("og_description") ?? description;
+    // Share image: explicit og_image, else the hero photo (what the page opens on),
+    // else the first gallery/apartment/unit image. Managed images use the 960px
+    // copy so WhatsApp/Facebook previews load fast (WhatsApp skips images > ~300KB).
     let ogImage =
       pick("og_image") ??
+      (hasText(page.content.hero?.background?.url) ? page.content.hero.background!.url : undefined) ??
       page.content.gallery?.find((m) => hasText(m.url))?.url ??
+      (hasText(page.content.apartment?.image?.url) ? page.content.apartment!.image!.url : undefined) ??
       page.content.units?.find((u) => hasText(u.image?.url))?.image?.url;
-    if (hasText(ogImage)) ogImage = absoluteUrl(ogImage);
+    if (hasText(ogImage)) {
+      if (isManagedImage(ogImage) && !ogImage.includes("?")) ogImage = `${ogImage}?w=960`;
+      ogImage = absoluteUrl(ogImage);
+    }
 
     const suffix = lang !== source ? `?lang=${lang}` : "";
     return {
       found: true,
       slug: params.slug,
       lang,
+      source,
+      price: page.content.hero?.price ?? page.content.apartment?.price,
+      category: page.content.category,
       title,
       description,
       ogTitle,
@@ -115,13 +130,36 @@ export const Route = createFileRoute("/$slug")({
     }
     const links: Array<Record<string, string>> = [
       { rel: "canonical", href: d.canonical },
+      // The bare URL is the source language; other languages use ?lang=.
       ...READING_LANGS.map((l) => ({
         rel: "alternate",
         hreflang: l,
-        href: `${SITE_ORIGIN}/${d.slug}${l !== d.lang ? `?lang=${l}` : ""}`,
+        href: `${SITE_ORIGIN}/${d.slug}${l !== (d.source ?? "fr") ? `?lang=${l}` : ""}`,
       })),
+      { rel: "alternate", hreflang: "x-default", href: `${SITE_ORIGIN}/${d.slug}` },
     ];
-    return { meta, links };
+    // Structured data so Google understands this is a property for sale.
+    const priceNumber = hasText(d.price) ? Number(d.price.replace(/[^\d]/g, "")) : NaN;
+    const jsonLd = {
+      "@context": "https://schema.org",
+      "@type": "RealEstateListing",
+      name: d.ogTitle ?? d.title,
+      description: d.ogDescription ?? d.description,
+      url: d.pageUrl,
+      ...(hasText(d.ogImage) ? { image: d.ogImage } : {}),
+      inLanguage: d.lang,
+      ...(priceNumber > 0
+        ? { offers: { "@type": "Offer", price: priceNumber, priceCurrency: "ILS" } }
+        : {}),
+      provider: { "@type": "RealEstateAgent", name: "Corinne Cohen Invest", url: SITE_ORIGIN },
+    };
+    const scripts = [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify(jsonLd).replace(/</g, "\\u003c"),
+      },
+    ];
+    return { meta, links, scripts };
   },
   component: ProjectPage,
 });
