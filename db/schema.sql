@@ -3,7 +3,7 @@
 
 -- ---------- types ----------
 do $$ begin
-  create type public.page_status as enum ('draft', 'published');
+  create type public.page_status as enum ('draft', 'published', 'archived');
 exception when duplicate_object then null; end $$;
 
 -- ---------- helpers ----------

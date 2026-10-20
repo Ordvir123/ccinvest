@@ -216,8 +216,26 @@ function ProjectPage() {
   if (!page) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center bg-background px-4 text-center">
-        <h1 className="text-4xl text-foreground">404</h1>
-        <p className="mt-2 text-muted-foreground">Page introuvable.</p>
+        <p className="eyebrow text-sm text-muted-foreground">404</p>
+        <h1 className="mt-2 text-3xl text-ink md:text-4xl">Ce bien n'est plus disponible</h1>
+        <p className="mt-3 max-w-md text-muted-foreground">
+          Il a peut-être été vendu. Découvrez nos autres appartements et projets à Tel Aviv.
+        </p>
+        <div className="mt-8 flex flex-wrap justify-center gap-3">
+          <a
+            href="/appartements"
+            className="rounded-md bg-cta px-5 py-2.5 text-sm font-medium uppercase tracking-wider text-cta-foreground hover:bg-cta/90"
+          >
+            Nos appartements
+          </a>
+          <a
+            href="/projects"
+            className="rounded-md border border-border px-5 py-2.5 text-sm font-medium hover:bg-accent"
+          >
+            Nos projets
+          </a>
+        </div>
+        <WhatsAppButton />
       </div>
     );
   }

@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { submitLead, validateLead } from "@/lib/leads";
+import { CONTACT_WHATSAPP } from "@/lib/site";
 import { isRtlReading, type ReadingLang } from "@/types/page";
 
 
@@ -17,6 +18,7 @@ type Labels = {
   send: string;
   sending: string;
   success: string;
+  whatsapp: string;
   error: string;
 };
 
@@ -29,6 +31,7 @@ const COPY: Record<ReadingLang, Labels> = {
     send: "Envoyer",
     sending: "Envoi…",
     success: "Merci ! Nous vous recontacterons bientôt.",
+    whatsapp: "Une question urgente ? Écrivez-nous sur WhatsApp",
     error: "Échec de l'envoi. Veuillez réessayer.",
   },
   he: {
@@ -39,6 +42,7 @@ const COPY: Record<ReadingLang, Labels> = {
     send: "שליחה",
     sending: "שולח…",
     success: "תודה! ניצור איתך קשר בקרוב.",
+    whatsapp: "שאלה דחופה? כתבו לנו בוואטסאפ",
     error: "השליחה נכשלה. נסה שוב.",
   },
   en: {
@@ -49,6 +53,7 @@ const COPY: Record<ReadingLang, Labels> = {
     send: "Send",
     sending: "Sending…",
     success: "Thank you! We'll be in touch soon.",
+    whatsapp: "Urgent question? Message us on WhatsApp",
     error: "Could not send. Please try again.",
   },
 };
@@ -151,6 +156,14 @@ export function ContactForm({
             <div className="mt-8 flex flex-col items-center gap-3 rounded-lg bg-card/95 p-8 text-center text-card-foreground">
               <Check className="h-10 w-10 text-primary" />
               <p className="text-lg">{t.success}</p>
+              <a
+                href={`https://wa.me/${CONTACT_WHATSAPP}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sm text-muted-foreground underline-offset-4 hover:underline"
+              >
+                {t.whatsapp}
+              </a>
             </div>
           ) : (
             <form className="mt-8 space-y-4" onSubmit={onSubmit} aria-label="Contact form">

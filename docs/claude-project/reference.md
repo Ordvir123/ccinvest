@@ -7,7 +7,7 @@ GitHub: `Ordvir123/ccinvest`. Production branch: `cloudflare-migration` (will be
 
 | table | what it holds |
 |---|---|
-| `pages` | `id uuid`, `slug text` (URL path, unique), `status` (`draft`/`published`/`archived`), `source_lang` (always `fr`), `content jsonb`, `seo jsonb`, `updated_at` |
+| `pages` | `id uuid`, `slug text` (URL path, unique), `status` (`draft` = not on the site yet, `published` = live, `archived` = sold / taken off the site but kept), `source_lang` (always `fr`), `content jsonb`, `seo jsonb`, `updated_at` |
 | `page_translations` | `page_id`, `lang` (`he`/`en`), `content jsonb` (translated copy of `pages.content`), `source_hash text`, `locked_fields jsonb` — unique on (`page_id`,`lang`) |
 | `media` | one row per uploaded file: `folder` (= page slug), `url` (`/media/...`), `filename`, `content_type`, `created_at` |
 | `page_history` | automatic snapshot of the previous version before every update/delete of `pages` |
@@ -88,10 +88,11 @@ update pages set content = jsonb_set(content, '{hero,price}', '"4 950 000 ₪"')
 update pages set content = content || $j${"location": {...}, "about": {...}}$j$::jsonb where slug = 'rue-allenby';
 ```
 
-**Publish / unpublish** (only on explicit request)
+**Publish / unpublish / mark sold** (only on explicit request)
 ```sql
 update pages set status = 'published' where slug = 'rue-allenby';
 update pages set status = 'draft'     where slug = 'rue-allenby';
+update pages set status = 'archived'  where slug = 'rue-allenby';  -- sold: off the site, kept for reference
 ```
 
 **See history and restore a previous version**
