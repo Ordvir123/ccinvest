@@ -2,13 +2,14 @@ import { useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { FilePlus2, Pencil, Copy, CopyPlus, ExternalLink, Archive, ArchiveRestore, Trash2, Loader2 } from "lucide-react";
+import { FilePlus2, Pencil, Copy, CopyPlus, ExternalLink, Archive, ArchiveRestore, Trash2, Loader2, Send, FileClock, X } from "lucide-react";
 
 import { SITE_ORIGIN } from "@/lib/site";
 
 import { Section } from "@/components/ui/section";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   Table,
@@ -40,6 +41,7 @@ function PagesList() {
   const [showArchived, setShowArchived] = useState(false);
   const [toDelete, setToDelete] = useState<PageListItem | null>(null);
   const [toDuplicate, setToDuplicate] = useState<PageListItem | null>(null);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["admin-pages"],
@@ -90,11 +92,43 @@ function PagesList() {
 
 
 
+  const bulkMut = useMutation({
+    mutationFn: async (status: "published" | "draft" | "archived") => {
+      const ids = [...selected];
+      const results = await Promise.allSettled(ids.map((id) => setPageStatus(id, status)));
+      const failed = results.filter((r) => r.status === "rejected").length;
+      return { status, done: ids.length - failed, failed };
+    },
+    onSuccess: ({ status, done, failed }) => {
+      const verb = status === "published" ? "published" : status === "archived" ? "archived" : "moved to draft";
+      if (done) toast.success(`${done} page${done > 1 ? "s" : ""} ${verb}.`);
+      if (failed) toast.error(`${failed} page${failed > 1 ? "s" : ""} failed.`);
+      setSelected(new Set());
+      refresh();
+    },
+    onError: (e) => toast.error(e instanceof Error ? e.message : "Failed."),
+  });
+
   const all = data ?? [];
   const rows = all.filter((p) =>
     showArchived ? p.status === "archived" : p.status !== "archived",
   );
   const archivedCount = all.filter((p) => p.status === "archived").length;
+  const visibleSelected = rows.filter((p) => selected.has(p.id));
+  const allChecked = rows.length > 0 && visibleSelected.length === rows.length;
+  const someChecked = visibleSelected.length > 0 && !allChecked;
+  const toggleAll = (on: boolean) => setSelected(on ? new Set(rows.map((p) => p.id)) : new Set());
+  const toggleOne = (id: string, on: boolean) =>
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (on) next.add(id);
+      else next.delete(id);
+      return next;
+    });
+  const switchView = (archived: boolean) => {
+    setShowArchived(archived);
+    setSelected(new Set());
+  };
 
   return (
     <Section>
@@ -114,18 +148,45 @@ function PagesList() {
         <Button
           variant={showArchived ? "outline" : "default"}
           size="sm"
-          onClick={() => setShowArchived(false)}
+          onClick={() => switchView(false)}
         >
           Active
         </Button>
         <Button
           variant={showArchived ? "default" : "outline"}
           size="sm"
-          onClick={() => setShowArchived(true)}
+          onClick={() => switchView(true)}
         >
           <Archive className="h-4 w-4" /> Archive{archivedCount ? ` (${archivedCount})` : ""}
         </Button>
       </div>
+
+      {visibleSelected.length > 0 && (
+        <div className="sticky top-2 z-20 mt-4 flex flex-wrap items-center gap-2 rounded-xl border border-border bg-card p-2 shadow-sm">
+          <span className="px-2 text-sm font-medium">{visibleSelected.length} selected</span>
+          {showArchived ? (
+            <Button size="sm" variant="outline" disabled={bulkMut.isPending} onClick={() => bulkMut.mutate("draft")}>
+              <ArchiveRestore className="h-4 w-4" /> Restore as draft
+            </Button>
+          ) : (
+            <>
+              <Button size="sm" disabled={bulkMut.isPending} onClick={() => bulkMut.mutate("published")}>
+                <Send className="h-4 w-4" /> Publish
+              </Button>
+              <Button size="sm" variant="outline" disabled={bulkMut.isPending} onClick={() => bulkMut.mutate("draft")}>
+                <FileClock className="h-4 w-4" /> Move to draft
+              </Button>
+              <Button size="sm" variant="outline" disabled={bulkMut.isPending} onClick={() => bulkMut.mutate("archived")}>
+                <Archive className="h-4 w-4" /> Archive
+              </Button>
+            </>
+          )}
+          {bulkMut.isPending && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
+          <Button size="sm" variant="ghost" className="ms-auto" onClick={() => setSelected(new Set())} aria-label="Clear selection">
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
+      )}
 
       <Card className="mt-4">
         <CardContent className="p-0">
@@ -143,6 +204,13 @@ function PagesList() {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead className="w-10">
+                    <Checkbox
+                      checked={allChecked ? true : someChecked ? "indeterminate" : false}
+                      onCheckedChange={(v) => toggleAll(v === true)}
+                      aria-label="Select all"
+                    />
+                  </TableHead>
                   <TableHead>Title</TableHead>
                   <TableHead>Slug</TableHead>
                   <TableHead>Status</TableHead>
@@ -152,7 +220,14 @@ function PagesList() {
               </TableHeader>
               <TableBody>
                 {rows.map((p) => (
-                  <TableRow key={p.id}>
+                  <TableRow key={p.id} data-state={selected.has(p.id) ? "selected" : undefined}>
+                    <TableCell>
+                      <Checkbox
+                        checked={selected.has(p.id)}
+                        onCheckedChange={(v) => toggleOne(p.id, v === true)}
+                        aria-label={`Select ${p.title}`}
+                      />
+                    </TableCell>
                     <TableCell className="font-medium text-foreground">{p.title}</TableCell>
                     <TableCell className="text-muted-foreground">/{p.slug}</TableCell>
                     <TableCell>
