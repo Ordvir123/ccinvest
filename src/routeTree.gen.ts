@@ -25,6 +25,7 @@ import { Route as AdminAdminIndexRouteImport } from './routes/_admin.admin.index
 import { Route as AdminAdminSettingsRouteImport } from './routes/_admin.admin.settings'
 import { Route as AdminAdminMediaRouteImport } from './routes/_admin.admin.media'
 import { Route as AdminAdminLeadsRouteImport } from './routes/_admin.admin.leads'
+import { Route as AdminAdminImportRouteImport } from './routes/_admin.admin.import'
 import { Route as AdminAdminPagesIndexRouteImport } from './routes/_admin.admin.pages.index'
 import { Route as AdminAdminPagesNewRouteImport } from './routes/_admin.admin.pages.new'
 import { Route as AdminAdminPagesIdRouteImport } from './routes/_admin.admin.pages.$id'
@@ -108,6 +109,11 @@ const AdminAdminLeadsRoute = AdminAdminLeadsRouteImport.update({
   path: '/leads',
   getParentRoute: () => AdminAdminRoute,
 } as any)
+const AdminAdminImportRoute = AdminAdminImportRouteImport.update({
+  id: '/import',
+  path: '/import',
+  getParentRoute: () => AdminAdminRoute,
+} as any)
 const AdminAdminPagesIndexRoute = AdminAdminPagesIndexRouteImport.update({
   id: '/pages/',
   path: '/pages/',
@@ -136,6 +142,7 @@ export interface FileRoutesByFullPath {
   '/api/media': typeof ApiMediaRoute
   '/media/$': typeof MediaSplatRoute
   '/preview/$id': typeof PreviewIdRoute
+  '/admin/import': typeof AdminAdminImportRoute
   '/admin/leads': typeof AdminAdminLeadsRoute
   '/admin/media': typeof AdminAdminMediaRoute
   '/admin/settings': typeof AdminAdminSettingsRoute
@@ -155,6 +162,7 @@ export interface FileRoutesByTo {
   '/api/media': typeof ApiMediaRoute
   '/media/$': typeof MediaSplatRoute
   '/preview/$id': typeof PreviewIdRoute
+  '/admin/import': typeof AdminAdminImportRoute
   '/admin/leads': typeof AdminAdminLeadsRoute
   '/admin/media': typeof AdminAdminMediaRoute
   '/admin/settings': typeof AdminAdminSettingsRoute
@@ -177,6 +185,7 @@ export interface FileRoutesById {
   '/api/media': typeof ApiMediaRoute
   '/media/$': typeof MediaSplatRoute
   '/preview/$id': typeof PreviewIdRoute
+  '/_admin/admin/import': typeof AdminAdminImportRoute
   '/_admin/admin/leads': typeof AdminAdminLeadsRoute
   '/_admin/admin/media': typeof AdminAdminMediaRoute
   '/_admin/admin/settings': typeof AdminAdminSettingsRoute
@@ -199,6 +208,7 @@ export interface FileRouteTypes {
     | '/api/media'
     | '/media/$'
     | '/preview/$id'
+    | '/admin/import'
     | '/admin/leads'
     | '/admin/media'
     | '/admin/settings'
@@ -218,6 +228,7 @@ export interface FileRouteTypes {
     | '/api/media'
     | '/media/$'
     | '/preview/$id'
+    | '/admin/import'
     | '/admin/leads'
     | '/admin/media'
     | '/admin/settings'
@@ -239,6 +250,7 @@ export interface FileRouteTypes {
     | '/api/media'
     | '/media/$'
     | '/preview/$id'
+    | '/_admin/admin/import'
     | '/_admin/admin/leads'
     | '/_admin/admin/media'
     | '/_admin/admin/settings'
@@ -376,6 +388,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminAdminLeadsRouteImport
       parentRoute: typeof AdminAdminRoute
     }
+    '/_admin/admin/import': {
+      id: '/_admin/admin/import'
+      path: '/import'
+      fullPath: '/admin/import'
+      preLoaderRoute: typeof AdminAdminImportRouteImport
+      parentRoute: typeof AdminAdminRoute
+    }
     '/_admin/admin/pages/': {
       id: '/_admin/admin/pages/'
       path: '/pages'
@@ -401,6 +420,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface AdminAdminRouteChildren {
+  AdminAdminImportRoute: typeof AdminAdminImportRoute
   AdminAdminLeadsRoute: typeof AdminAdminLeadsRoute
   AdminAdminMediaRoute: typeof AdminAdminMediaRoute
   AdminAdminSettingsRoute: typeof AdminAdminSettingsRoute
@@ -411,6 +431,7 @@ interface AdminAdminRouteChildren {
 }
 
 const AdminAdminRouteChildren: AdminAdminRouteChildren = {
+  AdminAdminImportRoute: AdminAdminImportRoute,
   AdminAdminLeadsRoute: AdminAdminLeadsRoute,
   AdminAdminMediaRoute: AdminAdminMediaRoute,
   AdminAdminSettingsRoute: AdminAdminSettingsRoute,
