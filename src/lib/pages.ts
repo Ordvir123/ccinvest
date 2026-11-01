@@ -591,9 +591,27 @@ export type PublishedCard = {
   priceIsFrom?: boolean;
   cover?: string;
   category: PageCategory;
+  /** Numeric price (lowest unit price for projects), for filtering and sorting. */
+  priceValue?: number;
+  /** Lower-cased, accent-free text the listing search matches against. */
+  searchText: string;
+  updatedAt?: string;
 };
 
-function toCard(page: Page): PublishedCard {
+/** Lower-case and strip accents so "Rue Hayarkon" matches "hayárkon". */
+export function normalizeSearch(s: string): string {
+  return s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+}
+
+/** "5.500.000₪", "₪ 4,250,000", "5 750 000 nis" → 5500000 (undefined when absent). */
+export function parsePrice(p?: string): number | undefined {
+  const n = Number((p ?? "").replace(/[^\d]/g, ""));
+  return n > 0 ? n : undefined;
+}
+
+type TranslatedBits = { title?: string | null; subtitle?: string | null; place?: string | null };
+
+function toCard(page: Page & { updated_at?: string }, translated: TranslatedBits[] = []): PublishedCard {
   const c = page.content;
   const cover =
     c.gallery?.find((m) => hasText(m.url))?.url ??
@@ -621,6 +639,26 @@ function toCard(page: Page): PublishedCard {
     priceIsFrom,
     cover: cover || undefined,
     category: c.category === "project" ? "project" : "apartment",
+    priceValue: parsePrice(priceFrom),
+    searchText: normalizeSearch(
+      [
+        c.hero.title,
+        c.hero.subtitle,
+        c.location?.map_query,
+        c.location?.heading,
+        c.location?.text,
+        ...Object.values(c.location?.name_i18n ?? {}),
+        c.about?.body,
+        c.apartment?.name,
+        c.apartment?.description,
+        ...(c.units ?? []).flatMap((u) => [u.name, u.description]),
+        ...translated.flatMap((t) => [t.title, t.subtitle, t.place]),
+        page.slug,
+      ]
+        .filter((x): x is string => typeof x === "string" && x.trim() !== "")
+        .join(" \n "),
+    ),
+    updatedAt: page.updated_at,
   };
 }
 
@@ -633,14 +671,19 @@ export async function listPublishedPages(category?: PageCategory): Promise<Publi
   try {
     const { data, error } = await supabase
       .from("pages")
-      .select("id, slug, status, source_lang, content, seo")
+      .select(
+        "id, slug, status, source_lang, content, seo, updated_at, page_translations(title:content->hero->>title, subtitle:content->hero->>subtitle, place:content->location->>map_query)",
+      )
       .eq("status", "published")
       .order("updated_at", { ascending: false });
     if (error) throw error;
     return byCategory(
       (data ?? [])
         .filter((row) => row.slug !== TEMPLATE_SETTINGS_SLUG)
-        .map((row) => toCard(row as Page)),
+        .map((row) => {
+          const { page_translations, ...rest } = row as typeof row & { page_translations?: TranslatedBits[] };
+          return toCard(rest as unknown as Page & { updated_at?: string }, page_translations ?? []);
+        }),
     );
   } catch (err) {
     console.warn("[pages] published list failed:", err);
