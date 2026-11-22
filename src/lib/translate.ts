@@ -5,6 +5,7 @@ import type {
   PageContent,
   ReadingLang,
   Stat,
+  Unit,
   Video,
 } from "@/types/page";
 
@@ -85,23 +86,24 @@ export function listTranslatableFields(c: PageContent): TransField[] {
     });
   });
 
-  // Single apartment block (apartment-type pages). Same logic as a unit.
-  const apt = c.apartment;
-  if (apt) {
-    if (!apt.unit_type) push("apartment.name", "Apartment · Name", apt.name);
-    push("apartment.description", "Apartment · Description", apt.description);
+  // Apartment blocks (apartment-type pages). Same logic as a unit.
+  const pushApartment = (apt: Unit | undefined, prefix: string, label: string) => {
+    if (!apt) return;
+    if (!apt.unit_type) push(`${prefix}.name`, `${label} · Name`, apt.name);
+    push(`${prefix}.description`, `${label} · Description`, apt.description);
     (apt.features ?? []).forEach((f, j) =>
-      push(`apartment.features.${j}`, `Apartment · Feature ${j + 1}`, f),
+      push(`${prefix}.features.${j}`, `${label} · Feature ${j + 1}`, f),
     );
     (apt.specs ?? []).forEach((r, j) => {
       if (r.linked === false || !r.presetKey)
-        push(`apartment.specs.${j}.label`, `Apartment · Detail ${j + 1} label`, r.label);
+        push(`${prefix}.specs.${j}.label`, `${label} · Detail ${j + 1} label`, r.label);
     });
     (apt.featureRows ?? []).forEach((r, j) => {
       if (r.linked === false || !r.presetKey)
-        push(`apartment.featureRows.${j}.value`, `Apartment · Feature ${j + 1}`, r.value);
+        push(`${prefix}.featureRows.${j}.value`, `${label} · Feature ${j + 1}`, r.value);
     });
-  }
+  };
+  pushApartment(c.apartment, "apartment", "Apartment");
 
   (c.videos ?? []).forEach((v, i) => push(`videos.${i}.title`, `Video ${i + 1} · Title`, v.title));
 
@@ -130,6 +132,8 @@ export function listTranslatableFields(c: PageContent): TransField[] {
       (sec.data as Stat[]).forEach((st, i) =>
         push(`${id}.${i}.label`, `${id} · Stat ${i + 1} · Label`, st.label),
       );
+    } else if (sec.type === "listing") {
+      pushApartment(sec.data as Unit, id, `Apartment (${id})`);
     }
   });
 
@@ -280,26 +284,25 @@ export function preserveStableFields(source: PageContent, translated: PageConten
       };
     });
   }
-  // Single apartment: restore stable (non-AI-translated) fields + media, and the
-  // image-side toggle (a layout choice, never translated).
+  // Apartment block: restore stable (non-AI-translated) fields + media.
+  const restoreApartment = (src: Unit, tr: Unit): Unit => ({
+    ...tr,
+    unit_type: src.unit_type,
+    unit_number: src.unit_number,
+    floor: src.floor,
+    orientation: src.orientation,
+    rooms: src.rooms,
+    area_m2: src.area_m2,
+    balcony_m2: src.balcony_m2,
+    parking: src.parking,
+    price: src.price,
+    image: src.image ?? tr.image,
+    attachment: src.attachment,
+    specs: mergeRows(src.specs, tr.specs, "label"),
+    featureRows: mergeRows(src.featureRows, tr.featureRows, "value"),
+  });
   if (out.apartment && source.apartment) {
-    const src = source.apartment;
-    out.apartment = {
-      ...out.apartment,
-      unit_type: src.unit_type,
-      unit_number: src.unit_number,
-      floor: src.floor,
-      orientation: src.orientation,
-      rooms: src.rooms,
-      area_m2: src.area_m2,
-      balcony_m2: src.balcony_m2,
-      parking: src.parking,
-      price: src.price,
-      image: src.image ?? out.apartment.image,
-      attachment: src.attachment,
-      specs: mergeRows(src.specs, out.apartment.specs, "label"),
-      featureRows: mergeRows(src.featureRows, out.apartment.featureRows, "value"),
-    };
+    out.apartment = restoreApartment(source.apartment, out.apartment);
   } else if (source.apartment) {
     out.apartment = source.apartment;
   }
@@ -365,6 +368,11 @@ export function preserveStableFields(source: PageContent, translated: PageConten
               icon: st.icon, // never translated
             })),
           };
+        }
+        case "listing": {
+          const t = tr.data as Unit;
+          if (!t || typeof t !== "object") return structuredClone(src);
+          return { ...src, data: restoreApartment(src.data as Unit, t) };
         }
         default:
           return structuredClone(src);

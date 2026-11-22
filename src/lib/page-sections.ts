@@ -13,6 +13,7 @@ import type {
   Media,
   PageContent,
   Stat,
+  Unit,
   Video,
 } from "@/types/page";
 
@@ -62,10 +63,22 @@ const DUPLICABLE_TYPES: DuplicableSectionType[] = [
   "wide_images",
   "videos",
   "stats",
+  "listing",
 ];
 
-export function isDuplicable(type: string): type is DuplicableSectionType {
-  return (DUPLICABLE_TYPES as string[]).includes(type);
+/**
+ * Whether a section type can be duplicated. `listing` duplicates only on
+ * apartment pages (each copy is one more full apartment block); a project
+ * page already lists all its units in one section. Pass the page content to
+ * apply that rule; without it only the type list is checked.
+ */
+export function isDuplicable(
+  type: string,
+  content?: Pick<PageContent, "category">,
+): type is DuplicableSectionType {
+  if (!(DUPLICABLE_TYPES as string[]).includes(type)) return false;
+  if (type === "listing" && content && content.category === "project") return false;
+  return true;
 }
 
 /** The section type of an instance id ("gallery#2" -> "gallery"). */
@@ -150,6 +163,8 @@ export function emptySectionData(type: DuplicableSectionType): ExtraSectionData 
       return [] as Video[];
     case "stats":
       return [] as Stat[];
+    case "listing":
+      return { name: "", unit_type: "apartment" } as Unit;
   }
 }
 
@@ -167,6 +182,10 @@ export function getSectionData(content: PageContent, id: string): ExtraSectionDa
         return content.videos as Video[] | undefined;
       case "stats":
         return content.stats as Stat[] | undefined;
+      case "listing":
+        // Only the single apartment block is per-instance data; a project's
+        // units list is edited as a whole by its own editor.
+        return content.category === "project" ? undefined : content.apartment;
       default:
         return undefined;
     }
@@ -192,6 +211,8 @@ export function setSectionData(
         return { ...content, videos: data as Video[] };
       case "stats":
         return { ...content, stats: data as Stat[] };
+      case "listing":
+        return content.category === "project" ? content : { ...content, apartment: data as Unit };
       default:
         return content;
     }
@@ -218,7 +239,7 @@ export function duplicateSection(
   sourceId: string,
 ): { content: PageContent; newId: string } {
   const type = getSectionType(sourceId);
-  if (!isDuplicable(type)) return { content, newId: sourceId };
+  if (!isDuplicable(type, content)) return { content, newId: sourceId };
 
   const sourceData = getSectionData(content, sourceId) ?? emptySectionData(type);
   const newId = newInstanceId(content, type);
@@ -227,6 +248,12 @@ export function duplicateSection(
     type,
     data: structuredClone(sourceData),
   };
+  if (type === "listing") {
+    const side = isBaseId(sourceId)
+      ? content.apartment_image_side
+      : (content.extra_sections ?? []).find((e) => e.id === sourceId)?.image_side;
+    if (side) entry.image_side = side;
+  }
 
   const order = orderedSectionIds(content);
   const at = order.indexOf(sourceId);
@@ -431,6 +458,31 @@ export function setSectionLayout(
   }
   const extras = (content.extra_sections ?? []).map((e) =>
     e.id === id ? { ...e, layout } : e,
+  );
+  return { ...content, extra_sections: extras };
+}
+
+/* ============================================================
+ * Apartment blocks (listing / listing#N on apartment pages).
+ * ============================================================ */
+
+/** Desktop image side of an apartment block instance. Duplicates fall back to the base side. */
+export function getListingImageSide(content: PageContent, id: string): "left" | "right" {
+  const base = content.apartment_image_side === "left" ? "left" : "right";
+  if (isBaseId(id)) return base;
+  const side = (content.extra_sections ?? []).find((e) => e.id === id)?.image_side;
+  return side === "left" || side === "right" ? side : base;
+}
+
+/** Return new content with an apartment block instance's image side updated. */
+export function setListingImageSide(
+  content: PageContent,
+  id: string,
+  side: "left" | "right",
+): PageContent {
+  if (isBaseId(id)) return { ...content, apartment_image_side: side };
+  const extras = (content.extra_sections ?? []).map((e) =>
+    e.id === id ? { ...e, image_side: side } : e,
   );
   return { ...content, extra_sections: extras };
 }

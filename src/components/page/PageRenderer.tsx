@@ -7,6 +7,8 @@ import {
   getSectionData,
   getSectionLayout,
   getSectionType,
+  getListingImageSide,
+  isBaseId,
   effectiveLayout,
   layoutGroupSize,
   isCarouselLayout,
@@ -942,6 +944,21 @@ function Units({
   );
 }
 
+/** True when an apartment block has anything worth rendering. */
+function hasApartmentData(a?: Unit | null): a is Unit {
+  return (
+    !!a &&
+    typeof a === "object" &&
+    (hasText(a.unit_type) ||
+      hasText(a.name) ||
+      hasText(a.description) ||
+      hasText(a.price) ||
+      hasItems(a.specs) ||
+      hasItems(a.featureRows) ||
+      hasText(a.image?.url))
+  );
+}
+
 /** Single-apartment section ("About the apartment") — wide two-column layout. */
 function ApartmentSection({
   apartment,
@@ -1448,36 +1465,37 @@ export function PageRenderer({
             }
           />
         ) : null;
-      case "listing":
-        return content.category === "project" ? (
-          <Units
-            units={content.units}
-            heading={sectionHeading(id)}
-            labels={labels}
-            lang={lang}
-            specPresets={settings.specPresets}
-            featurePresets={settings.featurePresets}
-          />
-        ) : content.apartment &&
-          (hasText(content.apartment.unit_type) ||
-            hasText(content.apartment.name) ||
-            hasText(content.apartment.description) ||
-            hasText(content.apartment.price) ||
-            hasItems(content.apartment.specs) ||
-            hasItems(content.apartment.featureRows) ||
-            hasText(content.apartment.image?.url)) ? (
+      case "listing": {
+        if (content.category === "project") {
+          // Project pages list all their units in the base section only.
+          return isBaseId(id) ? (
+            <Units
+              units={content.units}
+              heading={sectionHeading(id)}
+              labels={labels}
+              lang={lang}
+              specPresets={settings.specPresets}
+              featurePresets={settings.featurePresets}
+            />
+          ) : null;
+        }
+        // Apartment pages: the base block is content.apartment; "listing#2", …
+        // are more full apartment blocks stored in extra_sections.
+        const apartment = getSectionData(content, id) as Unit | undefined;
+        return hasApartmentData(apartment) ? (
           <ApartmentSection
-            apartment={content.apartment}
-            imageSide={content.apartment_image_side === "left" ? "left" : "right"}
-            heading={sectionHeading(id) ?? content.apartment_title}
-            headingIcon={content.apartment_title_icon}
-            headingColor={content.apartment_title_color}
+            apartment={apartment}
+            imageSide={getListingImageSide(content, id)}
+            heading={sectionHeading(id) ?? (isBaseId(id) ? content.apartment_title : undefined)}
+            headingIcon={isBaseId(id) ? content.apartment_title_icon : undefined}
+            headingColor={isBaseId(id) ? content.apartment_title_color : undefined}
             labels={labels}
             lang={lang}
             specPresets={settings.specPresets}
             featurePresets={settings.featurePresets}
           />
         ) : null;
+      }
       case "contact":
         return (
           <ContactForm
