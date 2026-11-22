@@ -121,10 +121,20 @@ export type AboutData = {
 };
 
 /** Section types that can appear multiple times per page. */
-export type DuplicableSectionType = "about" | "gallery" | "wide_images" | "videos" | "stats";
+export type DuplicableSectionType =
+  | "about"
+  | "gallery"
+  | "wide_images"
+  | "videos"
+  | "stats"
+  | "listing";
 
-/** Data payload for a duplicated instance, matching its base field's shape. */
-export type ExtraSectionData = AboutData | Media[] | Video[] | Stat[];
+/**
+ * Data payload for a duplicated instance, matching its base field's shape.
+ * A duplicated `listing` ("listing#2", …) is one more full apartment block
+ * (same shape as `content.apartment`) — apartment pages only.
+ */
+export type ExtraSectionData = AboutData | Media[] | Video[] | Stat[] | Unit;
 
 /** A duplicated section instance stored alongside the base fields. */
 export type ExtraSection = {
@@ -133,6 +143,8 @@ export type ExtraSection = {
   data: ExtraSectionData;
   /** Layout preset for gallery / wide_images instances (see page-sections). */
   layout?: string;
+  /** Desktop image side for a duplicated apartment block (listing#N). Absent = same as apartment_image_side. */
+  image_side?: "left" | "right";
 };
 
 
@@ -193,7 +205,11 @@ export type PageContent = {
    */
   section_headings?: Record<string, Partial<Record<ReadingLang, string>>>;
   units?: Unit[];
-  /** Single apartment block for apartment-type pages (mutually exclusive with units). */
+  /**
+   * Main apartment block for apartment-type pages (mutually exclusive with units).
+   * More apartment blocks on the same page live in extra_sections as
+   * { id: "listing#2", type: "listing", data: Unit }.
+   */
   apartment?: Unit;
   /** Desktop image placement for the apartment section ("left"/"right" in LTR; mirrored in RTL). */
   apartment_image_side?: "left" | "right";

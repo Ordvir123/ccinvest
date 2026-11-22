@@ -126,7 +126,7 @@ export function PageEditor({
       title: listingIsProject ? "Units" : "About the apartment",
       description: listingIsProject
         ? "Repeatable apartment blocks."
-        : "The single apartment shown on this page.",
+        : "An apartment block (price, details, plan, image). Duplicate it to show another apartment on the same page.",
       defaultOpen: !listingIsProject,
     },
     gallery: { title: SECTION_LABELS.gallery, defaultOpen: false },
@@ -158,7 +158,7 @@ export function PageEditor({
       case "location":
         return withHeading(<LocationSection s={s} />);
       case "listing":
-        return withHeading(<ListingBody s={s} />);
+        return withHeading(<ListingBody s={s} id={id} />);
       case "gallery":
         return withHeading(<GallerySection s={s} id={id} />);
       case "wide_images":

@@ -398,7 +398,7 @@ export function cleanContent(content: PageContent): PageContent {
   const wide_images_layout = keepText(content.wide_images_layout);
 
   // Clean duplicated section instances with the same per-type logic as bases.
-  const DUPLICABLE = ["about", "gallery", "wide_images", "videos", "stats"];
+  const DUPLICABLE = ["about", "gallery", "wide_images", "videos", "stats", "listing"];
   const cleanedExtras = (content.extra_sections ?? [])
     .map((e) => {
       if (!e || typeof e.id !== "string" || !e.id.trim()) return null;
@@ -425,10 +425,29 @@ export function cleanContent(content: PageContent): PageContent {
           data = st.length ? st : undefined;
           break;
         }
+        case "listing": {
+          // Extra apartment blocks exist only on apartment pages.
+          const u = e.data as import("@/types/page").Unit | undefined;
+          data =
+            !isProject && u && typeof u === "object"
+              ? cleanUnit({ ...u, unit_type: u.unit_type ?? "apartment" })
+              : undefined;
+          break;
+        }
       }
       if (!data) return null;
       const layout = keepText(e.layout);
-      return { id: e.id, type: e.type, data, ...(layout ? { layout } : {}) };
+      const image_side =
+        e.type === "listing" && (e.image_side === "left" || e.image_side === "right")
+          ? e.image_side
+          : undefined;
+      return {
+        id: e.id,
+        type: e.type,
+        data,
+        ...(layout ? { layout } : {}),
+        ...(image_side ? { image_side } : {}),
+      };
     })
     .filter(Boolean) as import("@/types/page").ExtraSection[];
   const extra_sections = cleanedExtras.length ? cleanedExtras : undefined;

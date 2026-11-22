@@ -49,7 +49,7 @@ export function SectionManager({
         {orderedIds.map((id, i) => {
           const hidden = isSectionHidden(content, id);
           const type = getSectionType(id);
-          const duplicable = isDuplicable(type);
+          const duplicable = isDuplicable(type, content);
           const isDuplicate = !isBaseId(id);
           return (
             <div

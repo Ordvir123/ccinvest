@@ -42,6 +42,7 @@ import {
   CUSTOM_PRESET,
 } from "@/components/admin/editor/shared";
 import type { PageEditorState } from "@/components/admin/editor/usePageEditorState";
+import { getListingImageSide, isBaseId, setListingImageSide } from "@/lib/page-sections";
 
 /** Editor for flexible spec rows (Area, Rooms, Floor, …). */
 function SpecRowsEditor({
@@ -493,7 +494,67 @@ export function UnitBlock({
 }
 
 /* ---------- Listing (units / apartment) section body ---------- */
-export function ListingBody({ s }: { s: PageEditorState }) {
+/** Image-side picker shared by every apartment block. */
+function ImageSideField({
+  value,
+  onChange,
+}: {
+  value: "left" | "right";
+  onChange: (v: "left" | "right") => void;
+}) {
+  return (
+    <Field
+      label="Image side (desktop)"
+      hint="Which physical side the main image sits on. Stays on the same side in every language (fr / en / he)."
+    >
+      <Select value={value} onValueChange={(v) => onChange(v as "left" | "right")}>
+        <SelectTrigger>
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="right">Image on the right</SelectItem>
+          <SelectItem value="left">Image on the left</SelectItem>
+        </SelectContent>
+      </Select>
+    </Field>
+  );
+}
+
+/**
+ * Editor for a duplicated apartment block ("listing#2", …) on an apartment
+ * page. Same fields as the main apartment; its heading comes from the shared
+ * per-locale section heading field above it.
+ */
+function ExtraApartmentBody({ s, id }: { s: PageEditorState; id: string }) {
+  const { content, setContent, getData, setData, slug, canUpload, specPresets, featurePresets } = s;
+  const unit = (getData(id) as Unit | undefined) ?? ({ name: "", unit_type: "apartment" } as Unit);
+  return (
+    <div className="space-y-4">
+      <ImageSideField
+        value={getListingImageSide(content, id)}
+        onChange={(side) => setContent((c) => setListingImageSide(c, id, side))}
+      />
+      <UnitBlock
+        index={0}
+        unit={unit}
+        slug={slug}
+        canUpload={canUpload}
+        titleOverride="Apartment details"
+        forceOpen
+        specPresets={specPresets}
+        featurePresets={featurePresets}
+        onChange={(next) => setData(id, next)}
+      />
+    </div>
+  );
+}
+
+export function ListingBody({ s, id = "listing" }: { s: PageEditorState; id?: string }) {
+  if (!s.listingIsProject && !isBaseId(id)) return <ExtraApartmentBody s={s} id={id} />;
+  return <BaseListingBody s={s} />;
+}
+
+function BaseListingBody({ s }: { s: PageEditorState }) {
   const {
     content,
     patch,
@@ -568,23 +629,10 @@ export function ListingBody({ s }: { s: PageEditorState }) {
     </div>
   ) : (
     <div className="space-y-4">
-      <Field
-        label="Image side (desktop)"
-        hint="Which physical side the main image sits on. Stays on the same side in every language (fr / en / he)."
-      >
-        <Select
-          value={content.apartment_image_side ?? "right"}
-          onValueChange={(v) => patch({ apartment_image_side: v as "left" | "right" })}
-        >
-          <SelectTrigger>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="right">Image on the right</SelectItem>
-            <SelectItem value="left">Image on the left</SelectItem>
-          </SelectContent>
-        </Select>
-      </Field>
+      <ImageSideField
+        value={content.apartment_image_side ?? "right"}
+        onChange={(v) => patch({ apartment_image_side: v })}
+      />
 
       <UnitBlock
         index={0}

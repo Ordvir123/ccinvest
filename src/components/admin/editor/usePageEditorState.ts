@@ -161,6 +161,9 @@ export function usePageEditorState({
       // Collect custom rows from apartment + all units.
       const units: Unit[] = [
         ...(content.apartment ? [content.apartment] : []),
+        ...(content.extra_sections ?? [])
+          .filter((e) => e.type === "listing" && e.data && typeof e.data === "object")
+          .map((e) => e.data as Unit),
         ...(content.units ?? []),
       ];
       const makeLabels = (t: string) => ({ fr: t, he: t, en: t });

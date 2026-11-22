@@ -45,6 +45,8 @@ Numbers are strings without units (`"60"`, not `"60 m²"`) — the site formats 
 
 Section order / duplicates (`section_order`, `extra_sections`, `hidden_sections`) are optional; omit them for a default layout. Section ids: `stats, location, about, listing, gallery, wide_images, videos, contact`; duplicates are `<type>#2`, `<type>#3`.
 
+**Several apartments on one apartment page.** The first apartment block is `apartment`. Each more apartment is an `extra_sections` entry `{ "id": "listing#2", "type": "listing", "data": <Unit, same shape as apartment>, "image_side": "left" | "right" (optional) }`. Place it in `section_order` (e.g. `["location","listing","gallery","listing#2","gallery#2","contact"]`) and give it a heading in `section_headings["listing#2"]` (fr/he/en). Note: the `about` section does not render on apartment pages, so never put a second apartment there. `listing#N` is ignored on project pages (they use `units`).
+
 ## `pages.seo` shape
 ```json
 { "fr": {"meta_title": "...", "meta_description": "..."}, "he": {...}, "en": {...} }
